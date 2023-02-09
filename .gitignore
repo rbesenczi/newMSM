@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+# Project files and folders
+depend.mk
+.idea/
