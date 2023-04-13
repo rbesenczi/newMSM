@@ -5,7 +5,7 @@ msmOptions *msmOptions::gopt = nullptr;
 
 int main(int argc, char *argv[]) {
 
-    std::cout << "This is newMSM v.0.1.0-BETA." << std::endl;
+    std::cout << "This is newMSM v.0.1.1-BETA." << std::endl;
 
     msmOptions &opts = msmOptions::getInstance();
     Utilities::Log &logger = Utilities::LogSingleton::getInstance();
