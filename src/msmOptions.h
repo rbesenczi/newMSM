@@ -26,6 +26,10 @@ public:
     Utilities::Option<std::string> outbase;
     Utilities::Option<std::string> outformat;
     Utilities::Option<std::string> parameters;
+    // Removed parameters
+    Utilities::Option<std::string> in_register;
+    Utilities::Option<int> multiresolutionlevels;
+    Utilities::Option<float> smoothoutput;
 
     bool parse_command_line(int argc, char **argv);
 
@@ -93,6 +97,15 @@ inline msmOptions::msmOptions() :
         outbase(std::string("-o,--out"), std::string(""),
                 std::string("output basename"),
                 true, Utilities::requires_argument),
+        in_register(std::string("--in_register"), std::string(""),
+                   std::string("\t Warning! This option is removed from newMSM."),
+                   false , Utilities::requires_argument),
+        multiresolutionlevels(std::string("--levels"),0,
+                    std::string("\t Warning! This option is removed from newMSM."),
+                    false, Utilities::requires_argument),
+        smoothoutput(std::string("--smoothout"), 0.0,
+                   std::string("\t Warning! This option is removed from newMSM."),
+                   false, Utilities::requires_argument),
         outformat(std::string("-f,--format"), std::string("GIFTI"),
                   std::string("format of output files, can be: GIFTI, VTK, ASCII or ASCII_MAT (for full details of output file formats see MSM wiki)"),
                   false, Utilities::requires_argument),
@@ -117,6 +130,9 @@ inline msmOptions::msmOptions() :
         options.add(outbase);
         options.add(outformat);
         options.add(parameters);
+        options.add(in_register);
+        options.add(multiresolutionlevels);
+        options.add(smoothoutput);
     }
     catch(Utilities::X_OptionError& e)
     {

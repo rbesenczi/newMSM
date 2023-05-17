@@ -12,6 +12,15 @@ int main(int argc, char *argv[]) {
 
     newmeshreg::Mesh_registration MR;
 
+    if(opts.in_register.set())
+        std::cout << "Warning! --in_register parameter is removed from newMSM." << std::endl;
+
+    if(opts.multiresolutionlevels.set())
+        std::cout << "Warning! --levels parameter is removed from newMSM." << std::endl;
+
+    if(opts.smoothoutput.set())
+        std::cout << "Warning! --smoothout parameter is removed from newMSM." << std::endl;
+
     if (opts.printoptions.value())
     {
         MR.print_config_options();
