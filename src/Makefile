@@ -5,6 +5,7 @@ XFILES   = newmsm
 LIBS     = -lfsl-newmeshreg -lfsl-newresampler -lfsl-utils
 USRCXXFLAGS = -fopenmp
 USRINCFLAGS = -DHAS_HOCR
+USRINCFLAGS += -I../../msm-newmeshreg/include/
 
 all: ${XFILES}
 
