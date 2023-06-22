@@ -1,8 +1,8 @@
 --simval=1,2,2
 --sigma_in=0,0,0
 --sigma_ref=0,0,0
---lambda=0,0.5,0.5
---it=50,1,1
+--lambda=0,0.1,0.1
+--it=50,2,2
 --opt=AFFINE,DISCRETE,DISCRETE
 --CPgrid=0,3,4
 --SGgrid=0,5,6
@@ -10,7 +10,7 @@
 --regoption=3
 --regexp=1
 --dopt=MCMC
---mciters=10000
+--mciters=5000
 --labeldist=0.5
 --VN
 --triclique
