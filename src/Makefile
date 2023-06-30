@@ -3,7 +3,7 @@ include ${FSLCONFDIR}/default.mk
 PROJNAME = newMSM
 XFILES   = newmsm
 LIBS     = -lfsl-newmeshreg -lfsl-newresampler -lfsl-utils
-USRCXXFLAGS = -fopenmp
+USRCXXFLAGS = -fopenmp -std=c++20
 USRINCFLAGS = -DHAS_HOCR
 USRINCFLAGS += -I../../msm-newmeshreg/include/
 
