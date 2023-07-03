@@ -14,6 +14,7 @@ public:
     Utilities::Option<bool> verbose;
     Utilities::Option<bool> printoptions;
     Utilities::Option<bool> debug;
+    Utilities::Option<bool> groupwise;
     Utilities::Option<std::string> inputmesh;
     Utilities::Option<std::string> referencemesh;
     Utilities::Option<std::string> inputanatmesh;
@@ -26,7 +27,13 @@ public:
     Utilities::Option<std::string> outbase;
     Utilities::Option<std::string> outformat;
     Utilities::Option<std::string> parameters;
-    // Removed parameters
+
+    //Groupwise params
+    Utilities::Option<std::string> meshes;
+    Utilities::Option<std::string> templatemesh;
+    Utilities::Option<std::string> data;
+
+    // Removed params
     Utilities::Option<std::string> in_register;
     Utilities::Option<int> multiresolutionlevels;
     Utilities::Option<float> smoothoutput;
@@ -67,9 +74,21 @@ inline msmOptions::msmOptions() :
         debug(std::string("--debug"), false,
               std::string("run debugging or optimising options"),
               false, Utilities::no_argument,false),
+        groupwise(std::string("--groupwise"), false,
+              std::string("Run newMSM in groupwise mode"),
+              false, Utilities::no_argument,false),
+        meshes(std::string("--meshes"), std::string(""),
+               std::string("list of paths to input meshes (available formats: VTK, ASCII, GIFTI). Needs to be a sphere"),
+               false , Utilities::requires_argument),
+        templatemesh(std::string("--template"), std::string(""),
+                     std::string("templates sphere for resampling (available formats: VTK, ASCII, GIFTI). Needs to be a sphere"),
+                     false , Utilities::requires_argument),
+        data(std::string("--data"), std::string(""),
+             std::string("list of paths to the data"),
+             false , Utilities::requires_argument),
         inputmesh(std::string("--inmesh"), std::string(""),
                   std::string("input mesh (available formats: VTK, ASCII, GIFTI). Needs to be a sphere"),
-                  true , Utilities::requires_argument),
+                  false , Utilities::requires_argument),
         referencemesh(std::string("--refmesh"), std::string(""),
                       std::string("reference mesh (available formats: VTK, ASCII, GIFTI). Needs to be a sphere. If not included algorithm assumes reference mesh is equivalent input"),
                       false , Utilities::requires_argument),
@@ -96,10 +115,10 @@ inline msmOptions::msmOptions() :
                      false , Utilities::requires_argument),
         outbase(std::string("-o,--out"), std::string(""),
                 std::string("output basename"),
-                true, Utilities::requires_argument),
+                false, Utilities::requires_argument),
         in_register(std::string("--in_register"), std::string(""),
                    std::string("\t Warning! This option is removed from newMSM."),
-                   false , Utilities::requires_argument),
+                   false, Utilities::requires_argument),
         multiresolutionlevels(std::string("--levels"),0,
                     std::string("\t Warning! This option is removed from newMSM."),
                     false, Utilities::requires_argument),
@@ -118,6 +137,10 @@ inline msmOptions::msmOptions() :
         options.add(verbose);
         options.add(printoptions);
         options.add(debug);
+        options.add(groupwise);
+        options.add(meshes);
+        options.add(templatemesh);
+        options.add(data);
         options.add(inputmesh);
         options.add(referencemesh);
         options.add(inputanatmesh);
