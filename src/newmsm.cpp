@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
         GMR.set_template(opts.templatemesh.value());
         GMR.set_data_list(opts.data.value());
 
-        //GMR.run_multiresolutions(opts.parameters.value());
+        GMR.run_multiresolutions(opts.parameters.value());
 
         return 0;
     }
