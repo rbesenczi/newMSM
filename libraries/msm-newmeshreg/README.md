@@ -8,7 +8,7 @@ Most of the code from the original version has been replaced or revised, but som
  - application of octree search during registration
  - parallelisation of cost calculation during registration
 
-Please note, the current version is 0.4.2-BETA. All feedbacks are much appreciated.
+Please note, the current version is 0.4.3-BETA. All feedbacks are much appreciated.
 
 ## Install from source
 
