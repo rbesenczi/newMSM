@@ -56,7 +56,6 @@ public:
 
     void reset_meshspace(const newresampler::Mesh& source, int num = 0) override {
         m_datameshes[num] = source;
-        //costfct->reset_source(source, num);
     }
 
     void reset_CPgrid(const newresampler::Mesh& grid, int num = 0) override { m_controlmeshes[num] = grid; }
@@ -66,13 +65,11 @@ public:
         unfold(m_controlmeshes[num], m_verbosity);
     }
 
-    void applyLabeling() override { applyLabeling(labeling); }
-    void applyLabeling(int* dlabels) override {
-        #pragma omp parallel for num_threads(_nthreads)
+    void applyLabeling() override {
         for (int subject = 0; subject < m_num_subjects; subject++)
             for (int vertex = 0; vertex < control_grid_size; vertex++)
                 m_controlmeshes[subject].set_coord(vertex, m_ROT[subject * control_grid_size + vertex] *
-                                                           m_labels[dlabels[subject * control_grid_size + vertex]]);
+                                                           m_labels[labeling[subject * control_grid_size + vertex]]);
     }
 
     newresampler::Mesh get_CPgrid(int num = 0) override { return m_controlmeshes[num]; }

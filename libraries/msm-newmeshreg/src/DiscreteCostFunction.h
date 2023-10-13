@@ -184,7 +184,7 @@ public:
     }
 
     //---SET FUNCTION SPACE---//
-    virtual void set_meshes(const newresampler::Mesh& target,const newresampler::Mesh& source, const newresampler::Mesh& GRID, int num = 1){
+    virtual void set_meshes(const newresampler::Mesh& target,const newresampler::Mesh& source, const newresampler::Mesh& GRID, int num = 1) {
         _TARGET = target; _SOURCE = source; _ORIG = source; _CPgrid = GRID; _oCPgrid = GRID;
     }
     inline void set_iter(int iter) { _iter = iter; }

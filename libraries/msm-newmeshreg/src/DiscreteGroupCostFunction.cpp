@@ -23,10 +23,6 @@ SOFTWARE.
 
 namespace newmeshreg {
 
-void DiscreteGroupCostFunction::initialize(int numNodes, int numLabels, int numPairs, int numTriplets) {
-    DiscreteCostFunction::initialize(numNodes, numLabels, numPairs, numTriplets);
-}
-
 double DiscreteGroupCostFunction::computeTripletCost(int triplet, int labelA, int labelB, int labelC) {
 
     int meshID = std::floor(triplet/(double)TRIPLETS_PER_SUBJ);
@@ -63,7 +59,7 @@ double DiscreteGroupCostFunction::computePairwiseCost(int pair, int labelA, int 
     std::map<int,double> patchA = patch_data[subject_A * VERTICES_PER_SUBJ * m_num_labels + node_A * m_num_labels + labelA];
     std::map<int,double> patchB = patch_data[subject_B * VERTICES_PER_SUBJ * m_num_labels + node_B * m_num_labels + labelB];
 
-    for (const auto &e: patchA) {
+    for (const auto& e: patchA) {
         auto it = patchB.find(e.first);
         if (it != patchB.end()) {
             patch_data_A.push_back(e.second);

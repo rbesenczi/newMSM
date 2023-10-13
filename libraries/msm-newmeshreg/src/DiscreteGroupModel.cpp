@@ -97,10 +97,9 @@ void DiscreteGroupModel::get_rotated_meshes() {
 
     #pragma omp parallel for num_threads(_nthreads)
     for(int subject = 0; subject < m_num_subjects; subject++) {
-        newresampler::Mesh rotated_mesh = m_datameshes[subject];
-        rotated_mesh.set_pvalues(FEAT->get_data_matrix(subject));
-
         for (int label = 0; label < m_num_labels; label++) {
+            newresampler::Mesh rotated_mesh = m_datameshes[subject];
+            rotated_mesh.set_pvalues(FEAT->get_data_matrix(subject));
             for (int vertex = 0; vertex < control_grid_size; vertex++) {
                 const newresampler::Point CP = m_controlmeshes[subject].get_coord(vertex);
                 const NEWMAT::Matrix CP_label_rotation = estimate_rotation_matrix(CP, m_ROT[subject * control_grid_size + vertex] * m_labels[label]);
@@ -127,8 +126,7 @@ void DiscreteGroupModel::get_patch_data() {
                 std::map<int, double> patchdata;
                 const newresampler::Point CP = m_ROT[subject * control_grid_size + vertex] * m_labels[label];
                 for (int datapoint = 0; datapoint < m_template.nvertices(); datapoint++)
-                    if (((2 * RAD * asin((CP - m_template.get_coord(datapoint)).norm() / (2 * RAD))) <
-                         range * spacings[subject](vertex + 1)))
+                    if (((2 * RAD * asin((CP - m_template.get_coord(datapoint)).norm() / (2 * RAD))) < range * spacings[subject](vertex + 1)))
                         patchdata[datapoint] = rotated_meshes[subject * m_num_labels + label](1, datapoint + 1);
 
                 patch_data[subject * control_grid_size * m_num_labels + vertex * m_num_labels + label] = patchdata;

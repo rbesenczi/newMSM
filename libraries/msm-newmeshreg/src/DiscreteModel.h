@@ -132,8 +132,8 @@ public:
     // will not be 100% accurate but will remove any sensitivity of the label choices to weighting
     inline void setupCostFunctionWeighting(const NEWMAT::Matrix& Weight) { costfct->set_dataaffintyweighting(Weight); }
 
-    virtual // source needs to be reset after every iteration of discrete optimisation
-    inline void reset_meshspace(const newresampler::Mesh& source, int num = 0) {
+    // source needs to be reset after every iteration of discrete optimisation
+    virtual inline void reset_meshspace(const newresampler::Mesh& source, int num = 0) {
         m_SOURCE = source;
         costfct->reset_source(source);
     }

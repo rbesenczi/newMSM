@@ -70,27 +70,17 @@ void Group_Mesh_registration::evaluate() {
 void Group_Mesh_registration::run_discrete_opt(std::vector<newresampler::Mesh>& meshes) {
 
     double energy = 0.0, newenergy = 0.0;
+
     std::vector<newresampler::Mesh> previous_controlgrids(num_subjects);
+    for(int subject = 0; subject < num_subjects; subject++)
+        previous_controlgrids[subject] = model->get_CPgrid(subject);
 
     for(int iter = 1; iter <= boost::get<int>(PARAMETERS.find("iters")->second); iter++) {
 
-        for (int subject = 0; subject < num_subjects; subject++) {
-            model->reset_meshspace(ALL_SPH_REG[subject], subject);
-            previous_controlgrids[subject] = model->get_CPgrid(subject);
-        }
+        for (int subject = 0; subject < num_subjects; subject++)
+            model->reset_meshspace(meshes[subject], subject);
 
         model->setupCostFunction();
-
-        if(_debug)
-            for(int subject = 0; subject < num_subjects; subject++) {
-                newresampler::Mesh tmp = MESHES[subject];
-                newresampler::barycentric_mesh_interpolation(tmp, SPH_orig, ALL_SPH_REG[subject], _numthreads);
-                std::shared_ptr<MISCMATHS::BFMatrix> data;
-                set_data(DATAlist[subject], data, tmp);
-                newresampler::metric_resample(tmp, templ, _numthreads).save(
-                        _outdir + "transformed_and_reprojected-" + std::to_string(subject)
-                        + "before-level-" + std::to_string(level) + "-iter-" + std::to_string(iter) + _dataformat);
-            }
 
 #ifdef HAS_HOCR
         newenergy = Fusion::optimize(model, _verbose, _numthreads);
@@ -111,20 +101,12 @@ void Group_Mesh_registration::run_discrete_opt(std::vector<newresampler::Mesh>& 
 
         for(int subject = 0; subject < num_subjects; subject++)
         {
-            auto transformed_controlgrid = model->get_CPgrid(subject);
+            newresampler::Mesh transformed_controlgrid = model->get_CPgrid(subject);
             unfold(transformed_controlgrid, _verbose);
+            newresampler::barycentric_mesh_interpolation(meshes[subject], previous_controlgrids[subject], transformed_controlgrid, _numthreads);
+            unfold(meshes[subject], _verbose);
+            previous_controlgrids[subject] = transformed_controlgrid;
             model->reset_CPgrid(transformed_controlgrid, subject);
-            newresampler::barycentric_mesh_interpolation(ALL_SPH_REG[subject], previous_controlgrids[subject], transformed_controlgrid, _numthreads);
-            unfold(ALL_SPH_REG[subject], _verbose);
-            if(_debug) {
-                newresampler::Mesh tmp = MESHES[subject];
-                newresampler::barycentric_mesh_interpolation(tmp, SPH_orig, ALL_SPH_REG[subject], _numthreads);
-                std::shared_ptr<MISCMATHS::BFMatrix> data;
-                set_data(DATAlist[subject], data, tmp);
-                newresampler::metric_resample(tmp, templ, _numthreads).save(
-                        _outdir + "transformed_and_reprojected-" + std::to_string(subject)
-                        + "after-level-" + std::to_string(level) + "-iter-" + std::to_string(iter) + _dataformat);
-            }
         }
 
         energy = newenergy;
