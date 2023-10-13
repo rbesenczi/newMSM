@@ -81,15 +81,16 @@ void Group_Mesh_registration::run_discrete_opt(std::vector<newresampler::Mesh>& 
 
         model->setupCostFunction();
 
-        for(int subject = 0; subject < num_subjects; subject++) {
-            newresampler::Mesh tmp = MESHES[subject];
-            newresampler::barycentric_mesh_interpolation(tmp, SPH_orig, ALL_SPH_REG[subject], _numthreads);
-            std::shared_ptr<MISCMATHS::BFMatrix> data;
-            set_data(DATAlist[subject], data, tmp);
-            newresampler::metric_resample(tmp, templ, _numthreads).save(
-                    _outdir + "transformed_and_reprojected-" + std::to_string(subject)
-                    + "before-level-" + std::to_string(level) + "-iter-" + std::to_string(iter) + _dataformat);
-        }
+        if(_debug)
+            for(int subject = 0; subject < num_subjects; subject++) {
+                newresampler::Mesh tmp = MESHES[subject];
+                newresampler::barycentric_mesh_interpolation(tmp, SPH_orig, ALL_SPH_REG[subject], _numthreads);
+                std::shared_ptr<MISCMATHS::BFMatrix> data;
+                set_data(DATAlist[subject], data, tmp);
+                newresampler::metric_resample(tmp, templ, _numthreads).save(
+                        _outdir + "transformed_and_reprojected-" + std::to_string(subject)
+                        + "before-level-" + std::to_string(level) + "-iter-" + std::to_string(iter) + _dataformat);
+            }
 
 #ifdef HAS_HOCR
         newenergy = Fusion::optimize(model, _verbose, _numthreads);
@@ -115,13 +116,15 @@ void Group_Mesh_registration::run_discrete_opt(std::vector<newresampler::Mesh>& 
             model->reset_CPgrid(transformed_controlgrid, subject);
             newresampler::barycentric_mesh_interpolation(ALL_SPH_REG[subject], previous_controlgrids[subject], transformed_controlgrid, _numthreads);
             unfold(ALL_SPH_REG[subject], _verbose);
-            //////////debug
-            newresampler::Mesh tmp = MESHES[subject];
-            newresampler::barycentric_mesh_interpolation(tmp, SPH_orig, ALL_SPH_REG[subject], _numthreads);
-            std::shared_ptr<MISCMATHS::BFMatrix> data;
-            set_data(DATAlist[subject], data, tmp);
-            newresampler::metric_resample(tmp, templ, _numthreads).save(_outdir + "transformed_and_reprojected-" + std::to_string(subject)
-                    + "after-level-" + std::to_string(level) + "-iter-" + std::to_string(iter) + _dataformat);
+            if(_debug) {
+                newresampler::Mesh tmp = MESHES[subject];
+                newresampler::barycentric_mesh_interpolation(tmp, SPH_orig, ALL_SPH_REG[subject], _numthreads);
+                std::shared_ptr<MISCMATHS::BFMatrix> data;
+                set_data(DATAlist[subject], data, tmp);
+                newresampler::metric_resample(tmp, templ, _numthreads).save(
+                        _outdir + "transformed_and_reprojected-" + std::to_string(subject)
+                        + "after-level-" + std::to_string(level) + "-iter-" + std::to_string(iter) + _dataformat);
+            }
         }
 
         energy = newenergy;

@@ -55,7 +55,3 @@ Most features remained the same as it was in the original MSM implementation. A 
 ## Links
 
 FSL download and install [instructions](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation).
-
-Newresampler library GitHub [repository](https://github.com/rbesenczi/msm-newresampler).
-
-Newmeshreg library GitHub [repository](https://github.com/rbesenczi/msm-newmeshreg).
