@@ -37,29 +37,15 @@ conda activate ./msm-env/
     cd newmsm_sources
     ```
 3. Download and install newMSM sources.
-    1.  newresampler library
-        ```console
-        git clone https://github.com/rbesenczi/msm-newresampler.git
-        cd msm-newresampler/src
-        git checkout tags/v0.4.1
-        make && make install
-        cd ../..
-        ```
-    2. newmesreg library
-        ```console
-        git clone https://github.com/rbesenczi/msm-newmeshreg.git
-        cd msm-newmeshreg/src
-        git checkout tags/v0.4.1
-        make && make install
-        cd ../..
-        ```
-    3. newMSM application
+    1. newMSM application and dependencies
         ```console
         git clone https://github.com/rbesenczi/newMSM.git
-        cd newMSM/src
-        git checkout tags/v0.4.1
+        cd newMSM/libraries/msm-newresampler/src/
         make && make install
-        cd ../..
+        cd ../../msm-newmeshreg/src/
+        make && make install
+        cd ../../../src/
+        make && make install
         ```
 3. The binary `newmsm` should be in the folder `${FSLDEVDIR}/bin`.
 4. You can test it with the `${FSLDEVDIR}/bin/newmsm -p` command.
