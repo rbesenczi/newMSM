@@ -18,7 +18,6 @@ Please note, the current version is 0.4.2-BETA. All feedbacks are much appreciat
     ```console
     git clone https://github.com/rbesenczi/newMSM.git
     cd newMSM/libraries/msm-newmeshreg/src/
-    git checkout tags/v0.4.2
     make && make install
     ```
 

@@ -22,7 +22,6 @@ A few demo application can be found in the demo folder. Please see installation 
     ```console
     git clone https://github.com/rbesenczi/newMSM.git
     cd newMSM/libraries/msm-newresampler/src/
-    git checkout tags/v0.4.2
     make && make install
     cd ../demo
     make && make install
