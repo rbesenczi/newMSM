@@ -38,7 +38,7 @@ public:
     void initialize_level(int current_lvl) override;
     void evaluate() override;
     void transform(const std::string& filename) override;
-    void run_discrete_opt(std::vector<newresampler::Mesh>&);
+    void run_discrete_opt() override;
     void save_transformed_data(const std::string& filename) override;
 
     inline void set_inputs(const std::string& s) {

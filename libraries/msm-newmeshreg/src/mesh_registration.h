@@ -171,7 +171,7 @@ protected:
     //---RUN---//
     virtual void evaluate();
     virtual void transform(const std::string& filename);
-    void run_discrete_opt(newresampler::Mesh&);
+    virtual void run_discrete_opt();
 
     //---POSTPROCESSING---//
     virtual inline void saveSPH_reg(const std::string& filename) const { SPH_reg.save(filename + "sphere.LR.reg" + _surfformat); }

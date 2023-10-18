@@ -773,9 +773,7 @@ void multivariate_histogram_normalization(MISCMATHS::BFMatrix& IN, MISCMATHS::BF
                                           const std::shared_ptr<newresampler::Mesh>& EXCL_REF,
                                           int nthreads) {
 
-    const int execution_threads = nthreads > IN.Nrows() ? IN.Nrows() : nthreads;
-
-    #pragma omp parallel for num_threads(execution_threads)
+    #pragma omp parallel for num_threads(nthreads)
     for(int d = 1; d <= (int) IN.Nrows(); d++)
     {
         NEWMAT::ColumnVector datain(IN.Ncols()), dataref(REF.Ncols());

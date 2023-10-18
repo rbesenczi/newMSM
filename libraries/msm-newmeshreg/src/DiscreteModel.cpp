@@ -88,7 +88,7 @@ void NonLinearSRegDiscreteModel::Initialize(const newresampler::Mesh& CONTROLGRI
     m_maxs_dist = _labeldist * MVDmax;
 
     //---INITIALIZE COSTFCT---//
-    costfct->set_meshes(m_TARGET, m_SOURCE, m_CPgrid);
+    costfct->set_meshes(m_TARGET, m_SOURCE, m_CPgrid, 0);
     std::vector<std::vector<double>> orig_angles = m_CPgrid.get_face_angles();
     costfct->set_initial_angles(orig_angles);
     costfct->set_spacings(vMAXmvd, MVDmax);
@@ -103,7 +103,7 @@ void NonLinearSRegDiscreteModel::Initialize(const newresampler::Mesh& CONTROLGRI
 
     //---INITIALIAZE LABEL GRID---//
     Initialize_sampling_grid();
-    get_rotations(m_ROT);  // enables rotation of sampling grid onto every CP
+    get_rotations();  // enables rotation of sampling grid onto every CP
 
     //---INITIALIZE NEIGHBOURHOODS---//
     m_inputtree = std::make_shared<newresampler::Octree>(m_TARGET);
@@ -210,7 +210,7 @@ void NonLinearSRegDiscreteModel::setupCostFunction() {
 
     resetLabeling(); // initialise label array to zero
     //---use geodesic distances---//
-    costfct->reset_CPgrid(m_CPgrid);
+    costfct->reset_CPgrid(m_CPgrid, 0);
 
     if(m_iter == 1)
     {
@@ -219,7 +219,7 @@ void NonLinearSRegDiscreteModel::setupCostFunction() {
     }
 
     costfct->reset_anatomical();
-    get_rotations(m_ROT);
+    get_rotations();
     // instead of recalulating the source->CP neighbours, these are now constant
     // (as source is moving with CPgrid) we we just need to recalculate
     // the rotations of the label grid to the cp vertices
@@ -302,16 +302,15 @@ void NonLinearSRegDiscreteModel::estimate_triplets() {
     }
 }
 
-void NonLinearSRegDiscreteModel::get_rotations(std::vector<NEWMAT::Matrix>& ROT) {
+void NonLinearSRegDiscreteModel::get_rotations() {
 
     // rotates sampling grid to each control point
-    ROT.clear();
-    ROT.resize(m_CPgrid.nvertices());
-    const newresampler::Point ci = m_samplinggrid.get_coord(m_centroid);
+    m_ROT.clear();
+    m_ROT.resize(m_CPgrid.nvertices());
 
     #pragma omp parallel for num_threads(_nthreads)
     for (int k = 0; k < m_CPgrid.nvertices(); k++)
-        ROT[k] = estimate_rotation_matrix(ci, m_CPgrid.get_coord(k));
+        m_ROT[k] = estimate_rotation_matrix(centre, m_CPgrid.get_coord(k));
 }
 
 } //namespace newmeshreg

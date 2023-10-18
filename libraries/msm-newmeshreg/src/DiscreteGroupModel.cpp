@@ -27,11 +27,11 @@ void DiscreteGroupModel::initialize_pairs() {
 
     delete[] pairs;
     m_num_pairs = 0;
-    for (int n = 0; n < m_num_subjects; n++)
-        for (int i = 0; i < control_grid_size; i++)
-            for (int n2 = n+1; n2 < m_num_subjects; n2++)
+    for (int subject_A = 0; subject_A < m_num_subjects; subject_A++)
+        for (int vertex = 0; vertex < control_grid_size; vertex++)
+            for (int subject_B = subject_A + 1; subject_B < m_num_subjects; subject_B++)
                 m_num_pairs++;
-    pairs = new int[2 * m_num_pairs];
+    pairs = new int[2*m_num_pairs];
 }
 
 void DiscreteGroupModel::estimate_pairs() {
@@ -78,40 +78,15 @@ void DiscreteGroupModel::estimate_triplets() {
         }
 }
 
-void DiscreteGroupModel::get_rotations(std::vector<NEWMAT::Matrix>& ROT) {
+void DiscreteGroupModel::get_rotations() {
 
-    ROT.clear();
-    ROT.resize(m_num_subjects * control_grid_size);
-    const newresampler::Point ci = m_samplinggrid.get_coord(m_centroid);
+    m_ROT.clear();
+    m_ROT.resize(m_num_subjects * control_grid_size);
 
     #pragma omp parallel for num_threads(_nthreads)
     for (int subject = 0; subject < m_num_subjects; subject++)
         for (int vertex = 0; vertex < control_grid_size; vertex++)
-            ROT[subject * control_grid_size + vertex] = estimate_rotation_matrix(ci, m_controlmeshes[subject].get_coord(vertex));
-}
-
-void DiscreteGroupModel::get_rotated_meshes() {
-
-    rotated_meshes.clear();
-    rotated_meshes.resize(m_num_subjects * m_num_labels);
-
-    #pragma omp parallel for num_threads(_nthreads)
-    for(int subject = 0; subject < m_num_subjects; subject++) {
-        for (int label = 0; label < m_num_labels; label++) {
-            newresampler::Mesh rotated_mesh = m_datameshes[subject];
-            rotated_mesh.set_pvalues(FEAT->get_data_matrix(subject));
-            for (int vertex = 0; vertex < control_grid_size; vertex++) {
-                const newresampler::Point CP = m_controlmeshes[subject].get_coord(vertex);
-                const NEWMAT::Matrix CP_label_rotation = estimate_rotation_matrix(CP, m_ROT[subject * control_grid_size + vertex] * m_labels[label]);
-                for (int datapoint = 0; datapoint < m_datameshes[subject].nvertices(); datapoint++) {
-                    const newresampler::Point SP = m_datameshes[subject].get_coord(datapoint);
-                    if (((2 * RAD * asin((CP - SP).norm() / (2 * RAD))) < range * spacings[subject](vertex + 1)))
-                        rotated_mesh.set_coord(datapoint, SP * CP_label_rotation);
-                }
-            }
-            rotated_meshes[subject*m_num_labels+label] = newresampler::metric_resample(rotated_mesh, m_template).get_pvalues();
-        }
-    }
+            m_ROT[subject * control_grid_size + vertex] = estimate_rotation_matrix(centre, m_controlmeshes[subject].get_coord(vertex));
 }
 
 void DiscreteGroupModel::get_patch_data() {
@@ -120,32 +95,48 @@ void DiscreteGroupModel::get_patch_data() {
     patch_data.resize(control_grid_size * m_num_subjects * m_num_labels);
 
     #pragma omp parallel for num_threads(_nthreads)
-    for (int subject = 0; subject < m_num_subjects; subject++) {
-        for (int label = 0; label < m_num_labels; label++) {
-            for (int vertex = 0; vertex < control_grid_size; vertex++) {
+    for (int subject = 0; subject < m_num_subjects; subject++)
+        for (int label = 0; label < m_num_labels; label++)
+        {
+            newresampler::Mesh rotated_mesh = m_datameshes[subject];
+            rotated_mesh.set_pvalues(FEAT->get_data_matrix(subject));
+
+            if (label > 0)
+                for (int datapoint = 0; datapoint < rotated_mesh.nvertices(); datapoint++) {
+                    NEWMAT::Matrix rot = estimate_rotation_matrix(centre, rotated_mesh.get_coord(datapoint));
+                    rotated_mesh.set_coord(datapoint, rot * m_labels[label]); // rigid rotation
+                }
+
+            newresampler::Mesh rotated_resampled = newresampler::metric_resample(rotated_mesh, m_template);
+            if(subject == 0 || subject == 3) rotated_resampled.save(m_outdir + "rotated-iter-" + std::to_string(m_iter) + "-subject-" + std::to_string(subject) + "-label-" + std::to_string(label) + ".func");
+            newresampler::Mesh debug = rotated_resampled;
+
+            for (int vertex = 0; vertex < control_grid_size; vertex++)
+            {
                 std::map<int, double> patchdata;
-                const newresampler::Point CP = m_ROT[subject * control_grid_size + vertex] * m_labels[label];
-                for (int datapoint = 0; datapoint < m_template.nvertices(); datapoint++)
-                    if (((2 * RAD * asin((CP - m_template.get_coord(datapoint)).norm() / (2 * RAD))) < range * spacings[subject](vertex + 1)))
-                        patchdata[datapoint] = rotated_meshes[subject * m_num_labels + label](1, datapoint + 1);
+                const newresampler::Point rotated_CP = m_ROT[subject * control_grid_size + vertex] * m_labels[label];
+                for (int datapoint = 0; datapoint < rotated_resampled.nvertices(); datapoint++)
+                    if (((2 * RAD * asin((rotated_CP - rotated_resampled.get_coord(datapoint)).norm() / (2 * RAD)))
+                             < range * spacings[subject](vertex + 1))) {
+                        double dataval = rotated_resampled.get_pvalue(datapoint);
+                        patchdata[datapoint] = rotated_resampled.get_pvalue(datapoint);
+                        debug.set_pvalue(datapoint, dataval);
+                    }
+                    else
+                        debug.set_pvalue(datapoint, 0.0);
 
                 patch_data[subject * control_grid_size * m_num_labels + vertex * m_num_labels + label] = patchdata;
+                if((subject == 0 || subject == 3) && vertex == 100)
+                    debug.save(m_outdir + "-patch100-iter-" + std::to_string(m_iter) + "-subject-" + std::to_string(subject) + "-label-" + std::to_string(label) + ".func");
             }
         }
-    }
 }
 
-void DiscreteGroupModel::Initialize(const newresampler::Mesh& controlgrid) {
-
-    m_controlmeshes.clear();
-    m_controlmeshes.resize(m_num_subjects, controlgrid);
-    control_grid_size = controlgrid.nvertices();
-    m_num_nodes = control_grid_size * m_num_subjects;
-
-    initLabeling();
+void DiscreteGroupModel::get_spacings() {
 
     spacings.clear();
     spacings.resize(m_num_subjects);
+
     #pragma omp parallel for num_threads(_nthreads)
     for(int subject = 0; subject < m_num_subjects; subject++)
     {
@@ -162,56 +153,54 @@ void DiscreteGroupModel::Initialize(const newresampler::Mesh& controlgrid) {
         }
         spacings[subject] = vMAXmvd;
     }
+}
 
-    MVD = controlgrid.calculate_MeanVD();
+void DiscreteGroupModel::Initialize(const newresampler::Mesh& controlgrid) {
+
+    m_controlmeshes.clear();
+    m_controlmeshes.resize(m_num_subjects, controlgrid);
+    control_grid_size = controlgrid.nvertices();
     m_maxs_dist = _labeldist * controlgrid.calculate_MaxVD();
-
-    costfct->set_meshes(m_template, m_datameshes[0], controlgrid, m_num_subjects);
-    //costfct->set_group_spacings(spacings);
-
+    m_num_nodes = control_grid_size * m_num_subjects;
     m_iter = 1;
 
-    //---GET BETWEEN MESH GROUPINGS---//
+    initLabeling();
+    Initialize_sampling_grid();
     initialize_pairs();
-    estimate_pairs();
     estimate_triplets();
 
-    Initialize_sampling_grid();
-    get_rotations(m_ROT);
+    costfct->set_meshes(m_datameshes, controlgrid, m_num_subjects);
 }
 
 void DiscreteGroupModel::setupCostFunction() {
 
-    //---INIT---//
-    if(m_verbosity)
-        std::cout << " initialize cost function " << m_iter << " m_num_triplets " << m_num_triplets << std::endl;
+    if(m_verbosity) std::cout << "Initialize cost function " << m_iter << std::endl;
 
     resetLabeling(); // initialise label array to zero
 
     for (int subject = 0; subject < m_num_subjects; subject++)
         costfct->reset_CPgrid(m_controlmeshes[subject], subject);
 
-    get_rotations(m_ROT);
+    estimate_pairs();
+
+    get_spacings();
+    get_rotations();
 
     costfct->set_iter(m_iter);
 
-    if (m_iter % 2 == 0)
-        m_labels = m_samples;
-    else
-        m_labels = m_barycentres;
-
-    m_num_labels = m_labels.size();
+    if (m_iter % 2 == 0) m_labels = m_samples;
+    else m_labels = m_barycentres;
+    m_num_labels = (int)m_labels.size();
 
     costfct->set_labels(m_labels,m_ROT);
-    costfct->initialize(m_num_nodes, m_num_labels, m_num_pairs, m_num_triplets);
 
-    estimate_pairs();
-    get_rotated_meshes();
     get_patch_data();
+    costfct->set_patch_data(patch_data);
 
     costfct->setPairs(pairs);
     costfct->setTriplets(triplets);
-    costfct->set_patch_data(patch_data);
+
+    costfct->initialize(m_num_nodes, m_num_labels, m_num_pairs, m_num_triplets);
 
     if(m_verbosity)
         std::cout << " numpoints " << m_num_nodes << " m_num_labels " << m_num_labels << " m_num_pairs " << m_num_pairs << std::endl;

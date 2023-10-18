@@ -88,9 +88,8 @@ newresampler::Mesh featurespace::initialize(int ico, std::vector<newresampler::M
 void featurespace::variance_normalise(std::shared_ptr<MISCMATHS::BFMatrix>& DATA, std::shared_ptr<newresampler::Mesh>& EXCL) {
 
     std::vector<std::vector<double>> _data(DATA->Nrows());
-    const int execution_threads = _nthreads > DATA->Nrows() ? DATA->Nrows() : _nthreads;
 
-    #pragma omp parallel for num_threads(execution_threads)
+    #pragma omp parallel for num_threads(_nthreads)
     for (unsigned int k = 1; k <= DATA->Nrows(); k++)
         for (unsigned int i = 1; i <= DATA->Ncols(); i++)
             if (!EXCL || EXCL->get_pvalue(i - 1) > 0.0)
@@ -99,7 +98,7 @@ void featurespace::variance_normalise(std::shared_ptr<MISCMATHS::BFMatrix>& DATA
     std::vector<double> mean(DATA->Nrows(), 0.0),
                         var(DATA->Nrows(), 0.0);
 
-    #pragma omp parallel for num_threads(execution_threads)
+    #pragma omp parallel for num_threads(_nthreads)
     for (unsigned int i = 0; i < _data.size(); ++i)
     {
         for(unsigned int j = 0; j < _data[i].size(); j++)
@@ -118,7 +117,7 @@ void featurespace::variance_normalise(std::shared_ptr<MISCMATHS::BFMatrix>& DATA
         }
     }
 
-    #pragma omp parallel for num_threads(execution_threads)
+    #pragma omp parallel for num_threads(_nthreads)
     for(int i = 1; i <= DATA->Nrows(); ++i)
     {
         int data_index = 0;

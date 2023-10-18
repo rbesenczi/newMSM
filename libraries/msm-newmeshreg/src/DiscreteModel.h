@@ -115,8 +115,7 @@ public:
     double inline computeTripletCost(int triplet, int labelA, int labelB, int labelC) override { return costfct->computeTripletCost(triplet, labelA, labelB, labelC); }
     double inline evaluateTotalCostSum() override { return costfct->evaluateTotalCostSum(labeling, pairs, triplets); }
 
-    virtual //---SETUP MODEL---//
-    inline void set_meshspace(const newresampler::Mesh& target, const newresampler::Mesh& source, int num = 1) { m_TARGET = target; m_SOURCE = source; }
+    virtual inline void set_meshspace(const newresampler::Mesh& target, const newresampler::Mesh& source, int num) { m_TARGET = target; m_SOURCE = source; }
     inline void set_anatomical_meshspace(const newresampler::Mesh& ref_sphere, const newresampler::Mesh& ref_anat,
                                   const newresampler::Mesh& source_sphere, const newresampler::Mesh & source_anat) {
         costfct->set_anatomical(ref_sphere, ref_anat, source_sphere, source_anat);
@@ -133,14 +132,14 @@ public:
     inline void setupCostFunctionWeighting(const NEWMAT::Matrix& Weight) { costfct->set_dataaffintyweighting(Weight); }
 
     // source needs to be reset after every iteration of discrete optimisation
-    virtual inline void reset_meshspace(const newresampler::Mesh& source, int num = 0) {
+    virtual inline void reset_meshspace(const newresampler::Mesh& source, int num) {
         m_SOURCE = source;
-        costfct->reset_source(source);
+        costfct->reset_source(source,num);
     }
 
-    virtual inline void reset_CPgrid(const newresampler::Mesh& grid, int num = 0) { m_CPgrid = grid; }
+    virtual inline void reset_CPgrid(const newresampler::Mesh& grid, int num) { m_CPgrid = grid; }
 
-    virtual inline void warp_CPgrid(newresampler::Mesh& START, newresampler::Mesh& END, int num = 0) {
+    virtual inline void warp_CPgrid(newresampler::Mesh& START, newresampler::Mesh& END, int num) {
         barycentric_mesh_interpolation(m_CPgrid,START,END, _nthreads);
         unfold(m_CPgrid, m_verbosity);
     }
@@ -152,7 +151,7 @@ public:
     //---GET---//
     inline newresampler::Mesh get_TARGET() { return m_TARGET; }
 
-    virtual inline newresampler::Mesh get_CPgrid(int num = 0) { return m_CPgrid; }
+    virtual inline newresampler::Mesh get_CPgrid(int num) { return m_CPgrid; }
     inline std::shared_ptr<DiscreteCostFunction> getCostFunction() override { return costfct; }
     inline bool is_triclique() const { return m_triclique; }
 
@@ -194,7 +193,7 @@ protected:
     //---INIT---//
     virtual void estimate_pairs();
     virtual void estimate_triplets();
-    virtual void get_rotations(std::vector<NEWMAT::Matrix>&);
+    virtual void get_rotations();
 };
 
 } //namespace newmeshreg

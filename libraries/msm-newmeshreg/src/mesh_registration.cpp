@@ -84,7 +84,7 @@ void Mesh_registration::initialize_level(int current_lvl) {
 
         if(_debug) model->set_debug();
         model->set_featurespace(FEAT);
-        model->set_meshspace(SPH_orig, SPH_orig);
+        model->set_meshspace(SPH_orig, SPH_orig, 0);
         newresampler::Mesh CONTROL = newresampler::make_mesh_from_icosa(_gridres[current_lvl]);
         newresampler::recentre(CONTROL);
         newresampler::true_rescale(CONTROL, RAD);
@@ -232,7 +232,7 @@ void Mesh_registration::evaluate() {
     }
     else
     {
-        run_discrete_opt(SPH_reg);
+        run_discrete_opt();
     }
 
     if(_verbose) std::cout << "Exit main algorithm." << std::endl;
@@ -334,7 +334,7 @@ newresampler::Mesh Mesh_registration::project_CPgrid(newresampler::Mesh SPH_in, 
     return SPH_in;
 }
 
-void Mesh_registration::run_discrete_opt(newresampler::Mesh& source) {
+void Mesh_registration::run_discrete_opt() {
 
     double energy = 0.0, newenergy = 0.0;
 
@@ -345,16 +345,16 @@ void Mesh_registration::run_discrete_opt(newresampler::Mesh& source) {
             NEWMAT::Matrix ResampledRefWeight = SPHref_CFWEIGHTING;
             newresampler::Mesh targetmesh = model->get_TARGET();
             targetmesh.set_pvalues(ResampledRefWeight);
-            ResampledRefWeight = newresampler::metric_resample(targetmesh, source, _numthreads).get_pvalues();
+            ResampledRefWeight = newresampler::metric_resample(targetmesh, SPH_reg, _numthreads).get_pvalues();
             CombinedWeight = combine_costfunction_weighting(SPHin_CFWEIGHTING, ResampledRefWeight);
         }
         else {
-            CombinedWeight.resize(1, source.nvertices());
+            CombinedWeight.resize(1, SPH_reg.nvertices());
             CombinedWeight = 1;
         }
         model->setupCostFunctionWeighting(CombinedWeight);
 
-        model->reset_meshspace(source);
+        model->reset_meshspace(SPH_reg,0);
         model->setupCostFunction();
 
         if(_verbose) std::cout << "Run optimisation." << std::endl;
@@ -402,17 +402,17 @@ void Mesh_registration::run_discrete_opt(newresampler::Mesh& source) {
                       << "\tEnergy decrease: " << energy - newenergy << std::endl;
         }
 
-        newresampler::Mesh previous_controlgrid = model->get_CPgrid();
+        newresampler::Mesh previous_controlgrid = model->get_CPgrid(0);
 
         model->applyLabeling();
         // apply these choices in order to deform the CP grid
-        newresampler::Mesh transformed_controlgrid = model->get_CPgrid();
+        newresampler::Mesh transformed_controlgrid = model->get_CPgrid(0);
         // use the control point updates to warp the source mesh
-        newresampler::barycentric_mesh_interpolation(source, previous_controlgrid, transformed_controlgrid, _numthreads);
+        newresampler::barycentric_mesh_interpolation(SPH_reg, previous_controlgrid, transformed_controlgrid, _numthreads);
         // higher order frameowrk continuous deforms the CP grid whereas the original FW resets the grid each time
         unfold(transformed_controlgrid, _verbose);
-        model->reset_CPgrid(transformed_controlgrid); // source mesh is updated and control point grids are reset
-        unfold(source, _verbose);
+        model->reset_CPgrid(transformed_controlgrid,0); // source mesh is updated and control point grids are reset
+        unfold(SPH_reg, _verbose);
         energy = newenergy;
     }
 }

@@ -184,9 +184,11 @@ public:
     }
 
     //---SET FUNCTION SPACE---//
-    virtual void set_meshes(const newresampler::Mesh& target,const newresampler::Mesh& source, const newresampler::Mesh& GRID, int num = 1) {
+    virtual void set_meshes(const newresampler::Mesh& target, const newresampler::Mesh& source, const newresampler::Mesh& GRID, int num) {
         _TARGET = target; _SOURCE = source; _ORIG = source; _CPgrid = GRID; _oCPgrid = GRID;
     }
+
+    virtual void set_meshes(const std::vector<newresampler::Mesh>& source, const newresampler::Mesh& GRID, int num) { }
     inline void set_iter(int iter) { _iter = iter; }
     void set_featurespace(const std::shared_ptr<featurespace>& features) {
         FEAT = features;
@@ -195,14 +197,12 @@ public:
         _labels = labellist;
         ROTATIONS = std::make_shared<std::vector<NEWMAT::Matrix>>(ROT);
     }
-    virtual void set_targettree(const std::shared_ptr<newresampler::Octree>& tree) {}
-    virtual void set_group_spacings(const std::vector<NEWMAT::ColumnVector>& sp) { }
-    virtual void set_rotated_meshes(const std::vector<newresampler::Mesh>& MESHES, const std::vector<NEWMAT::Matrix>& data) { }
+
     virtual void set_patch_data(const std::vector<std::map<int,double>>& patches) { }
     virtual void set_spacings(const NEWMAT::ColumnVector& spacings, double MAX) { MAXSEP = spacings; MVDmax = MAX; }
     void set_octrees(std::shared_ptr<newresampler::Octree>& targett) { targettree = targett; }
-    virtual void reset_source(const newresampler::Mesh& source, int num = 0) { _SOURCE = source; }
-    virtual void reset_CPgrid(const newresampler::Mesh& grid, int num = 0) { _CPgrid = grid; }
+    virtual void reset_source(const newresampler::Mesh& source, int num) { _SOURCE = source; }
+    virtual void reset_CPgrid(const newresampler::Mesh& grid, int num) { _CPgrid = grid; }
     void set_initial_angles(const std::vector<std::vector<double>>& angles);
 
     //---REPORT AND DEBUG---//

@@ -25,23 +25,24 @@ namespace newmeshreg {
 
 double DiscreteGroupCostFunction::computeTripletCost(int triplet, int labelA, int labelB, int labelC) {
 
-    int meshID = std::floor(triplet/(double)TRIPLETS_PER_SUBJ);
-    int m0 = _triplets[3*triplet]-meshID*VERTICES_PER_SUBJ;
-    int m1 = _triplets[3*triplet+1]-meshID*VERTICES_PER_SUBJ;
-    int m2 = _triplets[3*triplet+2]-meshID*VERTICES_PER_SUBJ;
+    int subject = std::floor((double)triplet / TRIPLETS_PER_SUBJ);
+
+    int vertex_0 = _triplets[3*triplet  ] - subject * VERTICES_PER_SUBJ;
+    int vertex_1 = _triplets[3*triplet+1] - subject * VERTICES_PER_SUBJ;
+    int vertex_2 = _triplets[3*triplet+2] - subject * VERTICES_PER_SUBJ;
 
     newresampler::Triangle TRI((*ROTATIONS)[_triplets[3*triplet  ]] * _labels[labelA],
                                (*ROTATIONS)[_triplets[3*triplet+1]] * _labels[labelB],
                                (*ROTATIONS)[_triplets[3*triplet+2]] * _labels[labelC],0);
-    newresampler::Triangle TRI_noDEF(_CONTROLMESHES[meshID].get_coord(m0),
-                                     _CONTROLMESHES[meshID].get_coord(m1),
-                                     _CONTROLMESHES[meshID].get_coord(m2),0);
+    newresampler::Triangle TRI_noDEF(_CONTROLMESHES[subject].get_coord(vertex_0),
+                                     _CONTROLMESHES[subject].get_coord(vertex_1),
+                                     _CONTROLMESHES[subject].get_coord(vertex_2), 0);
 
-    if((TRI.normal() | TRI_noDEF.normal()) < 0) { return 1e7; }
+    if((TRI.normal() | TRI_noDEF.normal()) < 0) { return 1e7; } // folded
 
-    newresampler::Triangle TRI_ORIG(_ORIG.get_coord(m0),
-                                    _ORIG.get_coord(m1),
-                                    _ORIG.get_coord(m2),0);
+    newresampler::Triangle TRI_ORIG(_ORIG_MESHES[subject].get_coord(vertex_0),
+                                    _ORIG_MESHES[subject].get_coord(vertex_1),
+                                    _ORIG_MESHES[subject].get_coord(vertex_2), 0);
 
     return _reglambda * MISCMATHS::pow(calculate_triangular_strain(TRI_ORIG,TRI,_mu,_kappa),_rexp);
 }
@@ -66,7 +67,23 @@ double DiscreteGroupCostFunction::computePairwiseCost(int pair, int labelA, int 
             patch_data_B.push_back(it->second);
         }
     }
+/*
+    double cost = sim.get_sim_for_min(patch_data_A, patch_data_B);
+    if(subject_A == 0 && subject_B == 3 && node_A == 100)
+    {
+        std::cout << "subject_A==" << subject_A << " subject_B==" << subject_B
+                  << " node_A==" << node_A << " node_B==" << node_B
+                  << " coords_A==" << _CONTROLMESHES[subject_A].get_coord(node_A) << " coords_B==" << _CONTROLMESHES[subject_B].get_coord(node_B)
+                  << " labelA==" << labelA << " labelB==" << labelB
+                  << " Size()==" << patch_data_A.size()
+                  << " idxa==" << subject_A * VERTICES_PER_SUBJ * m_num_labels + node_A * m_num_labels + labelA
+                  << " idxb==" << subject_B * VERTICES_PER_SUBJ * m_num_labels + node_B * m_num_labels + labelB
+                  << " cost==" << cost
+                  << std::endl;
+    }
 
+    return cost;
+*/
     return sim.get_sim_for_min(patch_data_A, patch_data_B);
 }
 

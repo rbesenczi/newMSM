@@ -29,27 +29,28 @@ namespace newmeshreg {
 class DiscreteGroupCostFunction : public NonLinearSRegDiscreteCostFunction {
 
 public:
-    void set_meshes(const newresampler::Mesh& target, const newresampler::Mesh& source, const newresampler::Mesh& GRID, int num = 1) override {
-        _ORIG = source;
-        VERTICES_PER_SUBJ = GRID.nvertices();
-        TRIPLETS_PER_SUBJ = GRID.ntriangles();
-        _CONTROLMESHES.resize(num,GRID);
-    }
     //---INITIALISATION---//
     void initialize(int numNodes, int numLabels, int numPairs, int numTriplets) override {
         DiscreteCostFunction::initialize(numNodes, numLabels, numPairs, numTriplets);
     }
 
-    void reset_CPgrid(const newresampler::Mesh& grid, int num = 0) override { _CONTROLMESHES[num] = grid; }
+    void set_meshes(const std::vector<newresampler::Mesh>& source, const newresampler::Mesh& GRID, int num) override {
+        _ORIG_MESHES = source;
+        VERTICES_PER_SUBJ = GRID.nvertices();
+        TRIPLETS_PER_SUBJ = GRID.ntriangles();
+        _CONTROLMESHES.resize(num,GRID);
+    }
+
+    void reset_CPgrid(const newresampler::Mesh& grid, int num) override { _CONTROLMESHES[num] = grid; }
+    void set_patch_data(const std::vector<std::map<int,double>>& patches) override { patch_data = patches; }
 
     //---Compute costs---//
     double computeTripletCost(int triplet, int labelA, int labelB, int labelC) override;
     double computePairwiseCost(int pair, int labelA, int labelB) override;
-    void set_patch_data(const std::vector<std::map<int,double>>& patches) override { patch_data = patches; }
 
 private:
     std::vector<newresampler::Mesh> _CONTROLMESHES;
-    newresampler::Mesh _TEMPLATE;
+    std::vector<newresampler::Mesh> _ORIG_MESHES;
 
     std::vector<std::map<int,double>> patch_data;
 
