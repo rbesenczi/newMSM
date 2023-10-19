@@ -86,7 +86,8 @@ void Group_Mesh_registration::run_discrete_opt() {
         throw MeshregException("Groupwise mode is only supported in the HOCR version of MSM.");
 #endif
 
-        if(iter > 1 && iter % 2 != 0 && energy-newenergy < 1) {
+        if(iter > 1 && iter % 2 != 0 && newenergy > energy)
+        {
             if (_verbose)
                 std::cout << iter << " level has converged.\n"
                           << "New energy==" << newenergy << "\tPrevious energy==" << energy
@@ -103,9 +104,6 @@ void Group_Mesh_registration::run_discrete_opt() {
             newresampler::Mesh transformed_controlgrid = model->get_CPgrid(subject);
             unfold(transformed_controlgrid, _verbose);
             newresampler::barycentric_mesh_interpolation(ALL_SPH_REG[subject], previous_controlgrids[subject], transformed_controlgrid, _numthreads);
-            //ALL_SPH_REG[subject].set_pvalues(FEAT->get_data_matrix(subject));
-            //ALL_SPH_REG[subject].save(_outdir + "rotated-datamesh-level-" + std::to_string(level) + "-subject-" + std::to_string(subject) + "-iter-" + std::to_string(iter) + ".func");
-            //ALL_SPH_REG[subject].save(_outdir + "rotated-datamesh-level-" + std::to_string(level) + "-subject-" + std::to_string(subject) + "-iter-" + std::to_string(iter) + ".surf");
             unfold(ALL_SPH_REG[subject], _verbose);
             previous_controlgrids[subject] = transformed_controlgrid;
             model->reset_CPgrid(transformed_controlgrid, subject);

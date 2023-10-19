@@ -37,6 +37,7 @@ class DiscreteGroupModel : public NonLinearSRegDiscreteModel {
 
     int m_num_subjects = 0;
     int control_grid_size = 0;
+    int cp_triangles = 0;
 
 public:
     DiscreteGroupModel() = default;

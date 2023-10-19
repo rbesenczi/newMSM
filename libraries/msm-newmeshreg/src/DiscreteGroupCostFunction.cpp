@@ -44,7 +44,8 @@ double DiscreteGroupCostFunction::computeTripletCost(int triplet, int labelA, in
                                     _ORIG_MESHES[subject].get_coord(vertex_1),
                                     _ORIG_MESHES[subject].get_coord(vertex_2), 0);
 
-    return _reglambda * MISCMATHS::pow(calculate_triangular_strain(TRI_ORIG,TRI,_mu,_kappa),_rexp);
+    return _reglambda * MISCMATHS::pow(calculate_triangular_strain(TRI_ORIG,TRI,_mu,_kappa,
+                                           std::shared_ptr<NEWMAT::ColumnVector>(), _k_exp),_rexp);
 }
 
 double DiscreteGroupCostFunction::computePairwiseCost(int pair, int labelA, int labelB) {
@@ -67,23 +68,7 @@ double DiscreteGroupCostFunction::computePairwiseCost(int pair, int labelA, int 
             patch_data_B.push_back(it->second);
         }
     }
-/*
-    double cost = sim.get_sim_for_min(patch_data_A, patch_data_B);
-    if(subject_A == 0 && subject_B == 3 && node_A == 100)
-    {
-        std::cout << "subject_A==" << subject_A << " subject_B==" << subject_B
-                  << " node_A==" << node_A << " node_B==" << node_B
-                  << " coords_A==" << _CONTROLMESHES[subject_A].get_coord(node_A) << " coords_B==" << _CONTROLMESHES[subject_B].get_coord(node_B)
-                  << " labelA==" << labelA << " labelB==" << labelB
-                  << " Size()==" << patch_data_A.size()
-                  << " idxa==" << subject_A * VERTICES_PER_SUBJ * m_num_labels + node_A * m_num_labels + labelA
-                  << " idxb==" << subject_B * VERTICES_PER_SUBJ * m_num_labels + node_B * m_num_labels + labelB
-                  << " cost==" << cost
-                  << std::endl;
-    }
 
-    return cost;
-*/
     return sim.get_sim_for_min(patch_data_A, patch_data_B);
 }
 
