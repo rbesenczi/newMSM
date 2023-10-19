@@ -124,6 +124,7 @@ public:
         const int* triplets = energy->getTriplets();
 
         const int NUM_SWEEPS = 2;
+        const int num_nodes = energy->getNumNodes();
 
         int* labeling = energy->getLabeling();
         std::shared_ptr<DiscreteModelDummy> FPDMODEL = std::make_shared<DiscreteModelDummy>();
@@ -138,14 +139,12 @@ public:
             {
                 sumlabeldiff = 0.0;
                 ELCReduce::PBF<double> pbf;
-                int improveCounter = 0;
-                double ratioUnlabeled = 0.0;
                 int nodesChanged = 0;
 
-                std::vector<UnaryData> unary_data(energy->getNumNodes());
+                std::vector<UnaryData> unary_data(num_nodes);
 
                 #pragma omp parallel for num_threads(numthreads)
-                for(int node = 0; node < energy->getNumNodes(); ++node)
+                for(int node = 0; node < num_nodes; ++node)
                 {
                     unary_data[node].buffer[0] = energy->computeUnaryCost(node,labeling[node]);
                     unary_data[node].buffer[1] = energy->computeUnaryCost(node,label);
@@ -155,7 +154,7 @@ public:
 
                 if(sumlabeldiff > 0)
                 {
-                    for(int node = 0; node < energy->getNumNodes(); ++node)
+                    for(int node = 0; node < num_nodes; ++node)
                         pbf.AddUnaryTerm(node, unary_data[node].buffer[0], unary_data[node].buffer[1]);
 
                     std::vector<PairData> pair_data(energy->getNumPairs());
@@ -196,10 +195,7 @@ public:
 
                     for (int triplet = 0; triplet < energy->getNumTriplets(); ++triplet)
                     {
-                        const int nodeA = triplets[triplet*3];
-                        const int nodeB = triplets[triplet*3+1];
-                        const int nodeC = triplets[triplet*3+2];
-                        int node_ids[3] = { nodeA, nodeB, nodeC };
+                        int node_ids[3] = { triplets[triplet*3], triplets[triplet*3+1], triplets[triplet*3+2] };
                         pbf.AddHigherTerm(3, node_ids, triplet_data[triplet].buffer);
                     }
 
@@ -229,8 +225,8 @@ public:
                     if(verbose)
                     {
                         energy->report();
-                        std::cout << "  LAB " << label << ":\t" << lastEnergy << " -> " << newEnergy << " / " << ratioUnlabeled * 100 << "% UNL / "
-                                  << nodesChanged / static_cast<double>(energy->getNumNodes()) * 100 << "% CHN / IMP: " << improveCounter << std::endl;
+                        std::cout << "  LAB " << label << ":\t" << lastEnergy << " -> " << newEnergy << " / "
+                                  << nodesChanged / (double)num_nodes * 100 << "% CHN" << std::endl;
                         lastEnergy = newEnergy;
                     }
                 }
