@@ -51,6 +51,8 @@ double DiscreteGroupCostFunction::computeTripletCost(int triplet, int labelA, in
 double DiscreteGroupCostFunction::computePairwiseCost(int pair, int labelA, int labelB) {
 
     std::vector<double> patch_data_A, patch_data_B;
+    patch_data_A.reserve(1500);
+    patch_data_B.reserve(1500);
 
     int subject_A = std::floor((double)_pairs[2*pair  ] / VERTICES_PER_SUBJ);
     int subject_B = std::floor((double)_pairs[2*pair+1] / VERTICES_PER_SUBJ);
@@ -58,8 +60,8 @@ double DiscreteGroupCostFunction::computePairwiseCost(int pair, int labelA, int 
     int node_A = _pairs[2*pair  ] - subject_A * VERTICES_PER_SUBJ;
     int node_B = _pairs[2*pair+1] - subject_B * VERTICES_PER_SUBJ;
 
-    std::map<int,double> patchA = patch_data[subject_A * VERTICES_PER_SUBJ * m_num_labels + node_A * m_num_labels + labelA];
-    std::map<int,double> patchB = patch_data[subject_B * VERTICES_PER_SUBJ * m_num_labels + node_B * m_num_labels + labelB];
+    const std::map<int,double>& patchA = patch_data[subject_A * VERTICES_PER_SUBJ * m_num_labels + node_A * m_num_labels + labelA];
+    const std::map<int,double>& patchB = patch_data[subject_B * VERTICES_PER_SUBJ * m_num_labels + node_B * m_num_labels + labelB];
 
     for (const auto& e: patchA) {
         auto it = patchB.find(e.first);

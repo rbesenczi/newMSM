@@ -256,7 +256,7 @@ double NonLinearSRegDiscreteCostFunction::computeTripletCost(int triplet, int la
                     newresampler::Triangle TRItrans = deform_anatomy(triplet, n, vertex, moved2, transformed_points);
                     cost += calculate_triangular_strain(TRIorig, TRItrans, _mu, _kappa, std::shared_ptr<NEWMAT::ColumnVector>(), _k_exp);
                 }
-                cost = cost / NEARESTFACES[triplet].size();
+                cost = cost / (double) NEARESTFACES[triplet].size();
                 break;
             }
             default:

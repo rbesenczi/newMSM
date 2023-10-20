@@ -87,7 +87,7 @@ void Group_Mesh_registration::run_discrete_opt() {
 #endif
 
         if(iter > 1 && iter % 2 != 0
-                && (energy-newenergy < newenergy*0.005)) // convergence when less than 0.5% decrease in energy
+                && (energy-newenergy < newenergy*0.01)) // convergence when less than 1% decrease in energy
         {
             if (_verbose)
                 std::cout << iter << " level has converged.\n"
