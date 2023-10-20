@@ -32,7 +32,6 @@ class DiscreteGroupModel : public NonLinearSRegDiscreteModel {
     std::vector<newresampler::Mesh> m_datameshes;
     std::vector<newresampler::Mesh> m_controlmeshes;
     newresampler::Mesh m_template;
-    std::vector<std::map<int,double>> patch_data;
     std::vector<NEWMAT::ColumnVector> spacings;
 
     int m_num_subjects = 0;

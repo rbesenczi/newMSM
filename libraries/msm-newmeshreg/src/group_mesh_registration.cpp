@@ -86,7 +86,8 @@ void Group_Mesh_registration::run_discrete_opt() {
         throw MeshregException("Groupwise mode is only supported in the HOCR version of MSM.");
 #endif
 
-        if(iter > 1 && iter % 2 != 0 && newenergy > energy)
+        if(iter > 1 && iter % 2 != 0
+                && (energy-newenergy < newenergy*0.005)) // convergence when less than 0.5% decrease in energy
         {
             if (_verbose)
                 std::cout << iter << " level has converged.\n"
@@ -95,7 +96,8 @@ void Group_Mesh_registration::run_discrete_opt() {
             break;
         }
 
-        if (iter > 1 && _verbose) std::cout << "\tEnergy decrease==" << energy - newenergy << std::endl;
+        if (iter > 1 && _verbose) std::cout << "New energy==" << newenergy << "\tPrevious energy==" << energy
+                                            << "\tEnergy decrease==" << energy - newenergy << std::endl;
 
         model->applyLabeling();
 

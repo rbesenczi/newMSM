@@ -87,8 +87,7 @@ void DiscreteGroupModel::get_rotations() {
 
 void DiscreteGroupModel::get_patch_data() {
 
-    patch_data.clear();
-    patch_data.resize(control_grid_size * m_num_subjects * m_num_labels);
+    std::vector<std::map<int,double>> patch_data(control_grid_size * m_num_subjects * m_num_labels);
 
     #pragma omp parallel for num_threads(_nthreads)
     for (int subject = 0; subject < m_num_subjects; subject++)
@@ -122,6 +121,7 @@ void DiscreteGroupModel::get_patch_data() {
                 patch_data[subject * control_grid_size * m_num_labels + vertex * m_num_labels + label] = patchdata;
             }
         }
+    costfct->set_patch_data(patch_data);
 }
 
 void DiscreteGroupModel::get_spacings() {
@@ -190,7 +190,6 @@ void DiscreteGroupModel::setupCostFunction() {
     costfct->set_labels(m_labels,m_ROT);
 
     get_patch_data();
-    costfct->set_patch_data(patch_data);
 
     costfct->setPairs(pairs);
     costfct->setTriplets(triplets);
