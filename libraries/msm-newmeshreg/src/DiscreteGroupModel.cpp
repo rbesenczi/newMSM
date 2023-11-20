@@ -87,7 +87,7 @@ void DiscreteGroupModel::get_rotations() {
 
 void DiscreteGroupModel::get_patch_data() {
 
-    std::vector<std::map<int,double>> patch_data(control_grid_size * m_num_subjects * m_num_labels);
+    std::vector<std::map<int,float>> patch_data(control_grid_size * m_num_subjects * m_num_labels);
 
     #pragma omp parallel for num_threads(_nthreads)
     for (int subject = 0; subject < m_num_subjects; subject++)
@@ -102,21 +102,15 @@ void DiscreteGroupModel::get_patch_data() {
                                            estimate_rotation_matrix(centre, rotated_mesh.get_coord(datapoint)) *
                                            m_labels[label]); // rigid rotation, bugs expected
 
-            newresampler::Mesh rotated_resampled = newresampler::metric_resample(rotated_mesh, m_template);
-/*
-            if(m_debug && m_num_subjects > 3 && (subject == 0 || subject == 3))
-                #pragma omp critical
-                rotated_resampled.save(m_outdir + "rotated-iter-" + std::to_string(m_iter)
-                            + "-subject-" + std::to_string(subject) + "-label-" + std::to_string(label) + ".func");
-*/
-            for (int vertex = 0; vertex < control_grid_size; vertex++)
-            {
-                std::map<int, double> patchdata;
+            rotated_mesh = newresampler::metric_resample(rotated_mesh, m_template);
+
+            for (int vertex = 0; vertex < control_grid_size; vertex++) {
+                std::map<int, float> patchdata;
                 const newresampler::Point rotated_CP = m_ROT[subject * control_grid_size + vertex] * m_labels[label];
-                for (int datapoint = 0; datapoint < rotated_resampled.nvertices(); datapoint++)
-                    if (((2 * RAD * asin((rotated_CP - rotated_resampled.get_coord(datapoint)).norm() / (2 * RAD)))
+                for (int datapoint = 0; datapoint < rotated_mesh.nvertices(); datapoint++)
+                    if (((2 * RAD * asin((rotated_CP - rotated_mesh.get_coord(datapoint)).norm() / (2 * RAD)))
                             < range * spacings[subject](vertex + 1)))
-                        patchdata[datapoint] = rotated_resampled.get_pvalue(datapoint);
+                        patchdata[datapoint] = rotated_mesh.get_pvalue(datapoint);
 
                 patch_data[subject * control_grid_size * m_num_labels + vertex * m_num_labels + label] = patchdata;
             }

@@ -60,8 +60,8 @@ double DiscreteGroupCostFunction::computePairwiseCost(int pair, int labelA, int 
     int node_A = _pairs[2*pair  ] - subject_A * VERTICES_PER_SUBJ;
     int node_B = _pairs[2*pair+1] - subject_B * VERTICES_PER_SUBJ;
 
-    const std::map<int,double>& patchA = patch_data[subject_A * VERTICES_PER_SUBJ * m_num_labels + node_A * m_num_labels + labelA];
-    const std::map<int,double>& patchB = patch_data[subject_B * VERTICES_PER_SUBJ * m_num_labels + node_B * m_num_labels + labelB];
+    const std::map<int,float>& patchA = patch_data[subject_A * VERTICES_PER_SUBJ * m_num_labels + node_A * m_num_labels + labelA];
+    const std::map<int,float>& patchB = patch_data[subject_B * VERTICES_PER_SUBJ * m_num_labels + node_B * m_num_labels + labelB];
 
     for (const auto& e: patchA) {
         auto it = patchB.find(e.first);

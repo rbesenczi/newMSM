@@ -198,7 +198,7 @@ public:
         ROTATIONS = std::make_shared<std::vector<NEWMAT::Matrix>>(ROT);
     }
 
-    virtual void set_patch_data(const std::vector<std::map<int,double>>& patches) { }
+    virtual void set_patch_data(const std::vector<std::map<int,float>>& patches) { }
     virtual void set_spacings(const NEWMAT::ColumnVector& spacings, double MAX) { MAXSEP = spacings; MVDmax = MAX; }
     void set_octrees(std::shared_ptr<newresampler::Octree>& targett) { targettree = targett; }
     virtual void reset_source(const newresampler::Mesh& source, int num) { _SOURCE = source; }
