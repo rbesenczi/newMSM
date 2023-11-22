@@ -10,7 +10,7 @@ Most of the code from the original version has been replaced or revised, but som
 - parallelisation of mesh resampling
 - reorganisation of source code and standard code cleanup/code revision.
 
-Please note, the current version is 0.4.3-BETA. All feedbacks are much appreciated.
+Please note, the current version is 0.5.1-BETA. All feedbacks are much appreciated.
 
 A few demo application can be found in the demo folder. Please see installation and usage instructions below.
 
