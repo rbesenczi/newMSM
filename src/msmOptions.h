@@ -61,7 +61,7 @@ inline msmOptions& msmOptions::getInstance() {
 }
 
 inline msmOptions::msmOptions() :
-        options("msm", "msm [options]\n"),
+        options("newmsm", "newmsm [options]\n"),
         help(std::string("-h,--help"), false,
              std::string("display this message"),
              false, Utilities::no_argument),
@@ -171,14 +171,22 @@ inline msmOptions::msmOptions() :
 inline bool msmOptions::parse_command_line(int argc, char **argv) {
 
     for (int a = options.parse_command_line(argc, argv); a < argc; a++);
+
     if (!(printoptions.value()))
     {
-        if (help.value() || !options.check_compulsory_arguments())
+        if (help.value())
         {
             options.usage();
-            exit(2);
+            exit(EXIT_SUCCESS);
+        }
+
+        if (!options.check_compulsory_arguments())
+        {
+            options.usage();
+            exit(EXIT_FAILURE);
         }
     }
+
     return true;
 }
 

@@ -468,7 +468,7 @@ void Mesh_registration::set_reference_cfweighting(const std::string& E) {
 
 void Mesh_registration::parse_reg_options(const std::string &parameters)
 {
-    std::string title = "msm configuration parameters";
+    std::string title = "newmsm configuration parameters";
     std::string examples;
     Utilities::OptionParser options(title,examples);
 
@@ -637,7 +637,7 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
         if(parameters=="usage")
         {
             options.usage();
-            exit(2);
+            exit(EXIT_SUCCESS); // FSL deploy check
         }
 
         if (!parameters.empty())
@@ -658,7 +658,7 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
     if(!options.check_compulsory_arguments())
     {
         options.usage();
-        exit(2);
+        exit(EXIT_FAILURE);
     }
 
     //Removed parameters warning messages.

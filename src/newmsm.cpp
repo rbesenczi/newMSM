@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
         newmeshreg::Group_Mesh_registration GMR;
         if (opts.printoptions.value()) {
             GMR.print_config_options();
-            return 0;
+            //exit(EXIT_SUCCESS); // FSL deploy check in Mesh_registration class
         }
 
         if (opts.verbose.value()) GMR.set_verbosity(opts.verbose.value());
@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
         newmeshreg::Mesh_registration MR;
         if (opts.printoptions.value()) {
             MR.print_config_options();
-            return 0;
+            //exit(EXIT_SUCCESS); // FSL deploy check in Mesh_registration class
         }
 
         if (opts.verbose.value()) MR.set_verbosity(opts.verbose.value());
