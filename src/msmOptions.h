@@ -170,7 +170,7 @@ inline msmOptions::msmOptions() :
 
 inline bool msmOptions::parse_command_line(int argc, char **argv) {
 
-    for (int a = options.parse_command_line(argc, argv); a < argc; a++);
+    for (unsigned int a = options.parse_command_line(argc, argv); a < argc; a++);
 
     if (!(printoptions.value()))
     {

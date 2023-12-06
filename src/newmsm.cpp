@@ -3,7 +3,7 @@
 
 msmOptions *msmOptions::gopt = nullptr;
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) try {
 
     std::cout << "This is newMSM v0.5.1-BETA." << std::endl;
 
@@ -22,10 +22,7 @@ int main(int argc, char *argv[]) {
     if(opts.groupwise.value())
     {
         newmeshreg::Group_Mesh_registration GMR;
-        if (opts.printoptions.value()) {
-            GMR.print_config_options();
-            //exit(EXIT_SUCCESS); // FSL deploy check in Mesh_registration class
-        }
+        if (opts.printoptions.value()) GMR.print_config_options();
 
         if (opts.verbose.value()) GMR.set_verbosity(opts.verbose.value());
         if (opts.debug.value()) GMR.set_debug(opts.debug.value());
@@ -36,34 +33,27 @@ int main(int argc, char *argv[]) {
         GMR.set_data_list(opts.data.value());
 
         GMR.run_multiresolutions(opts.parameters.value());
-
-        return 0;
     }
     else
     {
         newmeshreg::Mesh_registration MR;
-        if (opts.printoptions.value()) {
-            MR.print_config_options();
-            //exit(EXIT_SUCCESS); // FSL deploy check in Mesh_registration class
-        }
+        if (opts.printoptions.value()) MR.print_config_options();
 
         if (opts.verbose.value()) MR.set_verbosity(opts.verbose.value());
         if (opts.debug.value()) MR.set_debug(opts.debug.value());
+        MR.set_outdir(opts.outbase.value());
 
         MR.set_input(opts.inputmesh.value());
-
         if (opts.referencemesh.value().empty()) MR.set_reference(opts.inputmesh.value());
         else MR.set_reference(opts.referencemesh.value());
 
         if (!opts.inputanatmesh.value().empty()) {
-            if (opts.referenceanatmesh.value().empty()) {
-                std::cout << " Error: must supply both anatomical meshes or none " << std::endl;
-                exit(1);
-            }
+            if (opts.referenceanatmesh.value().empty())
+                throw newmeshreg::MeshregException("Error: must supply both anatomical meshes or none");
+
             MR.set_anatomical(opts.inputanatmesh.value(), opts.referenceanatmesh.value());
         }
 
-        MR.set_outdir(opts.outbase.value());
         MR.set_output_format(opts.outformat.value());
 
         if (opts.transformed_sphere.set()) MR.set_transformed(opts.transformed_sphere.value());
@@ -75,5 +65,13 @@ int main(int argc, char *argv[]) {
 
         MR.run_multiresolutions(opts.parameters.value());
     }
-    return 0;
+
+    return EXIT_SUCCESS;
+
+} catch (newmeshreg::MeshregException& e) {
+    e.what();
+    exit(EXIT_FAILURE);
+} catch (std::exception& e) {
+    e.what();
+    exit(EXIT_FAILURE);
 }
