@@ -14,7 +14,7 @@
 
 ###########################################################
 ## Set the following lines according to your settings and cohort.
-workdir='/home/rb22/groupwise'
+workdir=$HOME/groupwise
 
 group_id=2133
 group_size=7
@@ -26,9 +26,9 @@ config_file=$input_folder/gMSM_config.txt
 ###########################################################
 
 ## Make required files and folders
-find $input_folder/data > $input_folder/input_data_$group_id.txt
+find $input_folder/data | sort -V > $input_folder/input_data_$group_id.txt
 echo "$(tail -n +2 $input_folder/input_data_$group_id.txt)" > $input_folder/input_data_$group_id.txt
-find $input_folder/meshes > $input_folder/input_meshes_$group_id.txt
+find $input_folder/meshes | sort -V > $input_folder/input_meshes_$group_id.txt
 echo "$(tail -n +2 $input_folder/input_meshes_$group_id.txt)" > $input_folder/input_meshes_$group_id.txt
 mkdir $workdir/output
 mkdir $workdir/output/$group_id
