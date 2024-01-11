@@ -141,19 +141,19 @@ void NonLinearSRegDiscreteCostFunction::initialize(int numNodes, int numLabels, 
 
 void NonLinearSRegDiscreteCostFunction::set_parameters(myparam& ALLPARAMS) {
     myparam::iterator it;
-    it=ALLPARAMS.find("exponent");_rexp=boost::get<float>(it->second);
-    it=ALLPARAMS.find("weight");_dweight=boost::get<bool>(it->second);
-    it=ALLPARAMS.find("anorm");_anorm=boost::get<bool>(it->second);
-    it=ALLPARAMS.find("shearmodulus");_mu=boost::get<float>(it->second);
-    it=ALLPARAMS.find("bulkmodulus");_kappa=boost::get<float>(it->second);
-    it=ALLPARAMS.find("kexponent");_k_exp=boost::get<float>(it->second);
-    it=ALLPARAMS.find("lambda"); _reglambda=boost::get<float>(it->second);
-    it=ALLPARAMS.find("range"); _controlptrange=boost::get<float>(it->second);
-    it=ALLPARAMS.find("simmeasure"); _simmeasure=boost::get<int>(it->second); sim.set_simval(_simmeasure);
-    it=ALLPARAMS.find("verbosity"); _verbosity=boost::get<bool>(it->second);
-    it=ALLPARAMS.find("regularisermode"); _rmode=boost::get<int>(it->second);
-    it=ALLPARAMS.find("numthreads"); _threads=boost::get<int>(it->second);
-    it=ALLPARAMS.find("dOPT"); dopt=boost::get<std::string>(it->second);
+    it=ALLPARAMS.find("exponent");_rexp=std::get<float>(it->second);
+    it=ALLPARAMS.find("weight");_dweight=std::get<bool>(it->second);
+    it=ALLPARAMS.find("anorm");_anorm=std::get<bool>(it->second);
+    it=ALLPARAMS.find("shearmodulus");_mu=std::get<float>(it->second);
+    it=ALLPARAMS.find("bulkmodulus");_kappa=std::get<float>(it->second);
+    it=ALLPARAMS.find("kexponent");_k_exp=std::get<float>(it->second);
+    it=ALLPARAMS.find("lambda"); _reglambda=std::get<float>(it->second);
+    it=ALLPARAMS.find("range"); _controlptrange=std::get<float>(it->second);
+    it=ALLPARAMS.find("simmeasure"); _simmeasure=std::get<int>(it->second); sim.set_simval(_simmeasure);
+    it=ALLPARAMS.find("verbosity"); _verbosity=std::get<bool>(it->second);
+    it=ALLPARAMS.find("regularisermode"); _rmode=std::get<int>(it->second);
+    it=ALLPARAMS.find("numthreads"); _threads=std::get<int>(it->second);
+    it=ALLPARAMS.find("dOPT"); dopt=std::get<std::string>(it->second);
 }
 
 double NonLinearSRegDiscreteCostFunction::computeTripletCost(int triplet, int labelA, int labelB, int labelC) {

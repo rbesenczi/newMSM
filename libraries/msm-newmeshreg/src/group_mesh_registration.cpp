@@ -76,7 +76,7 @@ void Group_Mesh_registration::run_discrete_opt() {
     for (int subject = 0; subject < num_subjects; subject++)
         previous_controlgrids[subject] = model->get_CPgrid(subject);
 
-    for(int iter = 1; iter <= boost::get<int>(PARAMETERS.find("iters")->second); iter++)
+    for(int iter = 1; iter <= std::get<int>(PARAMETERS.find("iters")->second); iter++)
     {
         model->setupCostFunction();
 

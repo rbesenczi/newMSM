@@ -338,7 +338,7 @@ void Mesh_registration::run_discrete_opt() {
 
     double energy = 0.0, newenergy = 0.0;
 
-    for(int iter = 1; iter <= boost::get<int>(PARAMETERS.find("iters")->second); iter++) {
+    for(int iter = 1; iter <= std::get<int>(PARAMETERS.find("iters")->second); iter++) {
         // resample and combine the reference cost function weighting with the source if provided
         NEWMAT::Matrix CombinedWeight;
         if(_incfw && _refcfw) {

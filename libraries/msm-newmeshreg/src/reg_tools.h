@@ -25,13 +25,12 @@ SOFTWARE.
 #include "newresampler/octree.h"
 #include "miscmaths/histogram.h"
 #include <omp.h>
-#include <boost/variant/variant.hpp>
-#include <boost/variant/get.hpp>
+#include <variant>
 
 namespace newmeshreg {
 
-typedef std::map<std::string, boost::variant<int, std::string, double, float, bool>> myparam;
-typedef std::pair<std::string, boost::variant<int, std::string, double, float, bool>> parameterPair;
+typedef std::map<std::string, std::variant<int, std::string, double, float, bool>> myparam;
+typedef std::pair<std::string, std::variant<int, std::string, double, float, bool>> parameterPair;
 
 class MeshregException : public std::exception {
 

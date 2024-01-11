@@ -25,18 +25,18 @@ namespace newmeshreg {
 
 void NonLinearSRegDiscreteModel::set_parameters(myparam& PAR) {
     myparam::iterator it;
-    it=PAR.find("dOPT"); optimiser = boost::get<std::string>(it->second);
-    it=PAR.find("SGres"); m_SGres = boost::get<int>(it->second);
-    it=PAR.find("CPres"); m_CPres = boost::get<int>(it->second);
-    it=PAR.find("regularisermode"); m_regoption = boost::get<int>(it->second);
-    it=PAR.find("multivariate"); m_multivariate = boost::get<bool>(it->second);
-    it=PAR.find("verbosity"); m_verbosity = boost::get<bool>(it->second);
-    it=PAR.find("outdir"); m_outdir = boost::get<std::string>(it->second);
-    it=PAR.find("TriLikelihood"); m_triclique = boost::get<bool>(it->second);
-    it=PAR.find("rescalelabels"); m_rescalelabels = boost::get<bool>(it->second);
-    it=PAR.find("numthreads"); _nthreads = boost::get<int>(it->second);
-    it=PAR.find("labeldist"); _labeldist = boost::get<float>(it->second);
-    it=PAR.find("range"); range=boost::get<float>(it->second);
+    it=PAR.find("dOPT"); optimiser = std::get<std::string>(it->second);
+    it=PAR.find("SGres"); m_SGres = std::get<int>(it->second);
+    it=PAR.find("CPres"); m_CPres = std::get<int>(it->second);
+    it=PAR.find("regularisermode"); m_regoption = std::get<int>(it->second);
+    it=PAR.find("multivariate"); m_multivariate = std::get<bool>(it->second);
+    it=PAR.find("verbosity"); m_verbosity = std::get<bool>(it->second);
+    it=PAR.find("outdir"); m_outdir = std::get<std::string>(it->second);
+    it=PAR.find("TriLikelihood"); m_triclique = std::get<bool>(it->second);
+    it=PAR.find("rescalelabels"); m_rescalelabels = std::get<bool>(it->second);
+    it=PAR.find("numthreads"); _nthreads = std::get<int>(it->second);
+    it=PAR.find("labeldist"); _labeldist = std::get<float>(it->second);
+    it=PAR.find("range"); range=std::get<float>(it->second);
     if(m_regoption == 1) _pairwise = true;
 }
 

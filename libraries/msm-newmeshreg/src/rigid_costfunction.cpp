@@ -47,12 +47,12 @@ void Rigid_cost_function::Initialize(){
 
 void Rigid_cost_function::set_parameters(myparam& PAR){
     myparam::iterator it;
-    it = PAR.find("iters"); iters = boost::get<int>(it->second);
-    it = PAR.find("simmeasure"); simmeasure = boost::get<int>(it->second);
-    it = PAR.find("verbosity"); verbosity = boost::get<bool>(it->second);
-    it = PAR.find("stepsize"); stepsize = boost::get<float>(it->second);
-    it = PAR.find("gradsampling"); spacing = boost::get<float>(it->second);
-    it = PAR.find("numthreads"); numthreads = boost::get<int>(it->second);
+    it = PAR.find("iters"); iters = std::get<int>(it->second);
+    it = PAR.find("simmeasure"); simmeasure = std::get<int>(it->second);
+    it = PAR.find("verbosity"); verbosity = std::get<bool>(it->second);
+    it = PAR.find("stepsize"); stepsize = std::get<float>(it->second);
+    it = PAR.find("gradsampling"); spacing = std::get<float>(it->second);
+    it = PAR.find("numthreads"); numthreads = std::get<int>(it->second);
 }
 
 void Rigid_cost_function::update_similarity() {
