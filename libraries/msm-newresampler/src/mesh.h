@@ -38,10 +38,11 @@ class Mesh {
 
     std::vector<std::shared_ptr<Mpoint>> points;
     std::vector<Triangle> triangles;
+
     std::vector<Point> normals;
 
     std::vector<std::vector<float>> pvalues;
-    std::vector<std::vector<float>> tvalues;
+    //std::vector<std::vector<float>> tvalues;
 
     //---METADATA---//
     std::vector<NEWMESH::GIFTImeta> global_metaData;
@@ -61,58 +62,65 @@ public:
     ~Mesh() = default;
 
     //---ACCESS---//
-    int nvertices() const { return (int)points.size(); }
-    int ntriangles() const { return (int)triangles.size(); }
+    int nvertices() const { return (int) points.size(); }
+    int ntriangles() const { return (int) triangles.size(); }
     float get_pvalue(int i, int dim = 0) const;
-    int get_dimension() const { return (int)pvalues.size(); }
+    int get_dimension() const { return (int) pvalues.size(); }
     int npvalues (int dim = 0) const { return (int) pvalues[dim].size(); }
     const Point& get_coord(int n) const;
-    const Mpoint& get_point(int n) const { return *points[n]; }
+    const Mpoint& get_point(int n) const;
     const std::vector<Triangle>& get_all_triangles() const { return triangles; }
     int get_total_triangles(int i) const;
-    double get_triangle_area(int tID) const { return triangles[tID].get_area(); }
+    double get_triangle_area(int tID) const;
     NEWMAT::Matrix get_pvalues() const;
 
     const Triangle& get_triangle(int n) const {
-        if (n >= (int) triangles.size() || triangles.empty())
+        if (n >= triangles.size() || n < 0)
             throw MeshException("get_triangle: index exceeds face dimensions");
         return triangles[n];
     }
 
     const Triangle& get_triangle_from_vertex(int n, int ID) const {
-        if (n >= (int) triangles.size() || (int) triangles.empty())
+        if (n >= triangles.size() || n < 0 || ID < 0 || ID >= points[n]->ntriangles())
             throw MeshException("get_triangle: index exceeds face dimensions");
         return triangles[points[n]->get_trID(ID)];
     }
 
     const Point& get_triangle_vertex(int n, int i) const {
-        if (n >= (int) triangles.size() || triangles.empty())
+        if (n >= triangles.size() || n < 0 || i < 0 || i >= 3)
             throw MeshException("get_triangle: index exceeds face dimensions");
         return triangles[n].get_vertex_coord(i);
     }
 
     const Point& get_normal(int n) const {
-        if (normals.size() < points.size())
+        if (normals.empty())
             throw MeshException("get_normal: normals have not been calculated, apply estimate_normals() first");
+        if(n >= normals.size() || n < 0)
+            throw MeshException("get_normals: index exceeds vertex dimensions");
         return normals[n];
     }
 
     Point get_triangle_normal(int n) const {
-        if (n >= (int) triangles.size() || (int) triangles.size() == 0)
+        if (n >= (int) triangles.size() || n < 0)
             throw MeshException("get_triangle: index exceeds face dimensions");
         return triangles[n].normal();
     }
 
     int get_triangle_vertexID(int n, int i) const { return triangles[n].get_vertex_no(i); }
-    std::vector<std::shared_ptr<Mpoint>> get_points() const { return points; }
+
+    //std::vector<std::shared_ptr<Mpoint>> get_points() const { return points; }
 
     int get_total_neighbours(int i) const {
-        return points.at(i)->nneighbours();
+        if (i >= (int) points.size() || i < 0)
+            throw MeshException("get_total_neighbours: index exceeds data dimensions");
+        return points[i]->nneighbours();
     }
 
     std::vector<std::vector<double>> get_face_angles() const {
-
-        std::vector<std::vector<double>> all_angles(triangles.size());
+    //TODO needs testing!
+        //std::vector<std::vector<double>> all_angles(triangles.size());
+        std::vector<std::vector<double>> all_angles;
+        all_angles.reserve(triangles.size());
         for (const auto& triangle : triangles)
             all_angles.emplace_back(triangle.get_angles());
 
@@ -134,7 +142,7 @@ public:
     void clear_triangles() { triangles.clear(); }
     void push_point(const std::shared_ptr<Mpoint>& mesh_point) { points.push_back(mesh_point); }
     void push_pvalues(const std::vector<float>& pvals) { pvalues.push_back(pvals); }
-    void push_tvalues(const std::vector<float>& tvals) { tvalues.push_back(tvals); }
+    //void push_tvalues(const std::vector<float>& tvals) { tvalues.push_back(tvals); }
     void push_triangle(const Triangle &t);
     void clear();
     void clear_data();

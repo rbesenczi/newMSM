@@ -142,12 +142,11 @@ void Octree::add_triangle(Node* node, const Triangle& triangle, const Point& low
 
 double Octree::distance_to_triangle(const Point& pt, const Triangle& tr) const {
 
-    Point mP;
     const Point& v0 = tr.get_vertex_coord(0),
                  v1 = tr.get_vertex_coord(1),
                  v2 = tr.get_vertex_coord(2);
 
-    project_point(pt, v0, v1, v2, mP);
+    Point mP = project_point(pt, v0, v1, v2);
 
     if (point_in_triangle(mP, v0, v1, v2))
         return tr.dist_to_point(mP);
@@ -195,7 +194,7 @@ Triangle Octree::get_closest_triangle(const Point &pt) const {
     if(closest_triangle.get_no() == -1) {
         //This is an unfortunate case... Probably needs some more refinement.
         best_distance = std::numeric_limits<double>::max();
-        constexpr double RAD = 100.0;
+        //constexpr double RAD = 100.0;
         for (auto &i: current_oct->parent->children)
             for (auto &j: i)
                 for (auto close_oct: j)

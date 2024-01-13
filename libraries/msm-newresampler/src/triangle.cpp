@@ -24,6 +24,7 @@ SOFTWARE.
 namespace newresampler {
 
 Triangle::Triangle(Point p1, Point p2, Point p3, int no) : no(no) {
+    //TODO why all 0?
     vertices.emplace_back(std::make_shared<Mpoint>(p1, 0));
     vertices.emplace_back(std::make_shared<Mpoint>(p2, 0));
     vertices.emplace_back(std::make_shared<Mpoint>(p3, 0));
@@ -31,14 +32,13 @@ Triangle::Triangle(Point p1, Point p2, Point p3, int no) : no(no) {
 }
 
 Triangle::Triangle(const std::shared_ptr<Mpoint> &p1, const std::shared_ptr<Mpoint> &p2,
-                   const std::shared_ptr<Mpoint> &p3, int number) {
+                   const std::shared_ptr<Mpoint> &p3, int no) : no(no) {
     vertices.push_back(p1);
     vertices.push_back(p2);
     vertices.push_back(p3);
-    no = number;
     area = calc_area();
 }
-
+/*
 Triangle Triangle::copy() const {
     Triangle t;
     for (const auto& i: vertices)
@@ -47,13 +47,14 @@ Triangle Triangle::copy() const {
     t.area = area;
     return t;
 }
-
+*/
+/*
 Point Triangle::centroid() const {
     return {(vertices[0]->get_coord().X + vertices[1]->get_coord().X + vertices[2]->get_coord().X) / 3,
             (vertices[0]->get_coord().Y + vertices[1]->get_coord().Y + vertices[2]->get_coord().Y) / 3,
-            (vertices[0]->get_coord().Z + vertices[1]->get_coord().Z + vertices[2]->get_coord().Z) / 3};
+            (vertices[0]->get_coord().Z + vertices[1]->get_coord().Z + vertices[2]->get_coord().Z) / 3 };
 }
-
+*/
 Point Triangle::normal() const {
     Point result = (vertices[2]->get_coord() - vertices[0]->get_coord()) *
                    (vertices[1]->get_coord() - vertices[0]->get_coord());
@@ -62,25 +63,36 @@ Point Triangle::normal() const {
 }
 
 double Triangle::calc_area() const {
+    /*
     Point result = (vertices[2]->get_coord() - vertices[0]->get_coord()) *
                    (vertices[1]->get_coord() - vertices[0]->get_coord());
     return 0.5 * result.norm();
+    */
+    return 0.5 * ((vertices[2]->get_coord() - vertices[0]->get_coord()) *
+                 (vertices[1]->get_coord() - vertices[0]->get_coord())).norm();
 }
 
-void Triangle::set(Point p1, Point p2, Point p3, int index)
+void Triangle::set(Point p1, Point p2, Point p3, int number)
 {
+    vertices.clear();
+    /*
     std::shared_ptr<Mpoint> m1 = std::make_shared<Mpoint>(p1,0);
     std::shared_ptr<Mpoint> m2 = std::make_shared<Mpoint>(p2,1);
     std::shared_ptr<Mpoint> m3 = std::make_shared<Mpoint>(p3,2);
-    vertices.clear(); vertices.push_back(m1); vertices.push_back(m2); vertices.push_back(m3);
-    no = index;
+    vertices.push_back(m1); vertices.push_back(m2); vertices.push_back(m3);
+    */
+    vertices.emplace_back(std::make_shared<Mpoint>(p1,0));
+    vertices.emplace_back(std::make_shared<Mpoint>(p2,1));
+    vertices.emplace_back(std::make_shared<Mpoint>(p3,2));
+    no = number;
     area = calc_area();
 }
 
 void Triangle::set_vertex(int i, const Point& p) {
-    std::shared_ptr<Mpoint> m = std::make_shared<Mpoint>(p,0);
+    //TODO why 0?
     if(vertices.empty()) vertices.resize(3);
-    vertices[i] = m;
+    //std::shared_ptr<Mpoint> m = std::make_shared<Mpoint>(p,0);
+    vertices[i] = std::make_shared<Mpoint>(p,0);
 }
 
 std::vector<double> Triangle::get_angles() const { // get angles in order of vertex: 0,1,2
@@ -90,18 +102,18 @@ std::vector<double> Triangle::get_angles() const { // get angles in order of ver
     Point v0 = vertices[2]->get_coord() - vertices[0]->get_coord();  // edge from vertex 0 to 2
     Point v1 = vertices[1]->get_coord() - vertices[0]->get_coord();  // edge from vertex 0 to 1
     Point v2 = vertices[2]->get_coord() - vertices[1]->get_coord();  // edge from vertex 1 to 2
-
+/*
     double dot01 = v0 | v1;
     double dot02 = v0 | v2;
     double dot12 = v1 | v2;
-
-    face_angles.emplace_back(acos(dot01 / (v0.norm() * v1.norm())));
-    face_angles.emplace_back(acos(dot02 / (v0.norm() * v2.norm())));
-    face_angles.emplace_back(acos(dot12 / (v2.norm() * v1.norm())));
+*/
+    face_angles.emplace_back(acos((v0 | v1) / (v0.norm() * v1.norm())));
+    face_angles.emplace_back(acos((v0 | v2) / (v0.norm() * v2.norm())));
+    face_angles.emplace_back(acos((v1 | v2) / (v2.norm() * v1.norm())));
 
     return face_angles;
 }
-
+/*
 bool Triangle::is_inside(const Point& x) const {
 
     Point v0 = vertices[2]->get_coord() - vertices[0]->get_coord();
@@ -119,18 +131,17 @@ bool Triangle::is_inside(const Point& x) const {
     double u = (dot11 * dot02 - dot01 * dot12) * invDenom;
     double v = (dot00 * dot12 - dot01 * dot02) * invDenom;
 
-    return (u > 0) && (v > 0) && (u + v < 1);
+    return (u > 0.0) && (v > 0.0) && (u + v < 1.0);
 }
-
+*/
 double Triangle::dist_to_point(const Point& x0) const {
 
-    double d = 0.0;
-
-    Point x1(vertices[0]->get_coord());
-    Point x2(vertices[1]->get_coord());
-    Point x3(vertices[2]->get_coord());
+    const Point x1(vertices[0]->get_coord());
+    const Point x2(vertices[1]->get_coord());
+    const Point x3(vertices[2]->get_coord());
 
     Point u;
+    double d = 0.0;
 
     double dmin = std::numeric_limits<double>::max();
     // test edges
@@ -166,17 +177,15 @@ std::map<int,double> calc_barycentric_weights(const Point& v1, const Point& v2,
                                              const Point& v3, const Point& vref,
                                              int n1, int n2, int n3){
 
-    double A, Aa, Ab, Ac;
-    Point PP;
     std::map<int,double> weights;
 
-    project_point(vref, v1, v2, v3, PP);
+    Point PP = project_point(vref, v1, v2, v3);
 
-    Aa = compute_area(PP, v2, v3);
-    Ab = compute_area(PP, v1, v3);
-    Ac = compute_area(PP, v1, v2);
+    double Aa = compute_area(PP, v2, v3);
+    double Ab = compute_area(PP, v1, v3);
+    double Ac = compute_area(PP, v1, v2);
 
-    A = Aa + Ab + Ac;
+    double A = Aa + Ab + Ac;
 
     weights[n1] = Aa / A;
     weights[n2] = Ab / A;
@@ -185,7 +194,7 @@ std::map<int,double> calc_barycentric_weights(const Point& v1, const Point& v2,
     return weights;
 }
 
-double barycentric_weight(const Point& v1, const Point& v2, const Point& v3, const Point& vref, double va1, double va2, double va3) {
+double barycentric_interpolation(const Point& v1, const Point& v2, const Point& v3, const Point& vref, double va1, double va2, double va3) {
 
     double Aa = compute_area(vref, v2, v3);
     double Ab = compute_area(vref, v1, v3);
@@ -196,10 +205,11 @@ double barycentric_weight(const Point& v1, const Point& v2, const Point& v3, con
     Ab = Ab / A;
     Ac = Ac / A;
 
-    return  Aa * va1 + Ab * va2 + Ac * va3;
+    return Aa * va1 + Ab * va2 + Ac * va3;
 }
 
 Point barycentric(const Point& v1, const Point& v2, const Point& v3, const Point& vref, const Point& va1, const Point& va2, const Point& va3){
+    //TODO rename and check
 
     double Aa = compute_area(vref, v2, v3);
     double Ab = compute_area(vref, v1, v3);

@@ -25,8 +25,8 @@ SOFTWARE.
 #include "newresampler/resampler.h"
 #include "reg_tools.h"
 
-#define RAD 100.0
-#define EPSILON 1.0E-8
+//#define RAD 100.0
+//#define EPSILON 1.0E-8
 
 namespace newmeshreg {
 

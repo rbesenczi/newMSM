@@ -448,7 +448,7 @@ void UnivariateNonLinearSRegDiscreteCostFunction::get_target_data(int node, cons
                             n1 = closest_triangle.get_vertex_no(1),
                             n2 = closest_triangle.get_vertex_no(2);
 
-        _targetdata[node][i] = newresampler::barycentric_weight(v0, v1, v2, tmp,
+        _targetdata[node][i] = newresampler::barycentric_interpolation(v0, v1, v2, tmp,
                                                                 FEAT->get_ref_val(1, n0+1),
                                                                 FEAT->get_ref_val(1, n1+1),
                                                                 FEAT->get_ref_val(1, n2+1));
@@ -520,7 +520,7 @@ void MultivariateNonLinearSRegDiscreteCostFunction::get_target_data(int node, co
                             n2 = closest_triangle.get_vertex_no(2);
 
         for(int dim = 0; dim < FEAT->get_dim(); ++dim)
-            _targetdata[_sourceinrange[node][i]][dim] = newresampler::barycentric_weight(v0, v1, v2, tmp,
+            _targetdata[_sourceinrange[node][i]][dim] = newresampler::barycentric_interpolation(v0, v1, v2, tmp,
                                                                                         FEAT->get_ref_val(dim+1, n0+1),
                                                                                         FEAT->get_ref_val(dim+1, n1+1),
                                                                                         FEAT->get_ref_val(dim+1, n2+1));
@@ -588,8 +588,8 @@ void HOUnivariateNonLinearSRegDiscreteCostFunction::get_target_data(int triplet,
     #pragma omp parallel for num_threads(mcmc_threads)
     for(int i = 0; i < _sourceinrange[triplet].size(); ++i)
     {
-        newresampler::Point SP = _SOURCE.get_coord(_sourceinrange[triplet][i]);
-        newresampler::project_point(CP0, CP1, CP2, SP);
+        //newresampler::Point SP = _SOURCE.get_coord(_sourceinrange[triplet][i]);
+        newresampler::Point SP = newresampler::project_point(CP0, CP1, CP2, _SOURCE.get_coord(_sourceinrange[triplet][i]));
         newresampler::Point tmp = newresampler::barycentric(CP0,CP1,CP2,SP,new_CP0,new_CP1,new_CP2);
         tmp.normalize();
         tmp *= RAD;
@@ -603,7 +603,7 @@ void HOUnivariateNonLinearSRegDiscreteCostFunction::get_target_data(int triplet,
                             n1 = closest_triangle.get_vertex_no(1),
                             n2 = closest_triangle.get_vertex_no(2);
 
-        _targetdata[triplet][i] = newresampler::barycentric_weight(v0, v1, v2, tmp,
+        _targetdata[triplet][i] = newresampler::barycentric_interpolation(v0, v1, v2, tmp,
                                                                    FEAT->get_ref_val(1, n0 + 1),
                                                                    FEAT->get_ref_val(1, n1 + 1),
                                                                    FEAT->get_ref_val(1, n2 + 1));
@@ -673,8 +673,8 @@ void HOMultivariateNonLinearSRegDiscreteCostFunction::get_target_data(int triple
         _targetdata[_sourceinrange[triplet][i]].clear();
         _targetdata[_sourceinrange[triplet][i]].resize(FEAT->get_dim());
 
-        newresampler::Point SP = _SOURCE.get_coord(_sourceinrange[triplet][i]);
-        newresampler::project_point(CP0, CP1, CP2, SP);
+        //newresampler::Point SP = _SOURCE.get_coord(_sourceinrange[triplet][i]);
+        newresampler::Point SP = newresampler::project_point(CP0, CP1, CP2, SP);
         newresampler::Point tmp = newresampler::barycentric(CP0,CP1,CP2,SP,new_CP0,new_CP1,new_CP2);
         tmp.normalize();
         tmp *= RAD;
@@ -689,7 +689,7 @@ void HOMultivariateNonLinearSRegDiscreteCostFunction::get_target_data(int triple
                             n2 = closest_triangle.get_vertex_no(2);
 
         for(int dim = 0; dim < FEAT->get_dim(); ++dim)
-            _targetdata[_sourceinrange[triplet][i]][dim] = newresampler::barycentric_weight(v0, v1, v2, tmp,
+            _targetdata[_sourceinrange[triplet][i]][dim] = newresampler::barycentric_interpolation(v0, v1, v2, tmp,
                                                                          FEAT->get_ref_val(dim + 1, n0 + 1),
                                                                          FEAT->get_ref_val(dim + 1, n1 + 1),
                                                                          FEAT->get_ref_val(dim + 1, n2 + 1));

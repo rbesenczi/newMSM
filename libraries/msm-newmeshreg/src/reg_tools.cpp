@@ -158,7 +158,7 @@ void unfold(newresampler::Mesh& SOURCE, bool verbosity) {
     std::vector<newresampler::Point> foldinggradients;
     bool folded = true;
     int it = 0;
-    const double RAD = 100;
+    //const double RAD = 100;
 
     while (folded)
     {

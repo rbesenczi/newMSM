@@ -172,7 +172,7 @@ Mesh smooth_data(Mesh& orig, const Mesh& sphLow, double sigma, int nthreads, std
 
     NEWMAT::Matrix newdata(orig.get_dimension(), sphLow.nvertices()); newdata = 0;
     Mesh exclusion = sphLow, smoothed = sphLow;
-    const double RAD = 100.0;
+    //const double RAD = 100.0;
     const double ang = 4 * asin(sigma / (2 * RAD));
 
     Octree oct_search(orig);

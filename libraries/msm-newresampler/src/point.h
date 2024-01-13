@@ -28,6 +28,9 @@ SOFTWARE.
 
 #include "meshException.h"
 
+#define EPSILON 1e-8
+#define RAD 100.0
+
 namespace newresampler {
 
 class Point {
@@ -47,12 +50,11 @@ struct Tangs { Point e1, e2; };
 //---Utility functions related with Point---//
 bool same_side(const Point &, const Point &, const Point &, const Point &);
 bool point_in_triangle(const Point &, const Point &, const Point &, const Point &);
-Point project_point(const Point &, const Point &, const Point &, const Point &, Point &);
-void project_point(const Point &, const Point &, const Point &, Point&);
+Point project_point(const Point &vb, const Point &v1, const Point &v2, const Point &v3);
 void project_point(const Point& vb, const Tangs& T, double& e1coord, double& e2coord);
 double compute_area(const Point &, const Point &, const Point &);
 NEWMAT::Matrix form_matrix_from_points(const Point& p1, const Point& p2, const Point& p3, bool trans = false);
-NEWMAT::Matrix estimate_rotation_matrix(const Point& p1, const Point& p2);
+NEWMAT::Matrix estimate_rotation_matrix(Point p1, Point p2);
 NEWMAT::ReturnMatrix euler_rotate(const NEWMAT::ColumnVector& vector, double w1, double w2, double w3);
 
 //---Point operators---//

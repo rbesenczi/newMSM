@@ -31,17 +31,17 @@ namespace newresampler {
 class Triangle {
 
     std::vector<std::shared_ptr<Mpoint>> vertices;
-    int no = -1;
-    double area = 0.0;
+    int no = -1; //TODO need to check this
+    double area = 0.0;  //TODO sure we need this here?
 
 public:
-    Triangle(){};
+    Triangle() = default;
 
     Triangle(Point p1, Point p2, Point p3, int no);
     Triangle(const std::shared_ptr<Mpoint>& p1,
              const std::shared_ptr<Mpoint>& p2,
              const std::shared_ptr<Mpoint>& p3,
-             int number);
+             int no);
 
     //---ACCESS---//
     int get_no() const { return no; }
@@ -57,17 +57,17 @@ public:
     void set_vertex(int i, const Point& p);
 
     //---UTILITY---//
-    Triangle copy() const;
-    Point centroid() const;
+    //Triangle copy() const;
+    //Point centroid() const;
     Point normal() const;
     double calc_area() const;
     std::vector<double> get_angles() const;
-    bool is_inside(const Point &x) const;
+    //bool is_inside(const Point &x) const;
     double dist_to_point(const Point &x0) const;
 };
 
 std::map<int,double> calc_barycentric_weights(const Point&, const Point&, const Point&, const Point&, int, int, int);
-double barycentric_weight(const Point& v1, const Point& v2, const Point& v3, const Point& vref, double va1, double va2, double va3);
+double barycentric_interpolation(const Point& v1, const Point& v2, const Point& v3, const Point& vref, double va1, double va2, double va3);
 Point barycentric(const Point& v1, const Point& v2, const Point& v3, const Point& vref, const Point& va1, const Point& va2, const Point& va3);
 
 } //namespace newresampler

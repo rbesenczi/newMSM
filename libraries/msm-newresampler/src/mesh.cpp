@@ -34,7 +34,7 @@ Mesh::Mesh() {
     global_defaultcoord.push_back(default_coord);
 }
 
-Mesh::Mesh(const Mesh &m) : normals(m.normals), pvalues(m.pvalues), tvalues(m.tvalues),
+Mesh::Mesh(const Mesh &m) : normals(m.normals), pvalues(m.pvalues), //tvalues(m.tvalues),
                             global_metaData(m.global_metaData), global_Attributes(m.global_Attributes),
                             global_GIFTIlabels(m.global_GIFTIlabels), global_defaultcoord(m.global_defaultcoord){
 
@@ -50,9 +50,10 @@ Mesh::Mesh(const Mesh &m) : normals(m.normals), pvalues(m.pvalues), tvalues(m.tv
         Triangle tr(points[v0], points[v1], points[v2], triangle.get_no());
         triangles.push_back(tr);
     }
-
+    /*
     for (int i = 0; i < (int)points.size(); i++)
         normals.push_back(local_normal(i));
+    */
 }
 
 Mesh &Mesh::operator=(const Mesh &m) {
@@ -61,7 +62,7 @@ Mesh &Mesh::operator=(const Mesh &m) {
     triangles.clear();
     normals = m.normals;
     pvalues = m.pvalues;
-    tvalues = m.tvalues;
+    //tvalues = m.tvalues;
 
     global_metaData = m.global_metaData;
     global_Attributes = m.global_Attributes;
@@ -88,7 +89,7 @@ Mesh::Mesh(Mesh&& m) noexcept {
     triangles = std::move(m.triangles);
     normals = std::move(m.normals);
     pvalues = std::move(m.pvalues);
-    tvalues = std::move(m.tvalues);
+    //tvalues = std::move(m.tvalues);
 
     global_metaData = std::move(m.global_metaData);
     global_Attributes = std::move(m.global_Attributes);
@@ -105,7 +106,7 @@ Mesh& Mesh::operator=(Mesh&& m) noexcept {
     triangles = std::move(m.triangles);
     normals = std::move(m.normals);
     pvalues = std::move(m.pvalues);
-    tvalues = std::move(m.tvalues);
+    //tvalues = std::move(m.tvalues);
 
     global_metaData = std::move(m.global_metaData);
     global_Attributes = std::move(m.global_Attributes);
@@ -149,10 +150,10 @@ Point Mesh::local_normal(int pt) const {
 void Mesh::estimate_normals() {
 
     normals.clear();
-    normals.reserve(points.size());
+    normals.resize(points.size());
 
-    for (int i = 0; i < (int)points.size(); i++)
-        normals.emplace_back(local_normal(i));
+    for (int i = 0; i < points.size(); i++)
+        normals[i] = local_normal(i);
 }
 
 std::vector<float> Mesh::getPointsAsVectors() const {
@@ -265,15 +266,14 @@ void Mesh::initialize_pvalues(int dim, bool appendFieldData) {
 
 double Mesh::calculate_MaxVD() const {
 
-    double dist, MaxVD = std::numeric_limits<double>::lowest();
-    const double RAD = 100.0;
+    double MaxVD = std::numeric_limits<double>::lowest();
 
     for (long unsigned int i = 0; i < points.size(); i++)
     {
         Point control_point = points[i]->get_coord();
         for (auto it = nbegin(i); it != nend(i); it++)
         {
-            dist = 2 * RAD * asin((control_point - get_coord(*it)).norm() / (2 * RAD));
+            double dist = 2 * RAD * asin((control_point - get_coord(*it)).norm() / (2 * RAD));
             if(dist > MaxVD) MaxVD = dist;
         }
     }
@@ -360,7 +360,7 @@ void Mesh::load_gifti(const std::string &filename, const bool loadSurfaceData, c
 
     if (!appendFieldData) {
         pvalues.clear();
-        tvalues.clear();
+        //tvalues.clear();
     }
 
     if (loadSurfaceData) {
@@ -393,8 +393,7 @@ void Mesh::load_gifti(const std::string &filename, const bool loadSurfaceData, c
                 tmp_pvalues.push_back(dim.fScalar(point));
             }
             pvalues.push_back(tmp_pvalues);
-        } else if (dim.getDim(0) ==
-                   (int) triangles.size()) {
+        } else if (dim.getDim(0) == (int) triangles.size()) {
             std::vector<float> tmp_tvalues;
             for (point = 0; point < dim.getDim(0); point++) {
                 tmp_tvalues.push_back(dim.fScalar(point));
@@ -472,7 +471,7 @@ void Mesh::load_ascii(const std::string &filename, const bool loadSurfaceData,
 
     if (!appendFieldData) {
         pvalues.clear();
-        tvalues.clear();
+        //tvalues.clear();
     }
 
     std::ifstream f(filename.c_str());
@@ -507,10 +506,12 @@ void Mesh::load_ascii(const std::string &filename, const bool loadSurfaceData,
         }
         //reading the triangles
 
+        /*
         if (!loadSurfaceData) {
-            std::vector<float> tmp_tvalues(NFaces, 0);
-            tvalues.push_back(tmp_tvalues);
+            //std::vector<float> tmp_tvalues(NFaces, 0);
+            //tvalues.push_back(tmp_tvalues);
         }
+         */
 
         for (int i = 0; i < NFaces; i++) {
             int p0, p1, p2;
@@ -520,12 +521,12 @@ void Mesh::load_ascii(const std::string &filename, const bool loadSurfaceData,
             if (loadSurfaceData) {
                 Triangle t(points[p0], points[p1], points[p2], i);
                 push_triangle(t);
-            } else tvalues[tvalues.size() - 1][i] = val;
+            } //else tvalues[tvalues.size() - 1][i] = val;
         }
         f.close();
     } else {
         std::cout << "Mesh::load_ascii:error opening file: " << filename << std::endl;
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 }
 
@@ -560,8 +561,8 @@ void Mesh::load_ascii_file(const std::string &filename) { //load a freesurfer as
         }
         pvalues.push_back(tmp_pvalues);
 
-        std::vector<float> tmp_tvalues;
-        tvalues.push_back(tmp_tvalues);
+        //std::vector<float> tmp_tvalues;
+        //tvalues.push_back(tmp_tvalues);
 
         for (int i = 0; i < NFaces; i++) {
             int p0, p1, p2;
@@ -569,9 +570,9 @@ void Mesh::load_ascii_file(const std::string &filename) { //load a freesurfer as
             f >> p0 >> p1 >> p2 >> val;
             Triangle t(points[p0], points[p1], points[p2], i);
             push_triangle(t);
-            tmp_tvalues.push_back(val);
+            //tmp_tvalues.push_back(val);
         }
-        tvalues.push_back(tmp_tvalues);
+        //tvalues.push_back(tmp_tvalues);
         f.close();
 
     } else {
@@ -757,9 +758,9 @@ void Mesh::save_ascii(const std::string &s) const {
             ptcount++;
         }
         for (unsigned int i = 0; i < triangles.size(); i++) {
-            float val;
-            if (tvalues.empty()) val = 0;
-            else val = tvalues[0][i]; // value of first column
+            const float val = 0.0;
+            //if (tvalues.empty()) val = 0;
+            //else val = tvalues[0][i]; // value of first column
 
             flot << triangles[i].get_vertex(0).get_no() << " "
                  << triangles[i].get_vertex(1).get_no() << " "
@@ -838,28 +839,42 @@ void Mesh::clear() {
     points.clear();
     triangles.clear();
     pvalues.clear();
-    tvalues.clear();
+    //tvalues.clear();
 }
 
 void Mesh::clear_data() {
     pvalues.clear();
-    tvalues.clear();
+    //tvalues.clear();
 }
 
-const Point &Mesh::get_coord(int n) const {
-    if (n >= (int) points.size() || n < 0 || points.empty())
+const Point& Mesh::get_coord(int n) const {
+    if (n >= (int) points.size() || n < 0)
         throw MeshException("get_coord: index exceeds data dimensions");
-    else return points[n]->get_coord();
+    return points[n]->get_coord();
+}
+
+const Mpoint& Mesh::get_point(int n) const {
+    if (n >= (int) points.size() || n < 0)
+        throw MeshException("get_point: index exceeds data dimensions");
+    return *points[n];
+}
+
+double Mesh::get_triangle_area(int tID) const {
+    if(tID >= triangles.size() || tID < 0)
+        throw MeshException("get_triangle_area: invalid index");
+    return triangles[tID].get_area();
 }
 
 float Mesh::get_pvalue(int i, int dim) const {
-    if (dim >= (int) pvalues.size() || (int) pvalues[dim].size() < i)
+    if (dim >= (int) pvalues.size() || dim < 0)
+        throw MeshException("get_pvalue: invalid dimension");
+    if ((int) pvalues[dim].size() < i || i < 0)
         throw MeshException("get_pvalue: index exceeds data dimensions");
     return pvalues[dim][i];
 }
 
 int Mesh::get_total_triangles(int i) const {
-    if (i >= (int) points.size() || points.empty())
+    if (i >= (int) points.size() || i < 0)
         throw MeshException("get_coord: index exceeds data dimensions");
     return points[i]->ntriangles();
 }
@@ -955,19 +970,12 @@ Point Mesh::estimate_origin() const {
 
 NEWMAT::Matrix Mesh::get_pvalues() const {
 
-    NEWMAT::Matrix M(0,0);
+    NEWMAT::Matrix M((int)pvalues.size(), (int)points.size());
 
-    if(!pvalues.empty())
-    {
-        M.ReSize(pvalues.size(), pvalues[0].size());
-        for(unsigned int dim = 0; dim < pvalues.size(); dim++)
-        {
-            if (pvalues[dim].size() != pvalues[0].size())
-                throw MeshException("get_pvalues: inconsistent dimensions");
-            for (unsigned int i = 0; i < pvalues[dim].size(); i++)
-                M(dim + 1, i + 1) = pvalues[dim][i];
-        }
-    }
+    for (int dim = 0; dim < pvalues.size(); dim++)
+        for (int i = 0; i < pvalues[dim].size(); i++)
+            M(dim + 1, i + 1) = pvalues[dim][i];
+
     return M;
 }
 
@@ -1256,8 +1264,10 @@ Mesh make_mesh_from_icosa(int n) {
     std::vector<float> tmp_pvalues(ret.nvertices(), 0);
     ret.push_pvalues(tmp_pvalues);
 
+    /*
     std::vector<float> tmp_tvalues(ret.ntriangles(), 0);
     ret.push_tvalues(tmp_tvalues);
+    */
 
     return ret;
 }
@@ -1324,7 +1334,7 @@ void recentre(Mesh& sphere) {
 Mesh create_exclusion(const Mesh& data_mesh, float thrl, float thru) {
 
     Mesh EXCL = data_mesh;
-    const double EPSILON = 1.0E-8;
+    //const double EPSILON = 1.0E-8;
 
     for (int i = 0; i < data_mesh.npvalues(); i++)
     {

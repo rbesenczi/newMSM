@@ -39,10 +39,10 @@ class Mpoint {
 public:
     Mpoint() = default;
     Mpoint(double x, double y, double z, int counter) : coord(Point(x, y, z)), no(counter) {}
-    Mpoint(const Point p, int counter) : coord(p), no(counter) {}
+    Mpoint(const Point& p, int counter) : coord(p), no(counter) {}
 
     //---ACCESS---//
-    const Point& get_coord() const { return coord; }
+    inline const Point& get_coord() const { return coord; }
     int get_no() const { return no; }
     int ntriangles() const { return (int) trID.size(); }
     int nneighbours() const { return (int) nID.size(); }
