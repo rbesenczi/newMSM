@@ -1,5 +1,6 @@
 #include "msmOptions.h"
 #include "NewMeshReg/group_mesh_registration.h"
+#include "NewMeshReg/group_coregistration.h"
 
 msmOptions *msmOptions::gopt = nullptr;
 
@@ -33,6 +34,23 @@ int main(int argc, char *argv[]) try {
         GMR.set_data_list(opts.data.value());
 
         GMR.run_multiresolutions(opts.parameters.value());
+    }
+    if(opts.cogroup.value())
+    {
+        std::cout << "coGroup mode selected" << std::endl;
+        newmeshreg::Group_coregistration GCR;
+        if (opts.printoptions.value()) GCR.print_config_options();
+        if (opts.verbose.value()) GCR.set_verbosity(opts.verbose.value());
+        if (opts.debug.value()) GCR.set_debug(opts.debug.value());
+        GCR.set_outdir(opts.outbase.value());
+
+        GCR.set_warps(opts.meshesA.value(), opts.meshesB.value());
+        GCR.set_meshes(opts.meshA.value(), opts.meshB.value());
+
+        GCR.set_data(opts.meanA.value(), opts.meanB.value());
+        GCR.set_template(opts.templatemesh.value());
+
+        //GCR.run_multiresolutions(opts.parameters.value());
     }
     else
     {
