@@ -22,8 +22,6 @@ SOFTWARE.
 #include "newresampler/resampler.h"
 #include <boost/program_options.hpp>
 
-#define RAD 100
-
 void resample_mesh(const std::string& in_anat_name, const std::string& in_sphere_name, 
         int ico_dim, const std::string& output_name) { 
 

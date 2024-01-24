@@ -24,8 +24,6 @@ SOFTWARE.
 #include <boost/program_options.hpp>
 #include <memory>
 
-#define RAD 100
-
 void smooth(const std::string& in_sphere_name, const std::string& data_name, 
         double sigma, const std::string& output_name) {
     //tests data smoothing on the same mesh

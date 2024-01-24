@@ -24,8 +24,6 @@ SOFTWARE.
 #include <boost/program_options.hpp>
 #include <memory>
 
-#define RAD 100
-
 void resample_mesh(const std::string& in_sphere_name, const std::string& data_name, 
         int ico_dim, const std::string& output_name) {
 
