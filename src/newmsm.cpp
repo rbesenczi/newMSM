@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) try {
         GCR.set_data(opts.meanA.value(), opts.meanB.value());
         GCR.set_template(opts.templatemesh.value());
 
-        //GCR.run_multiresolutions(opts.parameters.value());
+        GCR.run_multiresolutions(opts.parameters.value());
     }
     else
     {

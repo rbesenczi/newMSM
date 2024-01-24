@@ -156,6 +156,7 @@ public:
     inline bool is_triclique() const { return m_triclique; }
 
     virtual void applyLabeling();
+    virtual void set_warps(const std::vector<newresampler::Mesh>& warps_A, const std::vector<newresampler::Mesh>& warps_B) {}
 
 protected:
     newresampler::Mesh m_TARGET; // TARGET MESH

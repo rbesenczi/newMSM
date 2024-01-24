@@ -212,6 +212,7 @@ public:
 
     //---UTILITY---//
     bool within_controlpt_range(int CPindex, int sourceindex);
+    virtual void set_warps(const std::vector<newresampler::Mesh>& warps_A, const std::vector<newresampler::Mesh>& warps_B) {}
 };
 
 class UnivariateNonLinearSRegDiscreteCostFunction: public NonLinearSRegDiscreteCostFunction {

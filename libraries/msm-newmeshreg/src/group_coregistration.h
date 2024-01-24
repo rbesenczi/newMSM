@@ -2,6 +2,7 @@
 #define NEWMESHREG_GROUPCOMESHREG_H
 
 #include "mesh_registration.h"
+#include "DiscreteGroupCoModel.h"
 
 namespace newmeshreg {
 
@@ -16,12 +17,11 @@ class Group_coregistration : public Mesh_registration {
 public:
 
     void initialize_level(int current_lvl) override;
-    /*
     void evaluate() override;
-    void transform(const std::string& filename) override;
     void run_discrete_opt() override;
+    void transform(const std::string& filename) override;
     void save_transformed_data(const std::string& filename) override;
-    */
+    void init_warps(int level);
 
     inline void set_warps(const std::string& warps_A, const std::string& warps_B) {
         std::vector<std::string> meshlist_A = read_ascii_list(warps_A);
