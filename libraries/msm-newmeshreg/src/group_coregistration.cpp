@@ -2,7 +2,6 @@
 
 namespace newmeshreg {
 
-
 void Group_coregistration::initialize_level(int current_lvl) {
 
     check();
@@ -27,13 +26,12 @@ void Group_coregistration::initialize_level(int current_lvl) {
     newresampler::recentre(control);
     newresampler::true_rescale(control, RAD);
 
-    init_warps(current_lvl);
+    control_warps = init_warps(current_lvl);
 
     model = std::make_shared<DiscreteGroupCoModel>(PARAMETERS);
     if(_debug) model->set_debug();
     model->set_featurespace(FEAT);
     model->set_meshspace(templ, SPH_orig, 2);
-    model->set_warps(warpsA, warpsB);
     model->Initialize(control);
 }
 
@@ -42,8 +40,11 @@ void Group_coregistration::evaluate() {
     if (level == 1)
         PAIR_SPH_REG.resize(2, SPH_orig);
     else
-        for (int subject = 0; subject < 2; subject++)
+        for (int subject = 0; subject < 2; subject++) {
             PAIR_SPH_REG[subject] = project_CPgrid(SPH_orig, PAIR_SPH_REG[subject], subject);
+            for (int warp = 0; warp < warps[subject].size(); warp++)
+                warps[subject][warp] = project_CPgrid(MESHES[subject], control_warps[subject][warp], subject);
+        }
 
     run_discrete_opt();
 
@@ -61,6 +62,7 @@ void Group_coregistration::run_discrete_opt() {
 
     for(int iter = 1; iter <= std::get<int>(PARAMETERS.find("iters")->second); iter++)
     {
+        model->set_warps(control_warps);
         model->setupCostFunction();
 
 #ifdef HAS_HOCR
@@ -89,9 +91,17 @@ void Group_coregistration::run_discrete_opt() {
             unfold(transformed_controlgrid, _verbose);
             newresampler::barycentric_mesh_interpolation(PAIR_SPH_REG[subject], previous_controlgrids[subject], transformed_controlgrid, _numthreads);
             unfold(PAIR_SPH_REG[subject], _verbose);
+
+            for(int warp = 0; warp < warps[subject].size(); ++warp)
+            {
+                newresampler::barycentric_mesh_interpolation(control_warps[subject][warp], previous_controlgrids[subject], transformed_controlgrid);
+                unfold(control_warps[subject][warp]);
+            }
+
             previous_controlgrids[subject] = transformed_controlgrid;
             model->reset_CPgrid(transformed_controlgrid, subject);
             model->reset_meshspace(PAIR_SPH_REG[subject], subject);
+
         }
         energy = newenergy;
     }
@@ -112,19 +122,31 @@ void Group_coregistration::save_transformed_data(const std::string &filename) {
         newmeshreg::set_data(DATAlist[subject], data, MESHES[subject]);
         newresampler::metric_resample(MESHES[subject], templ, _numthreads).save(filename + "transformed_and_reprojected-" + std::to_string(subject) + _dataformat);
     }
+    save_warps();
 }
 
-void Group_coregistration::init_warps(int level) {
+std::vector<std::vector<newresampler::Mesh>> Group_coregistration::init_warps(int level) {
+
+    std::vector<std::vector<newresampler::Mesh>> control_warps(2);
+    control_warps[0].resize(warps[0].size());
+    control_warps[1].resize(warps[1].size());
 
     newresampler::Mesh new_ico = newresampler::make_mesh_from_icosa(_gridres[level]);
     newresampler::recentre(new_ico);
     newresampler::true_rescale(new_ico, RAD);
 
-    for (auto &warp: warpsA)
-        warp = newresampler::surface_resample(warp, MESHES[0], new_ico);
+    for (int group = 0; group < 2; group++)
+        for (int warp = 0; warp < warps[group].size(); warp++)
+            control_warps[group][warp] = newresampler::surface_resample(warps[group][warp], MESHES[group], new_ico);
 
-    for (auto &warp: warpsB)
-        warp = newresampler::surface_resample(warp, MESHES[1], new_ico);
+    return control_warps;
 }
 
+void Group_coregistration::save_warps() {
+
+    for(int group = 0; group < 2; group++)
+        for(int warp = 0; warp < warps[group].size(); warp++)
+            warps[group][warp].save(_outdir + "sphere-" + std::to_string(group) + '.' + std::to_string(warp) + ".reg." + _surfformat);
 }
+
+} //namespace newmeshreg

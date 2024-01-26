@@ -13,8 +13,8 @@ class DiscreteGroupCoModel : public NonLinearSRegDiscreteModel {
     std::vector<newresampler::Mesh> m_controlmeshes;
     newresampler::Mesh m_template;
     std::vector<NEWMAT::ColumnVector> spacings;
-    std::vector<newresampler::Mesh> warpsA;
-    std::vector<newresampler::Mesh> warpsB;
+    std::vector<std::vector<newresampler::Mesh>> warps;
+    std::vector<std::vector<std::vector<NEWMAT::Matrix>>> warp_rotations;
 
     int m_num_subjects = 0;
     int control_grid_size = 0;
@@ -28,9 +28,8 @@ public:
         costfct->set_parameters(p);
     }
 
-    void set_warps(const std::vector<newresampler::Mesh>& warps_A, const std::vector<newresampler::Mesh>& warps_B) override {
-        warpsA = warps_A;
-        warpsB = warps_B;
+    void set_warps(const std::vector<std::vector<newresampler::Mesh>>& ws) override {
+        warps = ws;
     }
 
     void set_meshspace(const newresampler::Mesh& target, const newresampler::Mesh& source, int num) override {
@@ -72,7 +71,6 @@ public:
     void get_rotations() override;
     void setupCostFunction() override;
 };
-
 
 } //namespace newmeshreg
 

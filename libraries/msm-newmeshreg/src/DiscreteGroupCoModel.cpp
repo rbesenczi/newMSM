@@ -61,9 +61,21 @@ void DiscreteGroupCoModel::get_rotations() {
     #pragma omp parallel for num_threads(_nthreads)
     for (int subject = 0; subject < m_num_subjects; subject++)
         for (int vertex = 0; vertex < control_grid_size; vertex++)
-            m_ROT[subject * control_grid_size + vertex] = estimate_rotation_matrix(centre,
-                                                                                   m_controlmeshes[subject].get_coord(
-                                                                                           vertex));
+            m_ROT[subject * control_grid_size + vertex] =
+                    newresampler::estimate_rotation_matrix(centre,m_controlmeshes[subject].get_coord(vertex));
+
+    warp_rotations.clear();
+    warp_rotations.resize(2);
+    warp_rotations[0].resize(warps[0].size());
+    warp_rotations[1].resize(warps[1].size());
+
+    for (int group = 0; group < 2; group++)
+        for (int subject = 0; subject < warps[group].size(); subject++) {
+            warp_rotations[group][subject].resize(control_grid_size);
+            for (int vertex = 0; vertex < control_grid_size; vertex++)
+                warp_rotations[group][subject][vertex] =
+                        newresampler::estimate_rotation_matrix(centre,warps[group][subject].get_coord(vertex));
+        }
 }
 
 void DiscreteGroupCoModel::get_patch_data() {
@@ -138,7 +150,6 @@ void DiscreteGroupCoModel::Initialize(const newresampler::Mesh &controlgrid) {
     estimate_triplets();
 
     costfct->set_meshes(m_datameshes, controlgrid, m_num_subjects);
-    costfct->set_warps(warpsA, warpsB);
 }
 
 void DiscreteGroupCoModel::setupCostFunction() {
@@ -162,6 +173,8 @@ void DiscreteGroupCoModel::setupCostFunction() {
     m_num_labels = (int) m_labels.size();
 
     costfct->set_labels(m_labels, m_ROT);
+    costfct->set_warp_rotations(warp_rotations);
+    costfct->set_warps(warps);
 
     get_patch_data();
 

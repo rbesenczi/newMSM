@@ -9,9 +9,8 @@ namespace newmeshreg {
 class Group_coregistration : public Mesh_registration {
 
     std::vector<newresampler::Mesh> PAIR_SPH_REG;
-    std::vector<newresampler::Mesh> warpsA;
-    std::vector<newresampler::Mesh> warpsB;
-    int num_subjects_A = 0, num_subjects_B = 0;
+    std::vector<std::vector<newresampler::Mesh>> warps;
+    std::vector<std::vector<newresampler::Mesh>> control_warps;
     newresampler::Mesh templ;
 
 public:
@@ -21,29 +20,28 @@ public:
     void run_discrete_opt() override;
     void transform(const std::string& filename) override;
     void save_transformed_data(const std::string& filename) override;
-    void init_warps(int level);
+    std::vector<std::vector<newresampler::Mesh>> init_warps(int level);
+    void save_warps();
 
     inline void set_warps(const std::string& warps_A, const std::string& warps_B) {
         std::vector<std::string> meshlist_A = read_ascii_list(warps_A);
-        num_subjects_A = meshlist_A.size();
-        warpsA.clear();
-        warpsA.resize(num_subjects_A);
-        for (int subject = 0; subject < num_subjects_A; ++subject) {
+        std::vector<std::string> meshlist_B = read_ascii_list(warps_B);
+        warps.clear();
+        warps.resize(2);
+        warps[0].resize(meshlist_A.size());
+        warps[1].resize(meshlist_B.size());
+        for (int subject = 0; subject < meshlist_A.size(); subject++) {
             if(_verbose) std::cout << "warp_A #" << subject << " is " << meshlist_A[subject] << std::endl;
-            warpsA[subject].load(meshlist_A[subject]);
-            recentre(warpsA[subject]);
-            true_rescale(warpsA[subject], RAD);
+            warps[0][subject].load(meshlist_A[subject]);
+            recentre(warps[0][subject]);
+            true_rescale(warps[0][subject], RAD);
         }
 
-        std::vector<std::string> meshlist_B = read_ascii_list(warps_B);
-        num_subjects_B = meshlist_B.size();
-        warpsB.clear();
-        warpsB.resize(num_subjects_B);
-        for (int subject = 0; subject < num_subjects_B; ++subject) {
+        for (int subject = 0; subject < meshlist_B.size(); subject++) {
             if(_verbose) std::cout << "warp_B #" << subject << " is " << meshlist_B[subject] << std::endl;
-            warpsB[subject].load(meshlist_B[subject]);
-            recentre(warpsB[subject]);
-            true_rescale(warpsB[subject], RAD);
+            warps[1][subject].load(meshlist_B[subject]);
+            recentre(warps[1][subject]);
+            true_rescale(warps[1][subject], RAD);
         }
     }
 
