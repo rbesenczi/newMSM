@@ -30,7 +30,17 @@ double DiscreteGroupCoCostFunction::computeTripletCost(int triplet, int labelA, 
                                                                 std::shared_ptr<NEWMAT::ColumnVector>(), _k_exp),_rexp);
     }
 
-    return *(std::max_element(subject_costs.begin(), subject_costs.end()));
+    double mean_reg_cost = std::accumulate(subject_costs.begin(), subject_costs.end(), 0.0) / subject_costs.size();
+    double max_reg_cost = *(std::max_element(subject_costs.begin(), subject_costs.end()));
+/*
+    std::cout <<
+        "Mean regcost==" << mean_reg_cost <<
+        " Max regcost==" << max_reg_cost << '\t';
+    for(const auto& e: subject_costs)
+        std::cout << e << ' ';
+    std::cout << std::endl;
+*/
+    return _reglambda * mean_reg_cost + 0.2 * max_reg_cost;
 }
 
 double DiscreteGroupCoCostFunction::computePairwiseCost(int pair, int labelA, int labelB) {

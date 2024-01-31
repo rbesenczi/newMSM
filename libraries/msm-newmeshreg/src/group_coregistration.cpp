@@ -43,7 +43,7 @@ void Group_coregistration::evaluate() {
         for (int subject = 0; subject < 2; subject++) {
             PAIR_SPH_REG[subject] = project_CPgrid(SPH_orig, PAIR_SPH_REG[subject], subject);
             for (int warp = 0; warp < warps[subject].size(); warp++)
-                warps[subject][warp] = project_CPgrid(MESHES[subject], control_warps[subject][warp], subject);
+                control_warps[subject][warp] = project_CPgrid(SPH_orig, control_warps[subject][warp], subject);
         }
 
     run_discrete_opt();
@@ -85,22 +85,22 @@ void Group_coregistration::run_discrete_opt() {
 
         model->applyLabeling();
 
-        for(int subject = 0; subject < 2; subject++)
+        for(int group = 0; group < 2; group++)
         {
-            newresampler::Mesh transformed_controlgrid = model->get_CPgrid(subject);
+            newresampler::Mesh transformed_controlgrid = model->get_CPgrid(group);
             unfold(transformed_controlgrid, _verbose);
-            newresampler::barycentric_mesh_interpolation(PAIR_SPH_REG[subject], previous_controlgrids[subject], transformed_controlgrid, _numthreads);
-            unfold(PAIR_SPH_REG[subject], _verbose);
+            newresampler::barycentric_mesh_interpolation(PAIR_SPH_REG[group], previous_controlgrids[group], transformed_controlgrid, _numthreads);
+            unfold(PAIR_SPH_REG[group], _verbose);
 
-            for(int warp = 0; warp < warps[subject].size(); ++warp)
+            for(int warp = 0; warp < warps[group].size(); ++warp)
             {
-                newresampler::barycentric_mesh_interpolation(control_warps[subject][warp], previous_controlgrids[subject], transformed_controlgrid);
-                unfold(control_warps[subject][warp]);
+                newresampler::barycentric_mesh_interpolation(control_warps[group][warp], previous_controlgrids[group], transformed_controlgrid);
+                unfold(control_warps[group][warp]);
             }
 
-            previous_controlgrids[subject] = transformed_controlgrid;
-            model->reset_CPgrid(transformed_controlgrid, subject);
-            model->reset_meshspace(PAIR_SPH_REG[subject], subject);
+            previous_controlgrids[group] = transformed_controlgrid;
+            model->reset_CPgrid(transformed_controlgrid, group);
+            model->reset_meshspace(PAIR_SPH_REG[group], group);
 
         }
         energy = newenergy;
@@ -145,8 +145,11 @@ std::vector<std::vector<newresampler::Mesh>> Group_coregistration::init_warps(in
 void Group_coregistration::save_warps() {
 
     for(int group = 0; group < 2; group++)
-        for(int warp = 0; warp < warps[group].size(); warp++)
-            warps[group][warp].save(_outdir + "sphere-" + std::to_string(group) + '.' + std::to_string(warp) + ".reg." + _surfformat);
+        for(int warp = 0; warp < warps[group].size(); warp++) {
+            newresampler::barycentric_mesh_interpolation(warps[group][warp], SPH_orig, control_warps[group][warp], _numthreads);
+            warps[group][warp].save(
+                    _outdir + "sphere-" + std::to_string(group) + '.' + std::to_string(warp) + ".reg." + _surfformat);
+        }
 }
 
 } //namespace newmeshreg
