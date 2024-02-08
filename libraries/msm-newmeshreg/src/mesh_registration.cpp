@@ -493,6 +493,9 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
     Utilities::Option<std::vector<float>> lambda(std::string("--lambda"),  floatdefault,
                                       std::string("Lambda parameter - controls contribution of regulariser "),
                                  false, Utilities::requires_argument);
+    Utilities::Option<std::vector<float>> max_dist_pen(std::string("--max_dist_pen"),  floatdefault,
+                                                 std::string("Max_distortion_penalty parameter - control weight for the largest distortion "),
+                                                 false, Utilities::requires_argument);
     Utilities::Option<std::vector<int>> datagrid(std::string("--datagrid"),intdefault,
                                       std::string("DATA grid resolution (default --datagrid=5,5,5). If parameter = 0 then the native mesh is used."),
                                  false, Utilities::requires_argument);
@@ -600,6 +603,7 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
         options.add(sigma_in);
         options.add(sigma_ref);
         options.add(lambda);
+        options.add(max_dist_pen);
         options.add(datagrid);
         options.add(cpgrid);
         options.add(sampgrid);
@@ -693,6 +697,8 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
     {
         cost = optimizer.value();
         _lambda = lambda.value();
+        if(max_dist_pen.set()) max_distortion_penalty = max_dist_pen.value();
+        else max_distortion_penalty.resize(_lambda.size(), 0.5);
         // now check for assignments and else set defaults
         if (simval.set()) _simval = simval.value();
         else _simval.resize(cost.size(), 2);
@@ -782,6 +788,7 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
         std::cout << "\nSimilarity measure per level: "; for(const auto& e : _simval) std::cout << e << ' ';
         std::cout << "\nMax iterations per level: "; for(const auto& e : _iters) std::cout << e << ' ';
         std::cout << "\nLambda regulariser: "; for(const auto& e : _lambda) std::cout << e << ' ';
+        std::cout << "\nMax distortion penalty: "; for(const auto& e : max_distortion_penalty) std::cout << e << ' ';
         std::cout << "\nSigma for in data per level: "; for(const auto& e : _sigma_in) std::cout << e << ' ';
         std::cout << "\nSigma for ref data per level: "; for(const auto& e : _sigma_ref) std::cout << e << ' ';
         std::cout << "\nDatagrid resolution per level: "; for(const auto& e : _genesis) std::cout << e << ' ';
@@ -839,6 +846,7 @@ void Mesh_registration::fix_parameters_for_level(int i) {
 
     PARAMETERS.insert(parameterPair("dOPT", _discreteOPT));
     PARAMETERS.insert(parameterPair("lambda", _lambda[i]));
+    PARAMETERS.insert(parameterPair("max_penalty", max_distortion_penalty[i]));
     PARAMETERS.insert(parameterPair("lambda_pairs", _pairwiselambda));
     PARAMETERS.insert(parameterPair("set_lambda_pairs", _set_group_lambda));
     PARAMETERS.insert(parameterPair("iters", _iters[i]));

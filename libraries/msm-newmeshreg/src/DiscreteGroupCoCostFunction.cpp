@@ -26,21 +26,14 @@ double DiscreteGroupCoCostFunction::computeTripletCost(int triplet, int labelA, 
                                         _ORIG_MESHES[group].get_coord(vertex_1),
                                         _ORIG_MESHES[group].get_coord(vertex_2), 0);
 
-        subject_costs[subject] = _reglambda * MISCMATHS::pow(calculate_triangular_strain(TRI_ORIG,TRI,_mu,_kappa,
+        subject_costs[subject] = MISCMATHS::pow(calculate_triangular_strain(TRI_ORIG,TRI,_mu,_kappa,
                                                                 std::shared_ptr<NEWMAT::ColumnVector>(), _k_exp),_rexp);
     }
 
-    double mean_reg_cost = std::accumulate(subject_costs.begin(), subject_costs.end(), 0.0) / subject_costs.size();
+    double mean_reg_cost = std::accumulate(subject_costs.begin(), subject_costs.end(), 0.0) / (double)subject_costs.size();
     double max_reg_cost = *(std::max_element(subject_costs.begin(), subject_costs.end()));
-/*
-    std::cout <<
-        "Mean regcost==" << mean_reg_cost <<
-        " Max regcost==" << max_reg_cost << '\t';
-    for(const auto& e: subject_costs)
-        std::cout << e << ' ';
-    std::cout << std::endl;
-*/
-    return _reglambda * mean_reg_cost + 0.2 * max_reg_cost;
+
+    return _reglambda * (mean_reg_cost + max_distortion_penalty * max_reg_cost);
 }
 
 double DiscreteGroupCoCostFunction::computePairwiseCost(int pair, int labelA, int labelB) {

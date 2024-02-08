@@ -26,8 +26,6 @@ void Group_coregistration::initialize_level(int current_lvl) {
     newresampler::recentre(control);
     newresampler::true_rescale(control, RAD);
 
-    control_warps = init_warps(current_lvl);
-
     model = std::make_shared<DiscreteGroupCoModel>(PARAMETERS);
     if(_debug) model->set_debug();
     model->set_featurespace(FEAT);
@@ -37,8 +35,10 @@ void Group_coregistration::initialize_level(int current_lvl) {
 
 void Group_coregistration::evaluate() {
 
-    if (level == 1)
+    if (level == 1) {
         PAIR_SPH_REG.resize(2, SPH_orig);
+        control_warps = init_warps();
+    }
     else
         for (int subject = 0; subject < 2; subject++) {
             PAIR_SPH_REG[subject] = project_CPgrid(SPH_orig, PAIR_SPH_REG[subject], subject);
@@ -94,7 +94,7 @@ void Group_coregistration::run_discrete_opt() {
 
             for(int warp = 0; warp < warps[group].size(); ++warp)
             {
-                newresampler::barycentric_mesh_interpolation(control_warps[group][warp], previous_controlgrids[group], transformed_controlgrid);
+                newresampler::barycentric_mesh_interpolation(control_warps[group][warp], previous_controlgrids[group], transformed_controlgrid, _numthreads);
                 unfold(control_warps[group][warp]);
             }
 
@@ -125,19 +125,19 @@ void Group_coregistration::save_transformed_data(const std::string &filename) {
     save_warps();
 }
 
-std::vector<std::vector<newresampler::Mesh>> Group_coregistration::init_warps(int level) {
+std::vector<std::vector<newresampler::Mesh>> Group_coregistration::init_warps() {
 
     std::vector<std::vector<newresampler::Mesh>> control_warps(2);
     control_warps[0].resize(warps[0].size());
     control_warps[1].resize(warps[1].size());
 
-    newresampler::Mesh new_ico = newresampler::make_mesh_from_icosa(_gridres[level]);
+    newresampler::Mesh new_ico = newresampler::make_mesh_from_icosa(_gridres[0]);
     newresampler::recentre(new_ico);
     newresampler::true_rescale(new_ico, RAD);
 
     for (int group = 0; group < 2; group++)
         for (int warp = 0; warp < warps[group].size(); warp++)
-            control_warps[group][warp] = newresampler::surface_resample(warps[group][warp], MESHES[group], new_ico);
+            control_warps[group][warp] = newresampler::surface_resample(warps[group][warp], MESHES[group], new_ico, _numthreads);
 
     return control_warps;
 }

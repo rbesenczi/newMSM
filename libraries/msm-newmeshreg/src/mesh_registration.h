@@ -115,6 +115,7 @@ protected:
     std::vector<float> _sigma_ref;      // smoothing of reference
     std::vector<int> _simval; // code determines how similarity is assessed 1 is aleks' correlation measure 2 is conventional correlation 3=SSD 4=NMI 5 alpha entropy
     std::vector<float> _lambda;         // controls regularisation
+    std::vector<float> max_distortion_penalty;         // controls regularisation
     std::vector<float> _threshold;         // controls cut exclusion (2D upper and lower thresholds for defining cut vertices)
     std::vector<int> _iters; // total per resolution level
     std::vector<int> _gridres; // control point grid resolution (for discrete reg)

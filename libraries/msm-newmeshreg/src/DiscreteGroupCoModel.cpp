@@ -26,9 +26,8 @@ void DiscreteGroupCoModel::estimate_pairs() {
         for (int vertex = 0; vertex < control_grid_size; vertex++) {
             newresampler::Point CP = m_controlmeshes[subject_A].get_coord(vertex);
             for (int subject_B = subject_A + 1; subject_B < m_num_subjects; subject_B++) {
-                pairs[2 * pair] = subject_A * control_grid_size + vertex;
-                pairs[2 * pair + 1] =
-                        subject_B * control_grid_size + cp_grid_trees[subject_B]->get_closest_vertex_ID(CP);
+                pairs[2*pair  ] = subject_A * control_grid_size + vertex;
+                pairs[2*pair+1] = subject_B * control_grid_size + cp_grid_trees[subject_B]->get_closest_vertex_ID(CP);
                 pair++;
             }
         }
@@ -39,8 +38,8 @@ void DiscreteGroupCoModel::estimate_triplets() {
     delete[] triplets;
     triplets = new int[3 * m_num_triplets];
 
-    #pragma omp parallel for num_threads(_nthreads)
     for (int subject = 0; subject < m_num_subjects; subject++)
+        #pragma omp parallel for num_threads(_nthreads)
         for (int triangle = 0; triangle < cp_triangles; triangle++) {
             int node_ids[3] =
                     {m_controlmeshes[subject].get_triangle_vertexID(triangle, 0) + subject * control_grid_size,
@@ -58,32 +57,35 @@ void DiscreteGroupCoModel::get_rotations() {
     m_ROT.clear();
     m_ROT.resize(m_num_subjects * control_grid_size);
 
-    #pragma omp parallel for num_threads(_nthreads)
-    for (int subject = 0; subject < m_num_subjects; subject++)
+    for (int subject = 0; subject < m_num_subjects; subject++) {
+        #pragma omp parallel for num_threads(_nthreads)
         for (int vertex = 0; vertex < control_grid_size; vertex++)
             m_ROT[subject * control_grid_size + vertex] =
-                    newresampler::estimate_rotation_matrix(centre,m_controlmeshes[subject].get_coord(vertex));
+                    newresampler::estimate_rotation_matrix(centre, m_controlmeshes[subject].get_coord(vertex));
+    }
 
     warp_rotations.clear();
     warp_rotations.resize(2);
     warp_rotations[0].resize(warps[0].size());
     warp_rotations[1].resize(warps[1].size());
 
-    for (int group = 0; group < 2; group++)
+    for (int group = 0; group < 2; group++) {
+        #pragma omp parallel for num_threads(_nthreads)
         for (int subject = 0; subject < warps[group].size(); subject++) {
             warp_rotations[group][subject].resize(control_grid_size);
             for (int vertex = 0; vertex < control_grid_size; vertex++)
                 warp_rotations[group][subject][vertex] =
-                        newresampler::estimate_rotation_matrix(centre,warps[group][subject].get_coord(vertex));
+                        newresampler::estimate_rotation_matrix(centre, warps[group][subject].get_coord(vertex));
         }
+    }
 }
 
 void DiscreteGroupCoModel::get_patch_data() {
 
     std::vector<std::map<int, float>> patch_data(control_grid_size * m_num_subjects * m_num_labels);
 
-    #pragma omp parallel for num_threads(_nthreads)
-    for (int subject = 0; subject < m_num_subjects; subject++)
+    for (int subject = 0; subject < m_num_subjects; subject++) {
+        #pragma omp parallel for num_threads(_nthreads)
         for (int label = 0; label < m_num_labels; label++) {
             newresampler::Mesh rotated_mesh = m_datameshes[subject];
             rotated_mesh.set_pvalues(FEAT->get_data_matrix(subject));
@@ -108,6 +110,7 @@ void DiscreteGroupCoModel::get_patch_data() {
                 patch_data[subject * control_grid_size * m_num_labels + vertex * m_num_labels + label] = patchdata;
             }
         }
+    }
     costfct->set_patch_data(patch_data);
 }
 

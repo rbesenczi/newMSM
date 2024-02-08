@@ -20,7 +20,7 @@ public:
     void run_discrete_opt() override;
     void transform(const std::string& filename) override;
     void save_transformed_data(const std::string& filename) override;
-    std::vector<std::vector<newresampler::Mesh>> init_warps(int level);
+    std::vector<std::vector<newresampler::Mesh>> init_warps();
     void save_warps();
 
     inline void set_warps(const std::string& warps_A, const std::string& warps_B) {
