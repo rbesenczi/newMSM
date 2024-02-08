@@ -53,7 +53,6 @@ for (( i=0; i<$group_A_size; i++ ))
 do
 	$HOME/fsldev/bin/applywarp \
 	--to_be_deformed=$input_folder/output/$group_A_id/groupwise.$group_A_id.sphere-${subjects_A[$i]}.reg.corrected.surf.gii \
-	--original_sphere=$input_folder/input/$group_A_id/sunet.ico-6.template.surf.gii \
 	--warp=$input_folder/results/cogroup/cogroup.$group_A_id.$group_B_id.sphere-$group_A_id.${subjects_A[$i]}.reg..surf.gii \
 	--output=$input_folder/results/cogroup/cogroup.$group_A_id.${subjects_A[$i]}.
 
@@ -72,7 +71,6 @@ for (( i=0; i<$group_B_size; i++ ))
 do
 	$HOME/fsldev/bin/applywarp \
 	--to_be_deformed=$input_folder/output/$group_B_id/groupwise.$group_B_id.sphere-${subjects_B[$i]}.reg.corrected.surf.gii \
-	--original_sphere=$input_folder/input/$group_B_id/sunet.ico-6.template.surf.gii \
 	--warp=$input_folder/results/cogroup/cogroup.$group_A_id.$group_B_id.sphere-$group_B_id.${subjects_B[$i]}.reg..surf.gii \
 	--output=$input_folder/results/cogroup/cogroup.$group_B_id.${subjects_B[$i]}.
 	

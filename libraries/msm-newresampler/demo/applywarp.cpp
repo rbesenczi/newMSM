@@ -22,19 +22,16 @@ SOFTWARE.
 #include "newresampler/resampler.h"
 #include <boost/program_options.hpp>
 
-void applywarp(const std::string& to_be_def, const std::string& orig_sph,
-               const std::string& warp_sph, const std::string& output_name) {
+void applywarp(const std::string& to_be_def, const std::string& warp_sph, const std::string& output_name) {
 
-    newresampler::Mesh to_be_deformed, original_sphere, warp;
+    newresampler::Mesh to_be_deformed, warp;
     to_be_deformed.load(to_be_def, true, false);
-    original_sphere.load(orig_sph, true, false);
     warp.load(warp_sph, true, false);
 
     newresampler::true_rescale(to_be_deformed,RAD);
-    newresampler::true_rescale(original_sphere, RAD);
     newresampler::true_rescale(warp, RAD);
 
-    newresampler::barycentric_mesh_interpolation(to_be_deformed, original_sphere, warp);
+    newresampler::barycentric_mesh_interpolation(to_be_deformed, to_be_deformed, warp);
 
     to_be_deformed.save(output_name + "-warped.surf");
 }
@@ -46,7 +43,6 @@ try {
     desc.add_options()
             ("help", "This message")
             ("to_be_deformed", boost::program_options::value<std::string>(), "mesh to be deformed")
-            ("original_sphere", boost::program_options::value<std::string>(), "the original sphere the mesh is on")
             ("warp", boost::program_options::value<std::string>(), "the warp to be applied")
             ("output", boost::program_options::value<std::string>(), "output base file name")
             ;
@@ -65,12 +61,6 @@ try {
         exit(EXIT_FAILURE);
     }
 
-    if (!vm.count("original_sphere")) {
-        std::cout << "original_sphere was not set, but required.\n";
-        std::cout << desc << '\n';
-        exit(EXIT_FAILURE);
-    }
-
     if (!vm.count("warp")) {
         std::cout << "warp was not set, but required.\n";
         std::cout << desc << '\n';
@@ -83,8 +73,7 @@ try {
         exit(EXIT_FAILURE);
     }
 
-    applywarp(vm["to_be_deformed"].as<std::string>(), vm["original_sphere"].as<std::string>(),
-              vm["warp"].as<std::string>(), vm["output"].as<std::string>());
+    applywarp(vm["to_be_deformed"].as<std::string>(), vm["warp"].as<std::string>(), vm["output"].as<std::string>());
 
     exit(EXIT_SUCCESS);
 
