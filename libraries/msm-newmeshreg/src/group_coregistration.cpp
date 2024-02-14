@@ -101,7 +101,6 @@ void Group_coregistration::run_discrete_opt() {
             previous_controlgrids[group] = transformed_controlgrid;
             model->reset_CPgrid(transformed_controlgrid, group);
             model->reset_meshspace(PAIR_SPH_REG[group], group);
-
         }
         energy = newenergy;
     }
@@ -127,9 +126,9 @@ void Group_coregistration::save_transformed_data(const std::string &filename) {
 
 std::vector<std::vector<newresampler::Mesh>> Group_coregistration::init_warps() {
 
-    std::vector<std::vector<newresampler::Mesh>> control_warps(2);
-    control_warps[0].resize(warps[0].size());
-    control_warps[1].resize(warps[1].size());
+    std::vector<std::vector<newresampler::Mesh>> c_warps(2);
+    c_warps[0].resize(warps[0].size());
+    c_warps[1].resize(warps[1].size());
 
     newresampler::Mesh new_ico = newresampler::make_mesh_from_icosa(_gridres[0]);
     newresampler::recentre(new_ico);
@@ -137,9 +136,9 @@ std::vector<std::vector<newresampler::Mesh>> Group_coregistration::init_warps() 
 
     for (int group = 0; group < 2; group++)
         for (int warp = 0; warp < warps[group].size(); warp++)
-            control_warps[group][warp] = newresampler::surface_resample(warps[group][warp], MESHES[group], new_ico, _numthreads);
+            c_warps[group][warp] = newresampler::surface_resample(warps[group][warp], MESHES[group], new_ico, _numthreads);
 
-    return control_warps;
+    return c_warps;
 }
 
 void Group_coregistration::save_warps() {
