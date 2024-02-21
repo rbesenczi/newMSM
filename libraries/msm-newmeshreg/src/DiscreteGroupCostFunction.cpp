@@ -44,8 +44,14 @@ double DiscreteGroupCostFunction::computeTripletCost(int triplet, int labelA, in
                                     _ORIG_MESHES[subject].get_coord(vertex_1),
                                     _ORIG_MESHES[subject].get_coord(vertex_2), 0);
 
-    return _reglambda * MISCMATHS::pow(calculate_triangular_strain(TRI_ORIG,TRI,_mu,_kappa,
-                                           std::shared_ptr<NEWMAT::ColumnVector>(), _k_exp),_rexp);
+    double strain_energy = calculate_triangular_strain(TRI_ORIG,TRI,_mu,_kappa,
+                                                       std::shared_ptr<NEWMAT::ColumnVector>(), _k_exp);
+
+    if(fixnan && std::isnan(strain_energy)) {
+        std::cout << "NaN strain." << std::endl;
+        return 1e7;
+    }
+    else return _reglambda * MISCMATHS::pow(strain_energy,_rexp);
 }
 
 double DiscreteGroupCostFunction::computePairwiseCost(int pair, int labelA, int labelB) {
@@ -71,7 +77,13 @@ double DiscreteGroupCostFunction::computePairwiseCost(int pair, int labelA, int 
         }
     }
 
-    return sim.get_sim_for_min(patch_data_A, patch_data_B);
+    double pair_cost = sim.get_sim_for_min(patch_data_A, patch_data_B);
+
+    if(fixnan && std::isnan(pair_cost)) {
+        std::cout << "NaN pairw." << std::endl;
+        return 1e7;
+    }
+    else return pair_cost;
 }
 
 } //namespace newmeshreg

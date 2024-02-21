@@ -542,6 +542,9 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
     Utilities::Option<bool> anorm(std::string("--anorm"), false,
                        std::string("norm regulariser cost using mean angle (for HCP compatibility)"),
                        false, Utilities::no_argument);
+    Utilities::Option<bool> fix_nan(std::string("--fixnan"), false,
+                                  std::string("Fixes possible NaN values in cost function calculation"),
+                            false, Utilities::no_argument);
     Utilities::Option<bool> rescale_labels(std::string("--rescaleL"), false,
                                 std::string("rescale label grid rather than using barycentres"),
                                 false, Utilities::no_argument);
@@ -614,6 +617,7 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
         options.add(tricliquelikeihood);
         options.add(shear);
         options.add(bulk);
+        options.add(fix_nan);
         options.add(grouplambda);
         options.add(kexponent);
         options.add(regulariserexp);
@@ -750,6 +754,7 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
     _regmode=regulariseroption.value();
     _discreteOPT=doptimizer.value();
     _tricliquelikeihood=tricliquelikeihood.value();
+    fixnan=fix_nan.value();
     _shearmod=shear.value();
     _bulkmod=bulk.value();
     _k_exp=kexponent.value();
@@ -858,6 +863,7 @@ void Mesh_registration::fix_parameters_for_level(int i) {
     PARAMETERS.insert(parameterPair("quartet", _quartet));
     PARAMETERS.insert(parameterPair("regularisermode", _regmode));
     PARAMETERS.insert(parameterPair("TriLikelihood", _tricliquelikeihood));
+    PARAMETERS.insert(parameterPair("fixnan", fixnan));
     PARAMETERS.insert(parameterPair("rescalelabels", _rescale_labels));
     PARAMETERS.insert(parameterPair("shearmodulus", _shearmod));
     PARAMETERS.insert(parameterPair("bulkmodulus", _bulkmod));

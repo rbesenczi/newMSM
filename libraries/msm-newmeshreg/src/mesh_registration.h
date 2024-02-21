@@ -133,6 +133,7 @@ protected:
     bool _rescale_labels = false;
     bool _incfw = false;
     bool _refcfw = false;
+    bool fixnan = false;
     float _k_exp = 2.0;
     int _resolutionlevels = 1;  // default 1
     int _regmode = 0; //regulariser option

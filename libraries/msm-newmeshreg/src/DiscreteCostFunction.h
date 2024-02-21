@@ -141,6 +141,7 @@ protected:
     //---REGULARISER OPTIONS---//
     bool _dweight = false;
     bool _anorm = false;
+    bool fixnan = false;
 
     std::vector<std::vector<double>> _sourcedata;
     std::vector<std::vector<double>> _targetdata;

@@ -145,6 +145,7 @@ void NonLinearSRegDiscreteCostFunction::set_parameters(myparam& ALLPARAMS) {
     it=ALLPARAMS.find("max_penalty");max_distortion_penalty=std::get<float>(it->second);
     it=ALLPARAMS.find("weight");_dweight=std::get<bool>(it->second);
     it=ALLPARAMS.find("anorm");_anorm=std::get<bool>(it->second);
+    it=ALLPARAMS.find("fixnan");fixnan=std::get<bool>(it->second);
     it=ALLPARAMS.find("shearmodulus");_mu=std::get<float>(it->second);
     it=ALLPARAMS.find("bulkmodulus");_kappa=std::get<float>(it->second);
     it=ALLPARAMS.find("kexponent");_k_exp=std::get<float>(it->second);
