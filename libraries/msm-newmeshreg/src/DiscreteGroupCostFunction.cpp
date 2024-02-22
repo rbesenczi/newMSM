@@ -47,10 +47,7 @@ double DiscreteGroupCostFunction::computeTripletCost(int triplet, int labelA, in
     double strain_energy = calculate_triangular_strain(TRI_ORIG,TRI,_mu,_kappa,
                                                        std::shared_ptr<NEWMAT::ColumnVector>(), _k_exp);
 
-    if(fixnan && std::isnan(strain_energy)) {
-        std::cout << "NaN strain." << std::endl;
-        return 1e7;
-    }
+    if(fixnan && std::isnan(strain_energy)) return 1e7;
     else return _reglambda * MISCMATHS::pow(strain_energy,_rexp);
 }
 
@@ -79,10 +76,7 @@ double DiscreteGroupCostFunction::computePairwiseCost(int pair, int labelA, int 
 
     double pair_cost = sim.get_sim_for_min(patch_data_A, patch_data_B);
 
-    if(fixnan && std::isnan(pair_cost)) {
-        std::cout << "NaN pairw." << std::endl;
-        return 1e7;
-    }
+    if(fixnan && std::isnan(pair_cost)) return 1e7;
     else return pair_cost;
 }
 
