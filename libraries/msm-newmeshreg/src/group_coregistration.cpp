@@ -147,7 +147,7 @@ void Group_coregistration::save_warps() {
         for(int warp = 0; warp < warps[group].size(); warp++) {
             newresampler::barycentric_mesh_interpolation(warps[group][warp], SPH_orig, control_warps[group][warp], _numthreads);
             warps[group][warp].save(
-                    _outdir + "sphere-" + std::to_string(group) + '.' + std::to_string(warp) + ".reg." + _surfformat);
+                    _outdir + "sphere-" + std::to_string(group) + '.' + std::to_string(warp) + ".reg" + _surfformat);
         }
 }
 

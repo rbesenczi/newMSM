@@ -33,7 +33,7 @@ void applywarp(const std::string& to_be_def, const std::string& warp_sph, const 
 
     newresampler::barycentric_mesh_interpolation(to_be_deformed, to_be_deformed, warp);
 
-    to_be_deformed.save(output_name + "-warped.surf");
+    to_be_deformed.save(output_name + "warped.surf");
 }
 
 int main(int argc, char **argv)
