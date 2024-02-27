@@ -1,32 +1,45 @@
-#/bin/bash
+#! /bin/bash -l
+
+###########################################################
+## The following few lines are for running on CREATE cluster. Ignore it otherwise.
+#SBATCH --partition=cpu
+#SBATCH --time=0-48:00
+#SBATCH --nodes=1
+#SBATCH --mem=65536
+#SBATCH --ntasks=16
+#SBATCH --job-name=cgMSM
+#SBATCH --output=./cgMSM_log.txt
+## how to run on create: $ sbatch run_cgMSM.sh
+###########################################################
 
 dataset=HCP
 workdir=$HOME/groupwise/$dataset
+hierarchy=$HOME/groupwise/data/frontal_hierarchical_path_study.csv
 
-mkdir $workdir/lists
+mkdir $workdir/cg_lists
 
 while IFS="," read -r group_A_id group_B_id root_id
 do
-	group_A_id=${group_A_id}_HPC
-	group_B_id=${group_B_id}_HPC
-	root_node_id=${root_id}_HPC
+	group_A_id=${group_A_id}_${dataset}
+	group_B_id=${group_B_id}_${dataset}
+	root_node_id=${root_id}_${dataset}
 	group_A_list=$workdir/group_lists/$group_A_id.csv
 	group_B_list=$workdir/group_lists/$group_B_id.csv
 
 	subjects_A=( $(cat $group_A_list | cut -d ',' -f1) )
 	subjects_B=( $(cat $group_B_list | cut -d ',' -f1) )
 
-	rm $workdir/lists/mesh_list_$group_A_id.txt
-	rm $workdir/lists/mesh_list_$group_B_id.txt
+	rm $workdir/cg_lists/mesh_list_$group_A_id.txt
+	rm $workdir/cg_lists/mesh_list_$group_B_id.txt
 
 	for subject in "${subjects_A[@]}"
 	do
-		echo "$workdir/output/$group_A_id/groupwise.$group_A_id.sphere-$subject.reg.corrected.surf.gii" >> $workdir/lists/mesh_list_$group_A_id.txt
+		echo "$workdir/output/$group_A_id/groupwise.$group_A_id.sphere-$subject.reg.corrected.surf.gii" >> $workdir/cg_lists/mesh_list_$group_A_id.txt
 	done
 
 	for subject in "${subjects_B[@]}"
 	do
-		echo "$workdir/output/$group_B_id/groupwise.$group_B_id.sphere-$subject.reg.corrected.surf.gii" >> $workdir/lists/mesh_list_$group_B_id.txt
+		echo "$workdir/output/$group_B_id/groupwise.$group_B_id.sphere-$subject.reg.corrected.surf.gii" >> $workdir/cg_lists/mesh_list_$group_B_id.txt
 	done
 
 	mkdir $workdir/output
@@ -39,8 +52,8 @@ do
 		--meanB=$workdir/results/$group_B_id/groupwise.$group_B_id.mean.sulc.affine.dedrifted.ico6.shape.gii \
 		--meshA=$workdir/sunet.ico-6.template.surf.gii \
 		--meshB=$workdir/sunet.ico-6.template.surf.gii \
-		--meshesA=$workdir/lists/mesh_list_$group_A_id.txt \
-		--meshesB=$workdir/lists/mesh_list_$group_B_id.txt \
+		--meshesA=$workdir/cg_lists/mesh_list_$group_A_id.txt \
+		--meshesB=$workdir/cg_lists/mesh_list_$group_B_id.txt \
 		--template=$workdir/sunet.ico-6.template.surf.gii \
 		--conf=$workdir/cgMSM_HCP_config.txt \
 		--out=$workdir/output/$root_node_id/groupwise.$root_node_id. \
@@ -147,4 +160,4 @@ do
 	wb_command -set-structure $workdir/results/$root_node_id/groupwise.$root_node_id.mean.sulc.affine.dedrifted.ico6.shape.gii CORTEX_LEFT
 	wb_command -set-structure $workdir/results/$root_node_id/groupwise.$root_node_id.stdev.sulc.affine.dedrifted.ico6.shape.gii CORTEX_LEFT
 
-done < $HOME/groupwise/data/frontal_hierarchical_path_rem_S.csv
+done < $hierarchy
