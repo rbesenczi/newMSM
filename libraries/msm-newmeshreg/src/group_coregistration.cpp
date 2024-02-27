@@ -39,13 +39,19 @@ void Group_coregistration::evaluate() {
         PAIR_SPH_REG.resize(2, SPH_orig);
         control_warps = init_warps();
     }
-    else
+    else {
+        newresampler::Mesh old_ico = newresampler::make_mesh_from_icosa(_gridres[level-2]);
+        newresampler::recentre(old_ico);
+        newresampler::true_rescale(old_ico, RAD);
+        newresampler::Mesh new_ico = newresampler::make_mesh_from_icosa(_gridres[level-1]);
+        newresampler::recentre(new_ico);
+        newresampler::true_rescale(new_ico, RAD);
         for (int subject = 0; subject < 2; subject++) {
             PAIR_SPH_REG[subject] = project_CPgrid(SPH_orig, PAIR_SPH_REG[subject], subject);
             for (int warp = 0; warp < warps[subject].size(); warp++)
-                control_warps[subject][warp] = project_CPgrid(SPH_orig, control_warps[subject][warp], subject);
+                control_warps[subject][warp] = newresampler::surface_resample(control_warps[subject][warp], old_ico, new_ico, _numthreads);
         }
-
+    }
     run_discrete_opt();
 
     if(_verbose) std::cout << "Exit main algorithm at level " << level << '.' << std::endl;
@@ -142,10 +148,15 @@ std::vector<std::vector<newresampler::Mesh>> Group_coregistration::init_warps() 
 }
 
 void Group_coregistration::save_warps() {
+    auto icotmp = newresampler::make_mesh_from_icosa(_gridres[level-1]);
+    newresampler::true_rescale(icotmp, RAD);
+    newresampler::recentre(icotmp);
 
     for(int group = 0; group < 2; group++)
         for(int warp = 0; warp < warps[group].size(); warp++) {
-            newresampler::barycentric_mesh_interpolation(warps[group][warp], SPH_orig, control_warps[group][warp], _numthreads);
+            auto tmp = newresampler::surface_resample(warps[group][warp], MESHES[group], icotmp, _numthreads);
+
+            newresampler::barycentric_mesh_interpolation(warps[group][warp], tmp, control_warps[group][warp], _numthreads);
             warps[group][warp].save(
                     _outdir + "sphere-" + std::to_string(group) + '.' + std::to_string(warp) + ".reg" + _surfformat);
         }

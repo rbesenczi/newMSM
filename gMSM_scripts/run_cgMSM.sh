@@ -14,7 +14,7 @@
 
 dataset=HCP
 workdir=$HOME/groupwise/$dataset
-hierarchy=$HOME/groupwise/data/frontal_hierarchical_path_study.csv
+hierarchy=$HOME/groupwise/data/frontal_hierarchical_path_study_S.csv
 
 mkdir $workdir/cg_lists
 
@@ -50,12 +50,12 @@ do
 	time $HOME/fsldev/bin/newmsm \
 		--meanA=$workdir/results/$group_A_id/groupwise.$group_A_id.mean.sulc.affine.dedrifted.ico6.shape.gii \
 		--meanB=$workdir/results/$group_B_id/groupwise.$group_B_id.mean.sulc.affine.dedrifted.ico6.shape.gii \
-		--meshA=$workdir/sunet.ico-6.template.surf.gii \
-		--meshB=$workdir/sunet.ico-6.template.surf.gii \
+		--meshA=$workdir/templates/sunet.ico-6.template.surf.gii \
+		--meshB=$workdir/templates/sunet.ico-6.template.surf.gii \
 		--meshesA=$workdir/cg_lists/mesh_list_$group_A_id.txt \
 		--meshesB=$workdir/cg_lists/mesh_list_$group_B_id.txt \
-		--template=$workdir/sunet.ico-6.template.surf.gii \
-		--conf=$workdir/cgMSM_HCP_config.txt \
+		--template=$workdir/templates/sunet.ico-6.template.surf.gii \
+		--conf=$workdir/configs/cgMSM_${dataset}_config.txt \
 		--out=$workdir/output/$root_node_id/groupwise.$root_node_id. \
 		--verbose --cogroup
 
@@ -144,7 +144,7 @@ do
 	for subject in "${all_subjects[@]}"
 	do
 		merge+="-metric $workdir/output/$root_node_id/groupwise.$root_node_id.transformed_and_reprojected.dedrift-$subject.func.gii "
-		wb_command -surface-distortion $workdir/sunet.ico-6.template.surf.gii $workdir/output/$root_node_id/groupwise.$root_node_id.sphere-$subject.reg.corrected.surf.gii $workdir/output/$root_node_id/groupwise.$root_node_id.sphere-$subject.distortion.func.gii -local-affine-method -log2
+		wb_command -surface-distortion $workdir/templates/sunet.ico-6.template.surf.gii $workdir/output/$root_node_id/groupwise.$root_node_id.sphere-$subject.reg.corrected.surf.gii $workdir/output/$root_node_id/groupwise.$root_node_id.sphere-$subject.distortion.func.gii -local-affine-method -log2
 		arealmerge+="-metric $workdir/output/$root_node_id/groupwise.$root_node_id.sphere-$subject.distortion.func.gii -column 1 "
 		shapemerge+="-metric $workdir/output/$root_node_id/groupwise.$root_node_id.sphere-$subject.distortion.func.gii -column 2 "
 	done

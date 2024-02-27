@@ -34,7 +34,7 @@ do
   while IFS="," read -r rec_column1 rec_column2
   do
     echo "$input_folder/$rec_column1.sulc.affine.ico6.shape.gii" >> $workdir/file_lists/input_data_$group_id.txt
-    echo "$workdir/sunet.ico-6.template.surf.gii" >> $workdir/file_lists/input_meshes_$group_id.txt
+    echo "$workdir/templates/sunet.ico-6.template.surf.gii" >> $workdir/file_lists/input_meshes_$group_id.txt
   done < $subject_list
 
   subjects=( $(cat $subject_list | cut -d ',' -f1) )
