@@ -18,10 +18,10 @@ hierarchy=$HOME/groupwise/data/frontal_hierarchical_path_study_S.csv
 
 mkdir $workdir/cg_lists
 
-while IFS="," read -r group_A_id group_B_id root_id
+while IFS="," read -r group_A group_B root_id
 do
-	group_A_id=${group_A_id}_${dataset}
-	group_B_id=${group_B_id}_${dataset}
+	group_A_id=${group_A}_${dataset}
+	group_B_id=${group_B}_${dataset}
 	root_node_id=${root_id}_${dataset}
 	group_A_list=$workdir/group_lists/$group_A_id.csv
 	group_B_list=$workdir/group_lists/$group_B_id.csv
@@ -31,15 +31,18 @@ do
 
 	rm $workdir/cg_lists/mesh_list_$group_A_id.txt
 	rm $workdir/cg_lists/mesh_list_$group_B_id.txt
+	rm $workdir/group_lists/${root_node_id}.csv
 
 	for subject in "${subjects_A[@]}"
 	do
 		echo "$workdir/output/$group_A_id/groupwise.$group_A_id.sphere-$subject.reg.corrected.surf.gii" >> $workdir/cg_lists/mesh_list_$group_A_id.txt
+		echo "$subject,$group_A" >> $workdir/group_lists/${root_node_id}.csv
 	done
 
 	for subject in "${subjects_B[@]}"
 	do
 		echo "$workdir/output/$group_B_id/groupwise.$group_B_id.sphere-$subject.reg.corrected.surf.gii" >> $workdir/cg_lists/mesh_list_$group_B_id.txt
+		echo "$subject,$group_B" >> $workdir/group_lists/${root_node_id}.csv
 	done
 
 	mkdir $workdir/output
