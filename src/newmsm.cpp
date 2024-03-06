@@ -6,7 +6,7 @@ msmOptions *msmOptions::gopt = nullptr;
 
 int main(int argc, char *argv[]) try {
 
-    std::cout << "This is newMSM v0.5.1-BETA." << std::endl;
+    std::cout << "This is newMSM v0.6.1-BETA." << std::endl;
 
     msmOptions &opts = msmOptions::getInstance();
     opts.parse_command_line(argc, argv);
