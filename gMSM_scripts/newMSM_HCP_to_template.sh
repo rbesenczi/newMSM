@@ -18,7 +18,7 @@ outdir=$workdir/output
 num_subjects=$(cat $sublist | wc -l)
 bunch_size=$(( $num_subjects / $parallel_tasks + 1 ))
 
-touch $workdir/newMSM_HCP_to_template.sh
+touch $workdir/HCP_to_template.sh
 mkdir $outdir
 mkdir $workdir/logs
 
@@ -54,7 +54,7 @@ do
 done < <(sed -n \"${from},${to}p\" $sublist)" >> $workdir/HCP_to_template.sh
 
   echo "Submitting job #$(( $bunch + 1 )) to slurm."
-  #sbatch $workdir/newMSM_HCP_to_template.sh
+  #sbatch $workdir/HCP_to_template.sh
 
   if [ $? -ne 0 ];
   then
