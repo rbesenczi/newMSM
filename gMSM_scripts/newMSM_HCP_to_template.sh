@@ -26,7 +26,6 @@ for (( bunch=0; bunch<parallel_tasks; bunch++ ))
 do
   echo "#!/bin/bash -l
 
-###########################################################
 #SBATCH --partition=cpu
 #SBATCH --time=0-12:00
 #SBATCH --nodes=1
@@ -34,13 +33,12 @@ do
 #SBATCH --ntasks=$nthreads
 #SBATCH --job-name=MSM
 #SBATCH --output=${workdir}/logs/HCP_to_template_bunch_${bunch}.txt
-###########################################################" > $workdir/newMSM_HCP_to_template.sh
+" > $workdir/HCP_to_template.sh
 
   from=$(( bunch * bunch_size + 1 ))
   to=$(( from + bunch_size - 1 ))
 
-  echo "
-while IFS=',' read -r subject group
+  echo "while IFS=',' read -r subject group
 do
   echo \"Registering subject \$subject to the template...\"
 
@@ -53,11 +51,10 @@ do
   --out=$outdir/\$subject.MSMSulc.ico6. \\
   --verbose
 
-done < <(sed -n \"${from},${to}p\" $sublist)
-  " >> $workdir/newMSM_HCP_to_template.sh
+done < <(sed -n \"${from},${to}p\" $sublist)" >> $workdir/HCP_to_template.sh
 
   echo "Submitting job #$(( $bunch + 1 )) to slurm."
-  sbatch $workdir/newMSM_HCP_to_template.sh
+  #sbatch $workdir/newMSM_HCP_to_template.sh
 
   if [ $? -ne 0 ];
   then
