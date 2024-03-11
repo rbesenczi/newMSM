@@ -12,54 +12,61 @@
 ## how to run on create: $ sbatch run_cgMSM.sh
 ###########################################################
 
+###########################################################
+## Set the following lines according to your settings and cohort.
 dataset=HCP
 workdir=$HOME/groupwise/$dataset
-hierarchy=$HOME/groupwise/data/frontal_hierarchical_path_study_S.csv
+clustering=$workdir/frontal_subject_clusters_hcp_noline.csv
+hierarchy=$workdir/frontal_hierarchical_path_study_test.csv #NODE1750,NODE1807,NODE2012
 
-mkdir $workdir/cg_lists
+outdir=$workdir/output
+resultdir=$workdir/results
 
-while IFS="," read -r group_A group_B root_id
+###########################################################
+
+while IFS="," read -r group_A_id group_B_id root_node_id
 do
-	group_A_id=${group_A}_${dataset}
-	group_B_id=${group_B}_${dataset}
-	root_node_id=${root_id}_${dataset}
-	group_A_list=$workdir/group_lists/$group_A_id.csv
-	group_B_list=$workdir/group_lists/$group_B_id.csv
+	subjects_A=()
+	subjects_B=()
 
-	subjects_A=( $(cat $group_A_list | cut -d ',' -f1) )
-	subjects_B=( $(cat $group_B_list | cut -d ',' -f1) )
+	while IFS="," read -r subject group
+	do
+		if [ $group_A_id = $group ]; then
+			subjects_A+=($subject)
+		fi
+		if [ $group_B_id = $group ]; then
+			subjects_B+=($subject)
+		fi
+	done < $clustering
 
-	rm $workdir/cg_lists/mesh_list_$group_A_id.txt
-	rm $workdir/cg_lists/mesh_list_$group_B_id.txt
-	rm $workdir/group_lists/${root_node_id}.csv
+	rm $workdir/file_lists/mesh_list_$group_A_id.txt
+	rm $workdir/file_lists/mesh_list_$group_B_id.txt
 
 	for subject in "${subjects_A[@]}"
 	do
-		echo "$workdir/output/$group_A_id/groupwise.$group_A_id.sphere-$subject.reg.corrected.surf.gii" >> $workdir/cg_lists/mesh_list_$group_A_id.txt
-		echo "$subject,$group_A" >> $workdir/group_lists/${root_node_id}.csv
+		echo "$outdir/$group_A_id/groupwise.$group_A_id.sphere-$subject.reg.corrected.surf.gii" >> $workdir/file_lists/mesh_list_$group_A_id.txt
 	done
 
 	for subject in "${subjects_B[@]}"
 	do
-		echo "$workdir/output/$group_B_id/groupwise.$group_B_id.sphere-$subject.reg.corrected.surf.gii" >> $workdir/cg_lists/mesh_list_$group_B_id.txt
-		echo "$subject,$group_B" >> $workdir/group_lists/${root_node_id}.csv
+		echo "$outdir/$group_B_id/groupwise.$group_B_id.sphere-$subject.reg.corrected.surf.gii" >> $workdir/file_lists/mesh_list_$group_B_id.txt
 	done
 
-	mkdir $workdir/output
-	mkdir $workdir/output/$root_node_id
-	mkdir $workdir/results
-	mkdir $workdir/results/$root_node_id
+	mkdir $outdir
+	mkdir $outdir/$root_node_id
+	mkdir $resultdir
+	mkdir $resultdir/$root_node_id
 
 	time $HOME/fsldev/bin/newmsm \
-		--meanA=$workdir/results/$group_A_id/groupwise.$group_A_id.mean.sulc.affine.dedrifted.ico6.shape.gii \
-		--meanB=$workdir/results/$group_B_id/groupwise.$group_B_id.mean.sulc.affine.dedrifted.ico6.shape.gii \
+		--meanA=$resultdir/$group_A_id/groupwise.$group_A_id.mean.sulc.affine.dedrifted.ico6.shape.gii \
+		--meanB=$resultdir/$group_B_id/groupwise.$group_B_id.mean.sulc.affine.dedrifted.ico6.shape.gii \
 		--meshA=$workdir/templates/sunet.ico-6.template.surf.gii \
 		--meshB=$workdir/templates/sunet.ico-6.template.surf.gii \
-		--meshesA=$workdir/cg_lists/mesh_list_$group_A_id.txt \
-		--meshesB=$workdir/cg_lists/mesh_list_$group_B_id.txt \
+		--meshesA=$workdir/file_lists/mesh_list_$group_A_id.txt \
+		--meshesB=$workdir/file_lists/mesh_list_$group_B_id.txt \
 		--template=$workdir/templates/sunet.ico-6.template.surf.gii \
-		--conf=$workdir/configs/cgMSM_${dataset}_config.txt \
-		--out=$workdir/output/$root_node_id/groupwise.$root_node_id. \
+		--conf=$workdir/configs/cgMSM_config.txt \
+		--out=$outdir/$root_node_id/groupwise.$root_node_id. \
 		--verbose --cogroup
 
 	if [ $? -ne 0 ]; then
@@ -69,49 +76,49 @@ do
 	index=0
 	for subject in "${subjects_A[@]}"
 	do
-		wb_command -set-structure $workdir/output/$root_node_id/groupwise.$root_node_id.sphere-0.$index.reg.surf.gii CORTEX_LEFT
-		mv $workdir/output/$root_node_id/groupwise.$root_node_id.sphere-0.$index.reg.surf.gii $workdir/output/$root_node_id/groupwise.$root_node_id.sphere.$subject.deformation.surf.gii
+		wb_command -set-structure $outdir/$root_node_id/groupwise.$root_node_id.sphere-0.$index.reg.surf.gii CORTEX_LEFT
+		mv $outdir/$root_node_id/groupwise.$root_node_id.sphere-0.$index.reg.surf.gii $outdir/$root_node_id/groupwise.$root_node_id.sphere.$subject.deformation.surf.gii
 		((index++))
 	done
 
 	index=0
 	for subject in "${subjects_B[@]}"
 	do
-		wb_command -set-structure $workdir/output/$root_node_id/groupwise.$root_node_id.sphere-1.$index.reg.surf.gii CORTEX_LEFT
-		mv $workdir/output/$root_node_id/groupwise.$root_node_id.sphere-1.$index.reg.surf.gii $workdir/output/$root_node_id/groupwise.$root_node_id.sphere.$subject.deformation.surf.gii
+		wb_command -set-structure $outdir/$root_node_id/groupwise.$root_node_id.sphere-1.$index.reg.surf.gii CORTEX_LEFT
+		mv $outdir/$root_node_id/groupwise.$root_node_id.sphere-1.$index.reg.surf.gii $outdir/$root_node_id/groupwise.$root_node_id.sphere.$subject.deformation.surf.gii
 		((index++))
 	done
 
-	mv $workdir/output/$root_node_id/groupwise.$root_node_id.sphere-0.reg.surf.gii $workdir/output/$root_node_id/groupwise.$root_node_id.sphere-$group_A_id.reg.surf.gii
-	mv $workdir/output/$root_node_id/groupwise.$root_node_id.sphere-1.reg.surf.gii $workdir/output/$root_node_id/groupwise.$root_node_id.sphere-$group_B_id.reg.surf.gii
-	wb_command -set-structure $workdir/output/$root_node_id/groupwise.$root_node_id.sphere-$group_A_id.reg.surf.gii CORTEX_LEFT
-	wb_command -set-structure $workdir/output/$root_node_id/groupwise.$root_node_id.sphere-$group_B_id.reg.surf.gii CORTEX_LEFT
+	mv $outdir/$root_node_id/groupwise.$root_node_id.sphere-0.reg.surf.gii $outdir/$root_node_id/groupwise.$root_node_id.sphere-$group_A_id.reg.surf.gii
+	mv $outdir/$root_node_id/groupwise.$root_node_id.sphere-1.reg.surf.gii $outdir/$root_node_id/groupwise.$root_node_id.sphere-$group_B_id.reg.surf.gii
+	wb_command -set-structure $outdir/$root_node_id/groupwise.$root_node_id.sphere-$group_A_id.reg.surf.gii CORTEX_LEFT
+	wb_command -set-structure $outdir/$root_node_id/groupwise.$root_node_id.sphere-$group_B_id.reg.surf.gii CORTEX_LEFT
 
-	mv $workdir/output/$root_node_id/groupwise.$root_node_id.transformed_and_reprojected-0.func.gii $workdir/output/$root_node_id/groupwise.$root_node_id.transformed_and_reprojected-$group_A_id.func.gii
-	mv $workdir/output/$root_node_id/groupwise.$root_node_id.transformed_and_reprojected-1.func.gii $workdir/output/$root_node_id/groupwise.$root_node_id.transformed_and_reprojected-$group_B_id.func.gii
-	wb_command -set-structure $workdir/output/$root_node_id/groupwise.$root_node_id.transformed_and_reprojected-$group_A_id.func.gii CORTEX_LEFT
-	wb_command -set-structure $workdir/output/$root_node_id/groupwise.$root_node_id.transformed_and_reprojected-$group_B_id.func.gii CORTEX_LEFT
+	mv $outdir/$root_node_id/groupwise.$root_node_id.transformed_and_reprojected-0.func.gii $outdir/$root_node_id/groupwise.$root_node_id.transformed_and_reprojected-$group_A_id.func.gii
+	mv $outdir/$root_node_id/groupwise.$root_node_id.transformed_and_reprojected-1.func.gii $outdir/$root_node_id/groupwise.$root_node_id.transformed_and_reprojected-$group_B_id.func.gii
+	wb_command -set-structure $outdir/$root_node_id/groupwise.$root_node_id.transformed_and_reprojected-$group_A_id.func.gii CORTEX_LEFT
+	wb_command -set-structure $outdir/$root_node_id/groupwise.$root_node_id.transformed_and_reprojected-$group_B_id.func.gii CORTEX_LEFT
 
 	for subject in "${subjects_A[@]}"
 	do
 		echo "Warping and resampling $group_A_id $subject."
 
 		$HOME/fsldev/bin/applywarp \
-		--to_be_deformed=$workdir/output/$group_A_id/groupwise.$group_A_id.sphere-$subject.reg.corrected.surf.gii \
-		--warp=$workdir/output/$root_node_id/groupwise.$root_node_id.sphere.$subject.deformation.surf.gii \
-		--output=$workdir/output/$root_node_id/groupwise.$root_node_id.sphere-$subject.
+		--to_be_deformed=$outdir/$group_A_id/groupwise.$group_A_id.sphere-$subject.reg.corrected.surf.gii \
+		--warp=$outdir/$root_node_id/groupwise.$root_node_id.sphere.$subject.deformation.surf.gii \
+		--output=$outdir/$root_node_id/groupwise.$root_node_id.sphere-$subject.
 
-		mv $workdir/output/$root_node_id/groupwise.$root_node_id.sphere-$subject.warped.surf.gii $workdir/output/$root_node_id/groupwise.$root_node_id.sphere-$subject.reg.corrected.surf.gii
+		mv $outdir/$root_node_id/groupwise.$root_node_id.sphere-$subject.warped.surf.gii $outdir/$root_node_id/groupwise.$root_node_id.sphere-$subject.reg.corrected.surf.gii
 
 		wb_command -metric-resample \
-		$workdir/output/$group_A_id/groupwise.$group_A_id.transformed_and_reprojected.dedrift-$subject.func.gii \
-		$workdir/output/$root_node_id/groupwise.$root_node_id.sphere-$subject.reg.corrected.surf.gii \
-		$workdir/output/$group_A_id/groupwise.$group_A_id.sphere-$subject.reg.corrected.surf.gii \
+		$outdir/$group_A_id/groupwise.$group_A_id.transformed_and_reprojected.dedrift-$subject.func.gii \
+		$outdir/$root_node_id/groupwise.$root_node_id.sphere-$subject.reg.corrected.surf.gii \
+		$outdir/$group_A_id/groupwise.$group_A_id.sphere-$subject.reg.corrected.surf.gii \
 		ADAP_BARY_AREA \
-		$workdir/output/$root_node_id/groupwise.$root_node_id.transformed_and_reprojected.dedrift-$subject.func.gii \
+		$outdir/$root_node_id/groupwise.$root_node_id.transformed_and_reprojected.dedrift-$subject.func.gii \
 		-area-surfs \
-		$workdir/output/$root_node_id/groupwise.$root_node_id.sphere-$subject.reg.corrected.surf.gii \
-		$workdir/output/$group_A_id/groupwise.$group_A_id.sphere-$subject.reg.corrected.surf.gii
+		$outdir/$root_node_id/groupwise.$root_node_id.sphere-$subject.reg.corrected.surf.gii \
+		$outdir/$group_A_id/groupwise.$group_A_id.sphere-$subject.reg.corrected.surf.gii
 	done
 
 	for subject in "${subjects_B[@]}"
@@ -119,48 +126,49 @@ do
 		echo "Warping and resampling $group_B_id $subject."
 
 		$HOME/fsldev/bin/applywarp \
-		--to_be_deformed=$workdir/output/$group_B_id/groupwise.$group_B_id.sphere-$subject.reg.corrected.surf.gii \
-		--warp=$workdir/output/$root_node_id/groupwise.$root_node_id.sphere.$subject.deformation.surf.gii \
-		--output=$workdir/output/$root_node_id/groupwise.$root_node_id.sphere-$subject.
+		--to_be_deformed=$outdir/$group_B_id/groupwise.$group_B_id.sphere-$subject.reg.corrected.surf.gii \
+		--warp=$outdir/$root_node_id/groupwise.$root_node_id.sphere.$subject.deformation.surf.gii \
+		--output=$outdir/$root_node_id/groupwise.$root_node_id.sphere-$subject.
 
-		mv $workdir/output/$root_node_id/groupwise.$root_node_id.sphere-$subject.warped.surf.gii $workdir/output/$root_node_id/groupwise.$root_node_id.sphere-$subject.reg.corrected.surf.gii
+		mv $outdir/$root_node_id/groupwise.$root_node_id.sphere-$subject.warped.surf.gii $outdir/$root_node_id/groupwise.$root_node_id.sphere-$subject.reg.corrected.surf.gii
 
 		wb_command -metric-resample \
-		$workdir/output/$group_B_id/groupwise.$group_B_id.transformed_and_reprojected.dedrift-$subject.func.gii \
-		$workdir/output/$root_node_id/groupwise.$root_node_id.sphere-$subject.reg.corrected.surf.gii \
-		$workdir/output/$group_B_id/groupwise.$group_B_id.sphere-$subject.reg.corrected.surf.gii \
+		$outdir/$group_B_id/groupwise.$group_B_id.transformed_and_reprojected.dedrift-$subject.func.gii \
+		$outdir/$root_node_id/groupwise.$root_node_id.sphere-$subject.reg.corrected.surf.gii \
+		$outdir/$group_B_id/groupwise.$group_B_id.sphere-$subject.reg.corrected.surf.gii \
 		ADAP_BARY_AREA \
-		$workdir/output/$root_node_id/groupwise.$root_node_id.transformed_and_reprojected.dedrift-$subject.func.gii \
+		$outdir/$root_node_id/groupwise.$root_node_id.transformed_and_reprojected.dedrift-$subject.func.gii \
 		-area-surfs \
-		$workdir/output/$root_node_id/groupwise.$root_node_id.sphere-$subject.reg.corrected.surf.gii \
-		$workdir/output/$group_B_id/groupwise.$group_B_id.sphere-$subject.reg.corrected.surf.gii
+		$outdir/$root_node_id/groupwise.$root_node_id.sphere-$subject.reg.corrected.surf.gii \
+		$outdir/$group_B_id/groupwise.$group_B_id.sphere-$subject.reg.corrected.surf.gii
 	done
 
 	all_subjects=( "${subjects_A[@]}" "${subjects_B[@]}" )
 
 	echo "calculating mean and stdev, areal and shape distortion"
 
-	merge="wb_command -metric-merge $workdir/results/$root_node_id/groupwise.$root_node_id.merge.sulc.affine.dedrifted.ico6.shape.gii "
-	arealmerge="wb_command -metric-merge $workdir/results/$root_node_id/groupwise.$root_node_id.areal.distortion.merge.sulc.affine.dedrifted.ico6.shape.gii "
-	shapemerge="wb_command -metric-merge $workdir/results/$root_node_id/groupwise.$root_node_id.shape.distortion.merge.sulc.affine.dedrifted.ico6.shape.gii "
+	merge="wb_command -metric-merge $resultdir/$root_node_id/groupwise.$root_node_id.merge.sulc.affine.dedrifted.ico6.shape.gii "
+	arealmerge="wb_command -metric-merge $resultdir/$root_node_id/groupwise.$root_node_id.areal.distortion.merge.sulc.affine.dedrifted.ico6.shape.gii "
+	shapemerge="wb_command -metric-merge $resultdir/$root_node_id/groupwise.$root_node_id.shape.distortion.merge.sulc.affine.dedrifted.ico6.shape.gii "
 
 	for subject in "${all_subjects[@]}"
 	do
-		merge+="-metric $workdir/output/$root_node_id/groupwise.$root_node_id.transformed_and_reprojected.dedrift-$subject.func.gii "
-		wb_command -surface-distortion $workdir/templates/sunet.ico-6.template.surf.gii $workdir/output/$root_node_id/groupwise.$root_node_id.sphere-$subject.reg.corrected.surf.gii $workdir/output/$root_node_id/groupwise.$root_node_id.sphere-$subject.distortion.func.gii -local-affine-method -log2
-		arealmerge+="-metric $workdir/output/$root_node_id/groupwise.$root_node_id.sphere-$subject.distortion.func.gii -column 1 "
-		shapemerge+="-metric $workdir/output/$root_node_id/groupwise.$root_node_id.sphere-$subject.distortion.func.gii -column 2 "
+		merge+="-metric $outdir/$root_node_id/groupwise.$root_node_id.transformed_and_reprojected.dedrift-$subject.func.gii "
+		wb_command -surface-distortion $workdir/templates/sunet.ico-6.template.surf.gii $outdir/$root_node_id/groupwise.$root_node_id.sphere-$subject.reg.corrected.surf.gii $outdir/$root_node_id/groupwise.$root_node_id.sphere-$subject.distortion.func.gii -local-affine-method -log2
+		arealmerge+="-metric $outdir/$root_node_id/groupwise.$root_node_id.sphere-$subject.distortion.func.gii -column 1 "
+		shapemerge+="-metric $outdir/$root_node_id/groupwise.$root_node_id.sphere-$subject.distortion.func.gii -column 2 "
+		echo "$subject,$root_node_id" >> $clustering
 	done
 
 	$merge
 	$arealmerge
 	$shapemerge
 
-	wb_command -metric-reduce $workdir/results/$root_node_id/groupwise.$root_node_id.merge.sulc.affine.dedrifted.ico6.shape.gii MEAN $workdir/results/$root_node_id/groupwise.$root_node_id.mean.sulc.affine.dedrifted.ico6.shape.gii
-	wb_command -metric-reduce $workdir/results/$root_node_id/groupwise.$root_node_id.merge.sulc.affine.dedrifted.ico6.shape.gii STDEV $workdir/results/$root_node_id/groupwise.$root_node_id.stdev.sulc.affine.dedrifted.ico6.shape.gii
+	wb_command -metric-reduce $resultdir/$root_node_id/groupwise.$root_node_id.merge.sulc.affine.dedrifted.ico6.shape.gii MEAN $resultdir/$root_node_id/groupwise.$root_node_id.mean.sulc.affine.dedrifted.ico6.shape.gii
+	wb_command -metric-reduce $resultdir/$root_node_id/groupwise.$root_node_id.merge.sulc.affine.dedrifted.ico6.shape.gii STDEV $resultdir/$root_node_id/groupwise.$root_node_id.stdev.sulc.affine.dedrifted.ico6.shape.gii
 
-	wb_command -set-structure $workdir/results/$root_node_id/groupwise.$root_node_id.merge.sulc.affine.dedrifted.ico6.shape.gii CORTEX_LEFT
-	wb_command -set-structure $workdir/results/$root_node_id/groupwise.$root_node_id.mean.sulc.affine.dedrifted.ico6.shape.gii CORTEX_LEFT
-	wb_command -set-structure $workdir/results/$root_node_id/groupwise.$root_node_id.stdev.sulc.affine.dedrifted.ico6.shape.gii CORTEX_LEFT
+	wb_command -set-structure $resultdir/$root_node_id/groupwise.$root_node_id.merge.sulc.affine.dedrifted.ico6.shape.gii CORTEX_LEFT
+	wb_command -set-structure $resultdir/$root_node_id/groupwise.$root_node_id.mean.sulc.affine.dedrifted.ico6.shape.gii CORTEX_LEFT
+	wb_command -set-structure $resultdir/$root_node_id/groupwise.$root_node_id.stdev.sulc.affine.dedrifted.ico6.shape.gii CORTEX_LEFT
 
 done < $hierarchy

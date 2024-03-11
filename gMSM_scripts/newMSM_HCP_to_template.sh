@@ -12,13 +12,14 @@ template=$workdir/MSMSulc.L.sulc.ico6.shape.gii
 mesh=$workdir/sunet.ico-6.sphere.surf.gii
 config_file=$workdir/HCP_to_template_config.txt
 sublist=$workdir/subjects_in_study.txt
-outdir=$workdir/output
+outdir=$workdir/output/$dataset
 ###########################################################
 
 num_subjects=$(cat $sublist | wc -l)
 bunch_size=$(( $num_subjects / $parallel_tasks + 1 ))
 
 touch $workdir/HCP_to_template.sh
+mkdir $workdir/output
 mkdir $outdir
 mkdir $workdir/logs
 
