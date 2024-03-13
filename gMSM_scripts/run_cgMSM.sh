@@ -16,8 +16,8 @@
 ## Set the following lines according to your settings and cohort.
 dataset=HCP
 workdir=$HOME/groupwise/$dataset
-clustering=$workdir/frontal_subject_clusters_hcp_noline.csv
-hierarchy=$workdir/frontal_hierarchical_path_study_test.csv #NODE1750,NODE1807,NODE2012
+clustering=$workdir/frontal_subject_clusters_hcp.csv
+hierarchy=$workdir/frontal_hierarchical_path_study.csv
 
 outdir=$workdir/output
 resultdir=$workdir/results
@@ -29,7 +29,7 @@ do
 	subjects_A=()
 	subjects_B=()
 
-	while IFS="," read -r subject group
+	while IFS="," read -r linenum subject group
 	do
 		if [ $group_A_id = $group ]; then
 			subjects_A+=($subject)
@@ -151,13 +151,15 @@ do
 	arealmerge="wb_command -metric-merge $resultdir/$root_node_id/groupwise.$root_node_id.areal.distortion.merge.sulc.affine.dedrifted.ico6.shape.gii "
 	shapemerge="wb_command -metric-merge $resultdir/$root_node_id/groupwise.$root_node_id.shape.distortion.merge.sulc.affine.dedrifted.ico6.shape.gii "
 
+	index=0
 	for subject in "${all_subjects[@]}"
 	do
 		merge+="-metric $outdir/$root_node_id/groupwise.$root_node_id.transformed_and_reprojected.dedrift-$subject.func.gii "
 		wb_command -surface-distortion $workdir/templates/sunet.ico-6.template.surf.gii $outdir/$root_node_id/groupwise.$root_node_id.sphere-$subject.reg.corrected.surf.gii $outdir/$root_node_id/groupwise.$root_node_id.sphere-$subject.distortion.func.gii -local-affine-method -log2
 		arealmerge+="-metric $outdir/$root_node_id/groupwise.$root_node_id.sphere-$subject.distortion.func.gii -column 1 "
 		shapemerge+="-metric $outdir/$root_node_id/groupwise.$root_node_id.sphere-$subject.distortion.func.gii -column 2 "
-		echo "$subject,$root_node_id" >> $clustering
+		echo "$index,$subject,$root_node_id" >> $clustering
+		((index++))
 	done
 
 	$merge

@@ -23,8 +23,11 @@ config_file=$workdir/configs/gMSM_config.txt
 outdir=$workdir/output
 resultdir=$workdir/results
 
-clustering=$workdir/frontal_subject_clusters_hcp_noline.csv
-groups=(NODE1750 NODE1807)
+clustering=$workdir/frontal_subject_clusters_hcp.csv
+group_list=$workdir/group_list.txt
+
+groups=(NODE1750 NODE1807) #for testing
+#groups=( $(cat $group_list | cut -d ',' -f1) ) # for all groups
 ###########################################################
 
 for group_id in "${groups[@]}"
@@ -34,7 +37,7 @@ do
   rm $workdir/file_lists/input_meshes_$group_id.txt && touch $workdir/file_lists/input_meshes_$group_id.txt
   subjects=()
   
-  while IFS="," read -r subject group
+  while IFS="," read -r linenum subject group
   do
     if [ $group_id = $group ]; then
       echo "$input_folder/$subject.sulc.affine.ico6.shape.gii" >> $workdir/file_lists/input_data_$group_id.txt
