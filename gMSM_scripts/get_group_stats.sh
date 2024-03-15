@@ -4,21 +4,24 @@ workdir="$HOME/HCP_to_template"
 reg_folder=$workdir/output/
 metrics="$workdir/results"
 mesh=$workdir/sunet.ico-6.sphere.surf.gii
-clustering=$HOME/groupwise/HCP/frontal_subject_clusters_hcp_noline.csv
+group_list=$workdir/group_list.txt
+clustering=$HOME/groupwise/HCP/frontal_subject_clusters_hcp.csv
 
 mkdir $metrics
 
-groups=(NODE1750 NODE1807 NODE2012)
+#groups=(NODE1860 NODE1885 NODE1997) #for testing
+groups=( $(cat $group_list | cut -d ',' -f1) ) # for all groups
+
+mkdir $metrics/distortion_files/
 
 for group in "${groups[@]}"
 do
     echo "Calculating metrics of group $group."
 
-    mkdir $metrics/distortion_files/
     mkdir $metrics/distortion_files/$group
 
     subjects=()
-    while IFS="," read -r subject group_id
+    while IFS="," read -r line subject group_id
     do
         if [ $group_id = $group ]; then
           subjects+=($subject)

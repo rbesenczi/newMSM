@@ -9,11 +9,14 @@ home = environ['HOME']
 dataset = "HCP"
 group_reg = home + "/groupwise/" + dataset
 global_reg = home + "/" + dataset + "_to_template"
-group_lists = group_reg + "/frontal_subject_clusters_hcp_noline.csv"
+group_list = group_reg + "/group_list.txt"
+group_subs_lists = group_reg + "/frontal_subject_clusters_hcp.csv"
 
-groups = ["NODE1750", "NODE1807", "NODE2012"]
 mask_path = home + "/groupwise/NODE2218_frontal_mask.shape.gii"
 percentile = 75
+
+groups = list(set([row['group'] for row in csv.DictReader(open(group_list, "r", newline=''), fieldnames=['group','size'])]))
+#groups = ["NODE1750", "NODE1807"] #for testing
 
 mask = nibabel.load(mask_path).darrays[0].data
 
@@ -23,8 +26,8 @@ def dice_overlap(subject1, subject2, perc=75):
 	return (2 * numpy.sum(subject1perc * subject2perc)) / (numpy.sum(subject1perc) + numpy.sum(subject2perc))
 
 for group_id in groups:
-	with open(group_lists, "r", newline='') as csvfile:
-		reader = csv.DictReader(csvfile, fieldnames=['subject','group'])
+	with open(group_subs_lists, "r", newline='') as csvfile:
+		reader = csv.DictReader(csvfile, fieldnames=['line','subject','group'])
 		
 		subjects = []
 		for row in reader:
@@ -61,3 +64,4 @@ for group_id in groups:
 
 		print("Groupwise - Group {}: CC similarity: {:.4}; Dice overlap: {:0,.2f}%; Areal mean: {:.4}; Areal Max: {:.4}; Areal 95%: {:.4}; Areal 98%: {:.4}; Shape mean: {:.4}; Shape Max: {:.4}".format(group_id.split('_')[0], corrsum_group/num_pairs, (dice_sum_group/num_pairs)*100, numpy.mean(areal_group), numpy.max(areal_group), numpy.percentile(areal_group, 95), numpy.percentile(areal_group, 98), numpy.mean(shape_group), numpy.max(shape_group)))
 		print("HCP_templ - Group {}: CC similarity: {:.4}; Dice overlap: {:0,.2f}%; Areal mean: {:.4}; Areal Max: {:.4}; Areal 95%: {:.4}; Areal 98%: {:.4}; Shape mean: {:.4}; Shape Max: {:.4}".format(group_id.split('_')[0], corrsum_global/num_pairs, (dice_sum_global/num_pairs)*100, numpy.mean(areal_global), numpy.max(areal_global), numpy.percentile(areal_global, 95), numpy.percentile(areal_global, 98), numpy.mean(shape_global), numpy.max(shape_global)))
+		print('\n')

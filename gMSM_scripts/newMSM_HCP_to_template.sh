@@ -17,13 +17,14 @@ outdir=$workdir/output/$dataset
 
 num_subjects=$(cat $sublist | wc -l)
 bunch_size=$(( $num_subjects / $parallel_tasks + 1 ))
+num_processes=$(( $num_subjects / $bunch_size ))
 
 touch $workdir/HCP_to_template.sh
 mkdir $workdir/output
 mkdir $outdir
 mkdir $workdir/logs
 
-for (( bunch=0; bunch<parallel_tasks; bunch++ ))
+for (( bunch=0; bunch<num_processes; bunch++ ))
 do
   echo "#!/bin/bash -l
 
