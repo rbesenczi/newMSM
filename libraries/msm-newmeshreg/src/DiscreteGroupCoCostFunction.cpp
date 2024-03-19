@@ -33,7 +33,17 @@ double DiscreteGroupCoCostFunction::computeTripletCost(int triplet, int labelA, 
     double mean_reg_cost = std::accumulate(subject_costs.begin(), subject_costs.end(), 0.0) / (double)subject_costs.size();
     double max_reg_cost = *(std::max_element(subject_costs.begin(), subject_costs.end()));
 
-    return _reglambda * (mean_reg_cost + max_distortion_penalty * max_reg_cost);
+    switch(_rmode)
+    {
+        case 2:
+        {
+            return _reglambda * max_reg_cost;
+        }
+        case 3:
+        {
+            return _reglambda * mean_reg_cost + max_distortion_penalty * max_reg_cost;
+        }
+    }
 }
 
 double DiscreteGroupCoCostFunction::computePairwiseCost(int pair, int labelA, int labelB) {
