@@ -16,13 +16,15 @@
 ## Set the following lines according to your settings and cohort.
 dataset=HCP
 workdir=$HOME/groupwise/$dataset
-clustering=$workdir/frontal_subject_clusters_hcp.csv
-hierarchy=$workdir/frontal_hierarchical_path_study.csv
-
 outdir=$workdir/output
 resultdir=$workdir/results
 
+clustering=$workdir/frontal_subject_clusters_hcp.csv
+hierarchy=$workdir/frontal_hierarchical_path_study.csv
 ###########################################################
+
+mkdir $outdir
+mkdir $resultdir
 
 while IFS="," read -r group_A_id group_B_id root_node_id
 do
@@ -52,9 +54,7 @@ do
 		echo "$outdir/$group_B_id/groupwise.$group_B_id.sphere-$subject.reg.corrected.surf.gii" >> $workdir/file_lists/mesh_list_$group_B_id.txt
 	done
 
-	mkdir $outdir
 	mkdir $outdir/$root_node_id
-	mkdir $resultdir
 	mkdir $resultdir/$root_node_id
 
 	time $HOME/fsldev/bin/newmsm \
@@ -145,7 +145,7 @@ do
 
 	all_subjects=( "${subjects_A[@]}" "${subjects_B[@]}" )
 
-	echo "calculating mean and stdev, areal and shape distortion"
+	echo "Calculating merge, mean, stdev, areal and shape distortion for $root_node_id..."
 
 	merge="wb_command -metric-merge $resultdir/$root_node_id/groupwise.$root_node_id.merge.sulc.affine.dedrifted.ico6.shape.gii "
 	arealmerge="wb_command -metric-merge $resultdir/$root_node_id/groupwise.$root_node_id.areal.distortion.merge.sulc.affine.dedrifted.ico6.shape.gii "
