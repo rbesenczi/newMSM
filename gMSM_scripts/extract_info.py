@@ -1,12 +1,25 @@
-import csv
+import csv, sys, getopt
 from os import environ
 import graph_tool.all as gt
 
+dataset = ""
+
+try:
+	opts, args = getopt.getopt(sys.argv[1:], "h:d:", ["help","dataset="])
+except getopt.GetoptError:
+	print("extract_info.py -d {HCP,UKB}")
+	sys.exit(2)
+for o, a in opts:
+	if o in ("-h", "--help"):
+		print("extract_info.py -d {HCP,UKB}")
+		sys.exit()
+	if o in ("-d", "--dataset"):
+		dataset = a
+
 home = environ['HOME']
-dataset = "HCP"
 workdir = home + "/groupwise/" + dataset
-clustering = workdir + "/frontal_subject_clusters_hcp.csv"
-hierarchy = workdir + "/frontal_hierarchical_path_all.csv"
+clustering = home + "/groupwise/data/frontal_subject_clusters_" + dataset + ".csv"
+hierarchy = home + "/groupwise/data/frontal_hierarchical_path_all.csv"
 root = "NODE2218"
 
 groups = {}
@@ -62,14 +75,18 @@ with open(clustering, "r", newline='') as csvfile:
 			groups[row['group']] = [ row['subject'].split('\n')[0] ]
 
 	file = open(workdir + "/group_list.txt", 'w')
+	file_sublist = open(workdir + "/subjects_in_study.txt", 'w')
 
 	for key in groups.keys():
 		num_subs = len(groups[key])
 		if num_subs > 4:
 			no_small_groups.append(key)
+			for subject in groups[key]:
+				file_sublist.write(subject + '\n')
 			file.write(str(key) + ',' + str(num_subs) + '\n')
 	
 	file.close()
+	file_sublist.close()
 
 ###############################################################################################
 
@@ -137,4 +154,4 @@ for key in cg_path.keys():
 vids = min_graph.add_edge_list(src_trg_pair, hashed=True, hash_type="string", eprops=[('name', 'string')])
 
 gt.graph_draw(min_graph, vertex_size=1.5, vertex_text=vids, output=workdir+"/frontal_hierarchical_graph_study.pdf")
-gt.interactive_window(min_graph, vertex_size=3, vertex_text=vids)
+#gt.interactive_window(min_graph, vertex_size=3, vertex_text=vids)

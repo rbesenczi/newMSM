@@ -1,16 +1,29 @@
 import numpy
 import nibabel
-import sys
+import sys, getopt
 import csv
 from os import listdir, environ
 from os.path import isfile, join, splitext
 
+dataset = ""
+
+try:
+	opts, args = getopt.getopt(sys.argv[1:], "h:d:", ["help","dataset="])
+except getopt.GetoptError:
+	print("extract_info.py -d {HCP,UKB}")
+	sys.exit(2)
+for o, a in opts:
+	if o in ("-h", "--help"):
+		print("extract_info.py -d {HCP,UKB}")
+		sys.exit()
+	if o in ("-d", "--dataset"):
+		dataset = a
+
 home = environ['HOME']
-dataset = "HCP"
 group_reg = home + "/groupwise/" + dataset
 global_reg = home + "/" + dataset + "_to_template"
 group_list = group_reg + "/group_list.txt"
-group_subs_lists = group_reg + "/frontal_subject_clusters_hcp.csv"
+group_subs_lists = home + "/groupwise/data/frontal_subject_clusters_" + dataset + ".csv"
 
 mask_path = home + "/groupwise/NODE2218_frontal_mask.shape.gii"
 percentile = 75

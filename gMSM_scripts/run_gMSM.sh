@@ -23,7 +23,7 @@ config_file=$workdir/configs/gMSM_config.txt
 outdir=$workdir/output
 resultdir=$workdir/results
 
-clustering=$workdir/frontal_subject_clusters_hcp.csv
+clustering=$HOME/groupwise/data/frontal_subject_clusters_${dataset}.csv
 group_list=$workdir/group_list.txt
 
 groups=(NODE1750 NODE1807) #for testing

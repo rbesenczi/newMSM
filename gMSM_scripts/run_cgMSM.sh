@@ -19,7 +19,7 @@ workdir=$HOME/groupwise/$dataset
 outdir=$workdir/output
 resultdir=$workdir/results
 
-clustering=$workdir/frontal_subject_clusters_hcp.csv
+clustering=$HOME/groupwise/data/frontal_subject_clusters_${dataset}.csv
 hierarchy=$workdir/frontal_hierarchical_path_study.csv
 ###########################################################
 
@@ -65,7 +65,7 @@ do
 		--meshesA=$workdir/file_lists/mesh_list_$group_A_id.txt \
 		--meshesB=$workdir/file_lists/mesh_list_$group_B_id.txt \
 		--template=$workdir/templates/sunet.ico-6.template.surf.gii \
-		--conf=$workdir/configs/cgMSM_config.txt \
+		--conf=$workdir/configs/cgMSM_config_hibrid_reg.txt \
 		--out=$outdir/$root_node_id/groupwise.$root_node_id. \
 		--verbose --cogroup
 
