@@ -33,15 +33,6 @@ public:
     Utilities::Option<std::string> templatemesh;
     Utilities::Option<std::string> data;
 
-    //Co-groupwise params
-    Utilities::Option<bool> cogroup;
-    Utilities::Option<std::string> meanA;
-    Utilities::Option<std::string> meanB;
-    Utilities::Option<std::string> meshA;
-    Utilities::Option<std::string> meshB;
-    Utilities::Option<std::string> meshesA;
-    Utilities::Option<std::string> meshesB;
-
     // Removed params
     Utilities::Option<std::string> in_register;
     Utilities::Option<int> multiresolutionlevels;
@@ -92,30 +83,9 @@ inline msmOptions::msmOptions() :
         templatemesh(std::string("--template"), std::string(""),
                      std::string("templates sphere for resampling (available formats: VTK, ASCII, GIFTI). Needs to be a sphere"),
                      false , Utilities::requires_argument),
-        cogroup(std::string("--cogroup"), false,
-                  std::string("Run newMSM in group co-registering mode"),
-                  false, Utilities::no_argument,false),
         data(std::string("--data"), std::string(""),
              std::string("list of paths to the data"),
              false , Utilities::requires_argument),
-        meanA(std::string("--meanA"), std::string(""),
-              std::string("Mean of group A"),
-              false , Utilities::requires_argument),
-        meanB(std::string("--meanB"), std::string(""),
-              std::string("Mean of group B"),
-              false , Utilities::requires_argument),
-        meshA(std::string("--meshA"), std::string(""),
-              std::string("Mesh of mean of group A"),
-              false , Utilities::requires_argument),
-        meshB(std::string("--meshB"), std::string(""),
-              std::string("Mesh of mean of group B"),
-              false , Utilities::requires_argument),
-        meshesA(std::string("--meshesA"), std::string(""),
-              std::string("List of warps of group A"),
-              false , Utilities::requires_argument),
-        meshesB(std::string("--meshesB"), std::string(""),
-              std::string("List of warps of group B"),
-              false , Utilities::requires_argument),
         inputmesh(std::string("--inmesh"), std::string(""),
                   std::string("input mesh (available formats: VTK, ASCII, GIFTI). Needs to be a sphere"),
                   false , Utilities::requires_argument),
@@ -171,13 +141,6 @@ inline msmOptions::msmOptions() :
         options.add(meshes);
         options.add(templatemesh);
         options.add(data);
-        options.add(cogroup);
-        options.add(meanA);
-        options.add(meanB);
-        options.add(meshA);
-        options.add(meshB);
-        options.add(meshesA);
-        options.add(meshesB);
         options.add(inputmesh);
         options.add(referencemesh);
         options.add(inputanatmesh);
