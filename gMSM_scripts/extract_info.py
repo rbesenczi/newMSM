@@ -26,6 +26,7 @@ groups = {}
 no_small_groups = []
 paths = []
 cg_path = {}
+group_sizes = {}
 
 def proc_path(root):
 
@@ -84,6 +85,7 @@ with open(clustering, "r", newline='') as csvfile:
 			for subject in groups[key]:
 				file_sublist.write(subject + '\n')
 			file.write(str(key) + ',' + str(num_subs) + '\n')
+			group_sizes[key] = num_subs
 	
 	file.close()
 	file_sublist.close()
@@ -141,6 +143,10 @@ while iteration == True:
 file = open(workdir + "/frontal_hierarchical_path_study.csv", "w")
 for key in cg_path.keys():
 	file.write(cg_path[key][0] + ',' + cg_path[key][1] + ',' + key + '\n')
+	print(cg_path[key][0] + ',' + cg_path[key][1] + ',' + key)
+	if key not in group_sizes.keys():
+		group_sizes[key] = group_sizes[cg_path[key][0]] + group_sizes[cg_path[key][1]]
+	print(str(group_sizes[cg_path[key][0]]) + "," + str(group_sizes[cg_path[key][1]]) + "," + str(group_sizes[key]) + "\n")
 
 ###############################################################################################
 
@@ -153,5 +159,6 @@ for key in cg_path.keys():
 
 vids = min_graph.add_edge_list(src_trg_pair, hashed=True, hash_type="string", eprops=[('name', 'string')])
 
-gt.graph_draw(min_graph, vertex_size=1.5, vertex_text=vids, output=workdir+"/frontal_hierarchical_graph_study.pdf")
+print("Number of vertices:", min_graph.num_vertices())
+#gt.graph_draw(min_graph, vertex_size=1.5, vertex_text=vids, output=workdir+"/frontal_hierarchical_graph_study.pdf")
 #gt.interactive_window(min_graph, vertex_size=3, vertex_text=vids)
