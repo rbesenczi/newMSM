@@ -851,7 +851,6 @@ void Mesh_registration::fix_parameters_for_level(int i) {
 
     PARAMETERS.insert(parameterPair("dOPT", _discreteOPT));
     PARAMETERS.insert(parameterPair("lambda", _lambda[i]));
-    PARAMETERS.insert(parameterPair("max_penalty", max_distortion_penalty[i]));
     PARAMETERS.insert(parameterPair("lambda_pairs", _pairwiselambda));
     PARAMETERS.insert(parameterPair("set_lambda_pairs", _set_group_lambda));
     PARAMETERS.insert(parameterPair("iters", _iters[i]));

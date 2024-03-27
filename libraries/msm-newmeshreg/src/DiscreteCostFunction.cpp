@@ -142,7 +142,6 @@ void NonLinearSRegDiscreteCostFunction::initialize(int numNodes, int numLabels, 
 void NonLinearSRegDiscreteCostFunction::set_parameters(myparam& ALLPARAMS) {
     myparam::iterator it;
     it=ALLPARAMS.find("exponent");_rexp=std::get<float>(it->second);
-    it=ALLPARAMS.find("max_penalty");max_distortion_penalty=std::get<float>(it->second);
     it=ALLPARAMS.find("weight");_dweight=std::get<bool>(it->second);
     it=ALLPARAMS.find("anorm");_anorm=std::get<bool>(it->second);
     it=ALLPARAMS.find("fixnan");fixnan=std::get<bool>(it->second);
@@ -590,8 +589,7 @@ void HOUnivariateNonLinearSRegDiscreteCostFunction::get_target_data(int triplet,
     #pragma omp parallel for num_threads(mcmc_threads)
     for(int i = 0; i < _sourceinrange[triplet].size(); ++i)
     {
-        //newresampler::Point SP = _SOURCE.get_coord(_sourceinrange[triplet][i]);
-        newresampler::Point SP = newresampler::project_point(CP0, CP1, CP2, _SOURCE.get_coord(_sourceinrange[triplet][i]));
+        newresampler::Point SP = newresampler::project_point(_SOURCE.get_coord(_sourceinrange[triplet][i]), CP0, CP1, CP2);
         newresampler::Point tmp = newresampler::barycentric(CP0,CP1,CP2,SP,new_CP0,new_CP1,new_CP2);
         tmp.normalize();
         tmp *= RAD;
@@ -675,8 +673,7 @@ void HOMultivariateNonLinearSRegDiscreteCostFunction::get_target_data(int triple
         _targetdata[_sourceinrange[triplet][i]].clear();
         _targetdata[_sourceinrange[triplet][i]].resize(FEAT->get_dim());
 
-        //newresampler::Point SP = _SOURCE.get_coord(_sourceinrange[triplet][i]);
-        newresampler::Point SP = newresampler::project_point(CP0, CP1, CP2, SP);
+        newresampler::Point SP = newresampler::project_point(_SOURCE.get_coord(_sourceinrange[triplet][i]), CP0, CP1, CP2);
         newresampler::Point tmp = newresampler::barycentric(CP0,CP1,CP2,SP,new_CP0,new_CP1,new_CP2);
         tmp.normalize();
         tmp *= RAD;

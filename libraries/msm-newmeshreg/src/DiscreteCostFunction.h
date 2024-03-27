@@ -77,7 +77,6 @@ protected:
     int* _triplets = nullptr;
 
     float _reglambda = 1.0;  // scaling parameter for regulariser
-    float max_distortion_penalty = 0.2;
 
     int _threads = 1;
     bool _debug = false;
