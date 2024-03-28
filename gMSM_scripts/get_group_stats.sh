@@ -10,17 +10,11 @@ clustering=$HOME/groupwise/data/frontal_subject_clusters_${dataset}.csv
 
 mkdir $metrics
 
+groups=( $(cat $group_list | cut -d ',' -f1) ) #for all groups
 #groups=(NODE1860 NODE1885 NODE1997) #for testing
-groups=( $(cat $group_list | cut -d ',' -f1) ) # for all groups
-
-mkdir $metrics/distortion_files/
 
 for group in "${groups[@]}"
 do
-    echo "Calculating metrics of group $group."
-
-    mkdir $metrics/distortion_files/$group
-
     subjects=()
     while IFS="," read -r line subject group_id
     do
@@ -36,10 +30,11 @@ do
     for subject in "${subjects[@]}"
     do
         datamerge+="-metric $reg_folder/$subject.MSMSulc.ico6.transformed_and_reprojected.func.gii "
-        wb_command -surface-distortion $mesh $reg_folder/$subject.MSMSulc.ico6.sphere.reg.surf.gii $metrics/distortion_files/$group/$subject.MSMSulc.ico6.sphere.distortion.func.gii -local-affine-method -log2
-        arealmerge+="-metric $metrics/distortion_files/$group/$subject.MSMSulc.ico6.sphere.distortion.func.gii -column 1 "
-        shapemerge+="-metric $metrics/distortion_files/$group/$subject.MSMSulc.ico6.sphere.distortion.func.gii -column 2 "
+        arealmerge+="-metric $reg_folder/$subject.MSMSulc.ico6.sphere.distortion.func.gii -column 1 "
+        shapemerge+="-metric $reg_folder/$subject.MSMSulc.ico6.sphere.distortion.func.gii -column 2 "
     done
+
+    echo "Calculating metrics of group $group with ${#subjects[@]} subjects."
 
     $datamerge
     $arealmerge

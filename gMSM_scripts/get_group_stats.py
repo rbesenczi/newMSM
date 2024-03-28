@@ -30,6 +30,7 @@ percentile = 75
 
 groups = list(set([row['group'] for row in csv.DictReader(open(group_list, "r", newline=''), fieldnames=['group','size'])]))
 #groups = ["NODE1750", "NODE1807"] #for testing
+groups.sort()
 
 mask = nibabel.load(mask_path).darrays[0].data
 
