@@ -34,7 +34,7 @@ Mesh::Mesh() {
     global_defaultcoord.push_back(default_coord);
 }
 
-Mesh::Mesh(const Mesh &m) : normals(m.normals), pvalues(m.pvalues), //tvalues(m.tvalues),
+Mesh::Mesh(const Mesh &m) : normals(m.normals), pvalues(m.pvalues),
                             global_metaData(m.global_metaData), global_Attributes(m.global_Attributes),
                             global_GIFTIlabels(m.global_GIFTIlabels), global_defaultcoord(m.global_defaultcoord){
 
@@ -50,10 +50,6 @@ Mesh::Mesh(const Mesh &m) : normals(m.normals), pvalues(m.pvalues), //tvalues(m.
         Triangle tr(points[v0], points[v1], points[v2], triangle.get_no());
         triangles.push_back(tr);
     }
-    /*
-    for (int i = 0; i < (int)points.size(); i++)
-        normals.push_back(local_normal(i));
-    */
 }
 
 Mesh &Mesh::operator=(const Mesh &m) {
@@ -62,7 +58,6 @@ Mesh &Mesh::operator=(const Mesh &m) {
     triangles.clear();
     normals = m.normals;
     pvalues = m.pvalues;
-    //tvalues = m.tvalues;
 
     global_metaData = m.global_metaData;
     global_Attributes = m.global_Attributes;
@@ -89,7 +84,6 @@ Mesh::Mesh(Mesh&& m) noexcept {
     triangles = std::move(m.triangles);
     normals = std::move(m.normals);
     pvalues = std::move(m.pvalues);
-    //tvalues = std::move(m.tvalues);
 
     global_metaData = std::move(m.global_metaData);
     global_Attributes = std::move(m.global_Attributes);
@@ -106,7 +100,6 @@ Mesh& Mesh::operator=(Mesh&& m) noexcept {
     triangles = std::move(m.triangles);
     normals = std::move(m.normals);
     pvalues = std::move(m.pvalues);
-    //tvalues = std::move(m.tvalues);
 
     global_metaData = std::move(m.global_metaData);
     global_Attributes = std::move(m.global_Attributes);
@@ -360,7 +353,6 @@ void Mesh::load_gifti(const std::string &filename, const bool loadSurfaceData, c
 
     if (!appendFieldData) {
         pvalues.clear();
-        //tvalues.clear();
     }
 
     if (loadSurfaceData) {
@@ -471,7 +463,6 @@ void Mesh::load_ascii(const std::string &filename, const bool loadSurfaceData,
 
     if (!appendFieldData) {
         pvalues.clear();
-        //tvalues.clear();
     }
 
     std::ifstream f(filename.c_str());
@@ -506,13 +497,6 @@ void Mesh::load_ascii(const std::string &filename, const bool loadSurfaceData,
         }
         //reading the triangles
 
-        /*
-        if (!loadSurfaceData) {
-            //std::vector<float> tmp_tvalues(NFaces, 0);
-            //tvalues.push_back(tmp_tvalues);
-        }
-         */
-
         for (int i = 0; i < NFaces; i++) {
             int p0, p1, p2;
             float val;
@@ -521,7 +505,7 @@ void Mesh::load_ascii(const std::string &filename, const bool loadSurfaceData,
             if (loadSurfaceData) {
                 Triangle t(points[p0], points[p1], points[p2], i);
                 push_triangle(t);
-            } //else tvalues[tvalues.size() - 1][i] = val;
+            }
         }
         f.close();
     } else {
@@ -561,18 +545,13 @@ void Mesh::load_ascii_file(const std::string &filename) { //load a freesurfer as
         }
         pvalues.push_back(tmp_pvalues);
 
-        //std::vector<float> tmp_tvalues;
-        //tvalues.push_back(tmp_tvalues);
-
         for (int i = 0; i < NFaces; i++) {
             int p0, p1, p2;
             float val;
             f >> p0 >> p1 >> p2 >> val;
             Triangle t(points[p0], points[p1], points[p2], i);
             push_triangle(t);
-            //tmp_tvalues.push_back(val);
         }
-        //tvalues.push_back(tmp_tvalues);
         f.close();
 
     } else {
@@ -664,7 +643,7 @@ void Mesh::save_gifti(const std::string &s) const {
     writer.metaData = global_metaData;
     writer.extraAttributes = global_Attributes; //Any other attributes that the tag has
     writer.GIFTIlabels = global_GIFTIlabels;
-    //writer.report();
+
     if (subtype == ".surf") {
 
         std::vector<NEWMESH::GIFTIfield> surfaceData;
@@ -714,7 +693,6 @@ void Mesh::save_vtk(const std::string &s) const {
         flot << points.size() << "  float" << std::endl;
 
         for (const auto & point : points) {
-            //	flot.precision(6);
             flot << point->get_coord().X << " "
                  << point->get_coord().Y << " "
                  << point->get_coord().Z << std::endl;
@@ -759,8 +737,6 @@ void Mesh::save_ascii(const std::string &s) const {
         }
         for (unsigned int i = 0; i < triangles.size(); i++) {
             const float val = 0.0;
-            //if (tvalues.empty()) val = 0;
-            //else val = tvalues[0][i]; // value of first column
 
             flot << triangles[i].get_vertex(0).get_no() << " "
                  << triangles[i].get_vertex(1).get_no() << " "
@@ -839,12 +815,10 @@ void Mesh::clear() {
     points.clear();
     triangles.clear();
     pvalues.clear();
-    //tvalues.clear();
 }
 
 void Mesh::clear_data() {
     pvalues.clear();
-    //tvalues.clear();
 }
 
 const Point& Mesh::get_coord(int n) const {
@@ -1264,11 +1238,6 @@ Mesh make_mesh_from_icosa(int n) {
     std::vector<float> tmp_pvalues(ret.nvertices(), 0);
     ret.push_pvalues(tmp_pvalues);
 
-    /*
-    std::vector<float> tmp_tvalues(ret.ntriangles(), 0);
-    ret.push_tvalues(tmp_tvalues);
-    */
-
     return ret;
 }
 
@@ -1334,7 +1303,6 @@ void recentre(Mesh& sphere) {
 Mesh create_exclusion(const Mesh& data_mesh, float thrl, float thru) {
 
     Mesh EXCL = data_mesh;
-    //const double EPSILON = 1.0E-8;
 
     for (int i = 0; i < data_mesh.npvalues(); i++)
     {

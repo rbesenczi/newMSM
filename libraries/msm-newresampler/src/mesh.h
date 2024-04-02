@@ -42,7 +42,6 @@ class Mesh {
     std::vector<Point> normals;
 
     std::vector<std::vector<float>> pvalues;
-    //std::vector<std::vector<float>> tvalues;
 
     //---METADATA---//
     std::vector<NEWMESH::GIFTImeta> global_metaData;
@@ -54,7 +53,7 @@ public:
     Mesh();
 
     //---COPY/MOVE---//
-    Mesh(const Mesh &m);
+    Mesh(const Mesh& m);
     Mesh& operator=(const Mesh& m);
     Mesh(Mesh&& m) noexcept;
     Mesh& operator=(Mesh&& m) noexcept;
@@ -108,8 +107,6 @@ public:
 
     int get_triangle_vertexID(int n, int i) const { return triangles[n].get_vertex_no(i); }
 
-    //std::vector<std::shared_ptr<Mpoint>> get_points() const { return points; }
-
     int get_total_neighbours(int i) const {
         if (i >= (int) points.size() || i < 0)
             throw MeshException("get_total_neighbours: index exceeds data dimensions");
@@ -142,7 +139,6 @@ public:
     void clear_triangles() { triangles.clear(); }
     void push_point(const std::shared_ptr<Mpoint>& mesh_point) { points.push_back(mesh_point); }
     void push_pvalues(const std::vector<float>& pvals) { pvalues.push_back(pvals); }
-    //void push_tvalues(const std::vector<float>& tvals) { tvalues.push_back(tvals); }
     void push_triangle(const Triangle &t);
     void clear();
     void clear_data();

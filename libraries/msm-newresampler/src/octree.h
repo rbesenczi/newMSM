@@ -32,6 +32,10 @@ https://github.com/Washington-University/workbench/blob/master/src/Files/SignedD
 
 namespace newresampler {
 
+static const double NOT_IN_TRIANGLE = -1.0;
+static const int EMPTY_TRIANGLE = -1;
+static const int MESH_BOUNDS = 101;
+
 class Octree {
 
     Node* octree_root;

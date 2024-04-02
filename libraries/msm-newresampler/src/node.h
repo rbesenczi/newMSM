@@ -38,7 +38,7 @@ class Node {
 
 public:
     Node* children[2][2][2]; //pointers to children
-    Node* parent;
+    Node* parent = nullptr;
     double bounds[3][3]; //the bounds of this node
     bool is_leaf = true;
 

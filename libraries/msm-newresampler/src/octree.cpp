@@ -30,7 +30,7 @@ namespace newresampler {
 
 Octree::Octree(const Mesh& target) {
 
-    const int limit = 101;
+    const int limit = MESH_BOUNDS;
     double lower_bounds[3] = {-limit, -limit, -limit };
     double upper_bounds[3] = {limit, limit, limit };
 
@@ -99,7 +99,7 @@ void Octree::add_triangle(Node* node, const Triangle& triangle, const Point& low
                 total_size += split_size;
                 if (split_size != 8) ++num_split;
             }
-            if (num_split > 0 && total_size < 3 * (int)num_triangles)
+            if (num_split > 0 && total_size < 3 * num_triangles)
             {
                 node->make_children();
                 for (int d = 0; d < num_triangles; ++d)
@@ -150,7 +150,7 @@ double Octree::distance_to_triangle(const Point& pt, const Triangle& tr) const {
 
     if (point_in_triangle(mP, v0, v1, v2))
         return tr.dist_to_point(mP);
-    else return -1.0;   //don't like magic numbers, but this indicates that the point is not in the triangle
+    else return NOT_IN_TRIANGLE;
 }
 
 Triangle Octree::get_closest_triangle(const Point &pt) const {
@@ -171,30 +171,28 @@ Triangle Octree::get_closest_triangle(const Point &pt) const {
 
     for (int i = 0; i < current_oct->triangles_size(); ++i) {
         double temp_distance = distance_to_triangle(pt, current_oct->get_triangle(i));
-        if(temp_distance > -1.0 && temp_distance < best_distance) {
+        if(temp_distance > NOT_IN_TRIANGLE && temp_distance < best_distance) {
             closest_triangle = current_oct->get_triangle(i);
             best_distance = temp_distance;
         }
     }
 
-    if(closest_triangle.get_no() == -1) {
+    if(closest_triangle.get_no() == EMPTY_TRIANGLE) {
         best_distance = std::numeric_limits<double>::max();
         for (auto &i: current_oct->parent->children)
             for (auto &j: i)
                 for (auto &close_oct: j)
                     for (int tr = 0; tr < close_oct->triangles_size(); ++tr) {
                         double temp_distance = distance_to_triangle(pt, close_oct->get_triangle(tr));
-                        if (temp_distance > -1.0 && temp_distance < best_distance) {
+                        if (temp_distance > NOT_IN_TRIANGLE && temp_distance < best_distance) {
                             closest_triangle = close_oct->get_triangle(tr);
                             best_distance = temp_distance;
                         }
                     }
     }
 
-    if(closest_triangle.get_no() == -1) {
-        //This is an unfortunate case... Probably needs some more refinement.
+    if(closest_triangle.get_no() == EMPTY_TRIANGLE) {
         best_distance = std::numeric_limits<double>::max();
-        //constexpr double RAD = 100.0;
         for (auto &i: current_oct->parent->children)
             for (auto &j: i)
                 for (auto close_oct: j)
@@ -209,7 +207,8 @@ Triangle Octree::get_closest_triangle(const Point &pt) const {
                         }
     }
 
-    if(closest_triangle.get_no() == -1) throw MeshException("Error in octree...");
+    if(closest_triangle.get_no() == EMPTY_TRIANGLE)
+        throw MeshException("Error in octree. This may caused by a too distorted mesh face. Try increasing regularisation lambda.");
 
     return closest_triangle;
 }
@@ -224,8 +223,7 @@ int Octree::get_closest_vertex_ID(const Point &pt) const {
     for(int v = 0; v < 3; ++v)
     {
         double current_dist = (pt - closest_triangle.get_vertex_coord(v)).norm();
-        if(current_dist < dist)
-        {
+        if(current_dist < dist) {
             closest_vertex_ID = closest_triangle.get_vertex_no(v);
             dist = current_dist;
         }

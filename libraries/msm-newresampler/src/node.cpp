@@ -33,9 +33,10 @@ Node::Node() {
         for(auto& j : i)
             for (auto& k: j)
                 k = nullptr;
-
+    for(auto& i : bounds)
+        for(auto& j : i)
+                j = 0.0;
     triangles.reserve(MAX_TRIANGLES);
-    is_leaf = true;
 }
 
 Node::Node(const double lower_bounds[3], const double upper_bounds[3]) {
@@ -44,26 +45,21 @@ Node::Node(const double lower_bounds[3], const double upper_bounds[3]) {
         for(auto& j : i)
             for (auto& k: j)
                 k = nullptr;
-
-    triangles.reserve(MAX_TRIANGLES);
-    is_leaf = true;
-
-    for (int i = 0; i < 3; ++i)
-    {
+    for (int i = 0; i < 3; ++i) {
         bounds[i][0] = lower_bounds[i];
         bounds[i][2] = upper_bounds[i];
         bounds[i][1] = (bounds[i][0] + bounds[i][2]) / 2.0;
     }
+    triangles.reserve(MAX_TRIANGLES);
 }
 
 Node::~Node() {
 
-    is_leaf = true;
+    //is_leaf = true;
 
     for(auto& i : children)
         for(auto& j : i)
-            for(auto& k : j)
-            {
+            for(auto& k : j) {
                 delete k; k = nullptr;
             }
 }

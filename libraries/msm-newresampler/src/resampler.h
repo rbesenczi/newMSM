@@ -35,20 +35,8 @@ Copyright (C) 2014  Washington University School of Medicine
 
 namespace newresampler {
 
-enum class Method { BARY, ADAP_BARY };
-
 class Resampler {
-
-    Method method;
-
 public:
-    Resampler(): method(Method::ADAP_BARY) {}
-    explicit Resampler(Method m): method(m) {}
-
-    //---ACCESS---//
-    void set_method(const Method& m){ method = m; }
-    Method get_method() const { return method; };
-
     //---RESAMPLING AND CALC WEIGHTS, OCTREE-BASED METHODS---//
     Mesh barycentric_data_interpolation(const Mesh& metric_in, const Mesh& sphLow, int nthreads = 1, std::shared_ptr<Mesh> = std::shared_ptr<Mesh>());
     std::vector<std::map<int,double>> get_adaptive_barycentric_weights(const Mesh& in_mesh, const Mesh& sphLow, int nthreads = 1, std::shared_ptr<Mesh> = std::shared_ptr<Mesh>());
