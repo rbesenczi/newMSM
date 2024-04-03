@@ -140,26 +140,24 @@ NEWMAT::RowVector sparsesimkernel::meanvector(const MISCMATHS::BFMatrix& fdt_mat
 
 //--------------- FOR DISCRETE COST FUNCTIONS ---------------//
 // for the case where we are working on vector data and we have no knowledge of the full data m_A (currently used in discrete opt)
-void sparsesimkernel::initialize(const std::vector<double>& inputdata, const std::vector<double>& refdata, const std::vector<double>& weights) {
+void sparsesimkernel::initialize(const std::vector<double>& A, const std::vector<double>& B, const std::vector<double>& weights) {
 
     _meanA = 0.0;
     _meanB = 0.0;
     double sum = 0.0;
 
-    for(unsigned int i = 0; i < inputdata.size(); i++)
-    {
-        double varwght = 1.0;
-        if(weights.size() == inputdata.size()) varwght = weights[i];
+    for(unsigned int i = 0; i < A.size(); i++) {
 
-        _meanA += varwght * inputdata[i];
-        _meanB += varwght * refdata[i];
+        double varwght = 1.0;
+        if(!weights.empty()) varwght = weights[i];
+
+        _meanA += varwght * A[i];
+        _meanB += varwght * B[i];
         sum += varwght;
     }
 
-    if(sum > 0.0)
-    {
-        _meanA/=sum;
-        _meanB/=sum;
+    if(sum > 0.0) {
+        _meanA/=sum; _meanB/=sum;
     }
 }
 
@@ -170,11 +168,10 @@ double sparsesimkernel::corr(const std::vector<double>& A, const std::vector<dou
 
     initialize(A, B, weights);
 
-    for (unsigned int s = 0; s < A.size(); s++)
-    {
-        double varwght = 1.0;
+    for (unsigned int s = 0; s < A.size(); s++) {
 
-        if (weights.size() == A.size()) varwght = weights[s];
+        double varwght = 1.0;
+        if (!weights.empty()) varwght = weights[s];
 
         prod += varwght * (A[s] - _meanA) * (B[s] - _meanB);
         varA += varwght * (A[s] - _meanA) * (A[s] - _meanA);
@@ -182,49 +179,12 @@ double sparsesimkernel::corr(const std::vector<double>& A, const std::vector<dou
         sum += varwght;
     }
 
-    if(sum > 0)
-    {
-      prod /= sum;
-      varA /= sum;
-      varB /= sum;
+    if(sum > 0) {
+      prod /= sum; varA /= sum; varB /= sum;
     }
 
     if (varA == 0.0 || varB == 0.0) return 0.0;
     else return prod / (sqrt(varA) * sqrt(varB));
 }
 
-double sparsesimkernel::corr(const std::map<int,float> &A, const std::map<int,float> &B) {
-
-    double prod = 0.0, varA = 0.0, varB = 0.0, MAPA_MEAN = 0.0, MAPB_MEAN = 0.0;
-    int ind = 0;
-
-    // estimate mean
-    for (const auto &iter: A)
-        if (B.find(iter.first) != B.end()) {
-            MAPA_MEAN += iter.second;
-            MAPB_MEAN += B.find(iter.first)->second;
-            ind++;
-        }
-
-    if (ind == 0) return 1e6;
-    else {
-        MAPA_MEAN /= ind;
-        MAPB_MEAN /= ind;
-
-        for (const auto &iter: A) {
-            if (B.find(iter.first) != B.end()) {
-                prod += (iter.second - MAPA_MEAN) * (B.find(iter.first)->second - MAPB_MEAN);
-                varA += (iter.second - MAPA_MEAN) * (iter.second - MAPA_MEAN);
-                varB += (B.find(iter.first)->second - MAPB_MEAN) * (B.find(iter.first)->second - MAPB_MEAN);
-            }
-        }
-
-        prod /= ind;
-        varA /= ind;
-        varB /= ind;
-
-        if (varA == 0.0 || varB == 0.0) return 0.0;
-        else return (1 - (1 + (prod / (sqrt(varA) * sqrt(varB)))) * 0.5);
-    }
-}
 } //namespace newmeshreg

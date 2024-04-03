@@ -159,120 +159,64 @@ void NonLinearSRegDiscreteCostFunction::set_parameters(myparam& ALLPARAMS) {
 
 double NonLinearSRegDiscreteCostFunction::computeTripletCost(int triplet, int labelA, int labelB, int labelC) {
 
-    double cost = 0.0, weight = 1.0;
-    if(triplet == 0 && _debug) { sumlikelihood = 0.0; sumregcost = 0.0; }
+    double cost = 0.0;
+    if(_debug && triplet == 0) { sumlikelihood = 0.0; sumregcost = 0.0; }
+    std::map<int,newresampler::Point> rotated_triangle;
 
-    std::map<int,newresampler::Point> vertex;
+    rotated_triangle[_triplets[3*triplet  ]] = (*ROTATIONS)[_triplets[3*triplet  ]] * _labels[labelA];
+    rotated_triangle[_triplets[3*triplet+1]] = (*ROTATIONS)[_triplets[3*triplet+1]] * _labels[labelB];
+    rotated_triangle[_triplets[3*triplet+2]] = (*ROTATIONS)[_triplets[3*triplet+2]] * _labels[labelC];
 
-    std::vector<int> id = { _triplets[3*triplet], _triplets[3*triplet+1], _triplets[3*triplet+2] };
-
-    newresampler::Point v0 = _CPgrid.get_coord(id[0]);
-    newresampler::Point v1 = _CPgrid.get_coord(id[1]);
-    newresampler::Point v2 = _CPgrid.get_coord(id[2]);
-
-    vertex[id[0]] = (*ROTATIONS)[id[0]] * _labels[labelA];
-    vertex[id[1]] = (*ROTATIONS)[id[1]] * _labels[labelB];
-    vertex[id[2]] = (*ROTATIONS)[id[2]] * _labels[labelC];
-
-    newresampler::Triangle TRI(vertex[id[0]],
-                               vertex[id[1]],
-                               vertex[id[2]], 0);
-    newresampler::Triangle TRI_noDEF(v0,v1,v2,0);
-
-    double likelihood = triplet_likelihood(triplet, id[0], id[1], id[2], vertex[id[0]], vertex[id[1]], vertex[id[2]]);
+    newresampler::Triangle TRI(rotated_triangle[_triplets[3*triplet  ]],
+                               rotated_triangle[_triplets[3*triplet+1]],
+                               rotated_triangle[_triplets[3*triplet+2]], 0);
+    newresampler::Triangle TRI_noDEF(_CPgrid.get_coord(_triplets[3*triplet  ]),
+                                     _CPgrid.get_coord(_triplets[3*triplet+1]),
+                                     _CPgrid.get_coord(_triplets[3*triplet+2]),0);
 
     // only estimate cost if it doesn't cause folding
-    if((TRI.normal() | TRI_noDEF.normal()) < 0)
-    {
-        cost = 1.0;
-        weight += 1e6;
-    }
-    else
-    {
-        switch(_rmode)
-        {
-            case 2:
-            {
-                double tweight = 1.0, diff = 0.0;
-                newresampler::Triangle TRI_ORIG(_ORIG.get_coord(_triplets[3*triplet]),
-                                                _ORIG.get_coord(_triplets[3*triplet+1]),
-                                                _ORIG.get_coord(_triplets[3*triplet+2]), 0);
-                std::vector<double> deformed_angles = TRI.get_angles();
-                std::vector<double> orig_angles = TRI_ORIG.get_angles();
+    if ((TRI.normal() | TRI_noDEF.normal()) < 0) return std::numeric_limits<double>::max();
 
-                double distortion = log2(TRI.get_area()/TRI_ORIG.get_area());
-                if (_dweight && distortion != 1) tweight = exp(abs(distortion - 1));
-                else tweight = 1.0;
+    double likelihood =
+            triplet_likelihood(triplet, _triplets[3*triplet], _triplets[3*triplet+1], _triplets[3*triplet+2],
+                   rotated_triangle[_triplets[3*triplet]], rotated_triangle[_triplets[3*triplet+1]], rotated_triangle[_triplets[3*triplet+2]]);
 
-                for (int i = 0; i < 3; i++)
-                    diff += std::pow(deformed_angles[i] - orig_angles[i], 2);
+    switch (_rmode) {
+        case 2: //for backward compatibility reasons
+        case 3: {
+            newresampler::Triangle TRI_ORIG(_ORIG.get_coord(_triplets[3*triplet  ]),
+                                            _ORIG.get_coord(_triplets[3*triplet+1]),
+                                            _ORIG.get_coord(_triplets[3*triplet+2]), 0);
 
-                cost = tweight*(sqrt(diff));
-
-                if (_anorm) weight *= (1 / _MEANANGLE);
-                break;
-            }
-            case 3:
-            {
-                newresampler::Triangle TRI_ORIG(_ORIG.get_coord(_triplets[3*triplet]),
-                                                _ORIG.get_coord(_triplets[3*triplet+1]),
-                                                _ORIG.get_coord(_triplets[3*triplet+2]), 0);
-
-                cost = calculate_triangular_strain(TRI_ORIG, TRI, _mu, _kappa, std::shared_ptr<NEWMAT::ColumnVector>(), _k_exp);
-                break;
-            }
-            case 4:
-            {
-                double tweight = 1.0, diff = 0.0;
-                std::map<int,bool> moved2;
-                std::map<int,newresampler::Point> transformed_points;
-
-                for (unsigned int n = 0; n < NEARESTFACES[triplet].size(); n++)
-                {
-                    newresampler::Triangle TRIorig = _aSOURCE.get_triangle(NEARESTFACES[triplet][n]);
-                    newresampler::Triangle TRItrans = deform_anatomy(triplet, n, vertex, moved2, transformed_points);
-                    std::vector<double> orig_angles = TRIorig.get_angles();
-                    std::vector<double> deformed_angles = TRItrans.get_angles();
-
-                    double distortion = log2(TRItrans.get_area()/TRIorig.get_area());
-                    if (_dweight && distortion != 1) tweight = exp(abs(distortion - 1));
-                    else tweight = 1;
-
-                    for (int i = 0; i < 3; i++)
-                        diff += std::pow(deformed_angles[i] - orig_angles[i], 2);
-                    diff = tweight * sqrt(diff);
-                    cost += diff;   // TODO this is a bit odd, as diff is not zeroed at any point in this loop. Maybe double summing the cost?
-                }
-                cost = cost / (double) NEARESTFACES[triplet].size();
-                break;
-            }
-            case 5:
-            {
-                std::map<int,bool> moved2;
-                std::map<int,newresampler::Point> transformed_points;
-
-                for (unsigned int n = 0; n < NEARESTFACES[triplet].size(); n++)
-                {
-                    newresampler::Triangle TRIorig = _aSOURCE.get_triangle(NEARESTFACES[triplet][n]);
-                    newresampler::Triangle TRItrans = deform_anatomy(triplet, n, vertex, moved2, transformed_points);
-                    cost += calculate_triangular_strain(TRIorig, TRItrans, _mu, _kappa, std::shared_ptr<NEWMAT::ColumnVector>(), _k_exp);
-                }
-                cost = cost / (double) NEARESTFACES[triplet].size();
-                break;
-            }
-            default:
-                throw MeshregException("DiscreteModel computeTripletCost regoption does not exist");
+            cost = calculate_triangular_strain(TRI_ORIG, TRI, _mu, _kappa,
+                                               std::shared_ptr<NEWMAT::ColumnVector>(),_k_exp);
+            break;
         }
+        case 4: //for backward compatibility reasons
+        case 5: {
+            std::map<int, bool> moved2;
+            std::map<int, newresampler::Point> transformed_points;
+
+            for (unsigned int n = 0; n < NEARESTFACES[triplet].size(); n++) {
+                newresampler::Triangle TRIorig = _aSOURCE.get_triangle(NEARESTFACES[triplet][n]);
+                newresampler::Triangle TRItrans = deform_anatomy(triplet, n, rotated_triangle, moved2, transformed_points);
+                cost += calculate_triangular_strain(TRIorig, TRItrans, _mu, _kappa,
+                                                    std::shared_ptr<NEWMAT::ColumnVector>(), _k_exp);
+            }
+            cost = cost / (double) NEARESTFACES[triplet].size();
+            break;
+        }
+        default:
+            throw MeshregException("DiscreteModel computeTripletCost regoption does not exist");
     }
 
-    if (abs(cost) < 1e-8) cost = 0.0;
     if(_debug)
     {
         sumlikelihood += likelihood;
-        sumregcost += weight * _reglambda * MISCMATHS::pow(cost,_rexp);
+        sumregcost += _reglambda * MISCMATHS::pow(cost,_rexp);
     }
 
-    return likelihood + weight * _reglambda * MISCMATHS::pow(cost,_rexp); // normalise to try and ensure equivalent lambda for each resolution level
+    return likelihood + _reglambda * MISCMATHS::pow(cost,_rexp); // normalise to try and ensure equivalent lambda for each resolution level
 }
 
 double NonLinearSRegDiscreteCostFunction::computePairwiseCost(int pair, int labelA, int labelB) {
