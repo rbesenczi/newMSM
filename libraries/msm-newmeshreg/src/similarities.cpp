@@ -24,20 +24,14 @@ SOFTWARE.
 namespace newmeshreg {
 
 //--------------- FOR RIGID COST FUNCTIONS ---------------//
-void sparsesimkernel::Initialize(int simval) {  // for rigid
+void sparsesimkernel::initialise(int simval) {
 
     _sim = simval;
-
-    if (m_A == nullptr) throw newmeshreg::MeshregException("SIMILARITIES:: Connectivity matrices have not been initliased");
-
     _rmeanA = meanvector(*m_A);
-    if(m_A->Nrows() == 1) _meanA = _rmeanA(1);
     if(m_B != nullptr)
         _rmeanB = meanvector(*m_B);
     else
         _rmeanB = _rmeanA;
-
-    if(m_B->Nrows() == 1) _meanB = _rmeanB(1);
 }
 
 void sparsesimkernel::calculate_sim_column_nbh(int ind) {
@@ -65,25 +59,20 @@ double sparsesimkernel::corr(int i, int j) {
     double Bzerooffset = (0.0-_rmeanB(j));  // result for all zero values of sparse mat
     double Azerooffset = (0.0-_rmeanA(i));
 
-    for (MISCMATHS::BFMatrixColumnIterator it = m_A->begin(i); it != m_A->end(i); it++)
-    {
+    for (MISCMATHS::BFMatrixColumnIterator it = m_A->begin(i); it != m_A->end(i); it++) {
         prod += (*it-_rmeanA(i))*(m_B->Peek(it.Row(),j)-_rmeanB(j));
         varA += (*it-_rmeanA(i))*(*it-_rmeanA(i));
         varB += (m_B->Peek(it.Row(),j)-_rmeanB(j))*(m_B->Peek(it.Row(),j)-_rmeanB(j));
         num++;
     }
 
-    if(ptr)
-    { //if sparse run all for all rows where A had zero values
-
+    if(ptr) { //if sparse run all for all rows where A had zero values
         varA += (m_A->Nrows()-num)*Azerooffset*Azerooffset; // for rows where A has no values
-        for (MISCMATHS::BFMatrixColumnIterator it = m_B->begin(j); it != m_B->end(j); it++)
-        {
-            if(m_A->Peek(it.Row(),i) == 0)
-            {
-                prod +=Azerooffset*(*it-_rmeanB(j));
+        for (MISCMATHS::BFMatrixColumnIterator it = m_B->begin(j); it != m_B->end(j); it++) {
+            if(m_A->Peek(it.Row(),i) == 0) {
+                prod += Azerooffset*(*it-_rmeanB(j));
                 num++;
-                varB+=(*it-_rmeanB(j))*(*it-_rmeanB(j));
+                varB += (*it-_rmeanB(j))*(*it-_rmeanB(j));
             }
             numB++;
         }
@@ -118,73 +107,67 @@ NEWMAT::RowVector sparsesimkernel::meanvector(const MISCMATHS::BFMatrix& fdt_mat
     NEWMAT::RowVector mean(fdt_matrix.Ncols());
     mean = 0;
 
-    if (fdt_matrix.Nrows() == 1)
-    {
-        double sum = 0;
+    if (fdt_matrix.Nrows() == 1) {
+        double sum = 0.0;
         for (unsigned int i = 0; i < fdt_matrix.Ncols(); i++)
-            sum = sum + fdt_matrix.Peek(1, i + 1);
+            sum += fdt_matrix.Peek(1, i + 1);
         for (unsigned int i = 0; i < fdt_matrix.Ncols(); i++)
             mean(i + 1) = sum / fdt_matrix.Ncols();
     }
     else
-        for (unsigned int i = 0; i < fdt_matrix.Ncols(); i++)
-        {
-            double sum = 0;
+        for (unsigned int i = 0; i < fdt_matrix.Ncols(); i++) {
+            double sum = 0.0;
             for (unsigned int j = 0; j < fdt_matrix.Nrows(); j++)
-                sum = sum + fdt_matrix.Peek(j + 1, i + 1);
+                sum += fdt_matrix.Peek(j + 1, i + 1);
             mean(i + 1) = sum / fdt_matrix.Nrows();
         }
-
     return mean;
 }
 
 //--------------- FOR DISCRETE COST FUNCTIONS ---------------//
 // for the case where we are working on vector data and we have no knowledge of the full data m_A (currently used in discrete opt)
-void sparsesimkernel::initialize(const std::vector<double>& A, const std::vector<double>& B, const std::vector<double>& weights) {
-
-    _meanA = 0.0;
-    _meanB = 0.0;
-    double sum = 0.0;
-
-    for(unsigned int i = 0; i < A.size(); i++) {
-
-        double varwght = 1.0;
-        if(!weights.empty()) varwght = weights[i];
-
-        _meanA += varwght * A[i];
-        _meanB += varwght * B[i];
-        sum += varwght;
-    }
-
-    if(sum > 0.0) {
-        _meanA/=sum; _meanB/=sum;
-    }
-}
-
 double sparsesimkernel::corr(const std::vector<double>& A, const std::vector<double>& B, const std::vector<double>& weights) {
 
-    double prod = 0.0, varA = 0.0, varB = 0.0;
-    double sum = 0.0;
+    double prod = 0.0, varA = 0.0, varB = 0.0, meanA = 0.0, meanB = 0.0;
+    double sum = std::accumulate(weights.begin(), weights.end(), 0.0);
+    auto len = A.size();
 
-    initialize(A, B, weights);
+    for(unsigned int i = 0; i < len; i++) {
+        meanA += weights[i] * A[i];
+        meanB += weights[i] * B[i];
+    }
+
+    meanA /= sum; meanB /= sum;
 
     for (unsigned int s = 0; s < A.size(); s++) {
-
-        double varwght = 1.0;
-        if (!weights.empty()) varwght = weights[s];
-
-        prod += varwght * (A[s] - _meanA) * (B[s] - _meanB);
-        varA += varwght * (A[s] - _meanA) * (A[s] - _meanA);
-        varB += varwght * (B[s] - _meanB) * (B[s] - _meanB);
-        sum += varwght;
+        prod += weights[s] * (A[s] - meanA) * (B[s] - meanB);
+        varA += weights[s] * (A[s] - meanA) * (A[s] - meanA);
+        varB += weights[s] * (B[s] - meanB) * (B[s] - meanB);
     }
 
-    if(sum > 0) {
-      prod /= sum; varA /= sum; varB /= sum;
-    }
+    prod /= sum; varA /= sum; varB /= sum;
 
     if (varA == 0.0 || varB == 0.0) return 0.0;
     else return prod / (sqrt(varA) * sqrt(varB));
+}
+
+double sparsesimkernel::corr(const std::vector<double>& A, const std::vector<double>& B) {
+
+    double prod = 0.0, varA = 0.0, varB = 0.0;
+    auto len = A.size();
+
+    double meanA = std::accumulate(A.begin(), A.end(), 0.0) / len;
+    double meanB = std::accumulate(B.begin(), B.end(), 0.0) / len;
+
+    for (unsigned int s = 0; s < len; s++) {
+        prod += (A[s] - meanA) * (B[s] - meanB);
+        varA += (A[s] - meanA) * (A[s] - meanA);
+        varB += (B[s] - meanB) * (B[s] - meanB);
+    }
+
+    prod /= len; varA /= len; varB /= len;
+
+    return prod / (sqrt(varA) * sqrt(varB));
 }
 
 } //namespace newmeshreg

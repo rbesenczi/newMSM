@@ -29,20 +29,22 @@ Rigid_cost_function::Rigid_cost_function(
         std::shared_ptr<featurespace>& features)
         :TARGET(std::move(target)), SOURCE(std::move(source)), FEAT(features) {}
 
-void Rigid_cost_function::Initialize(){
+void Rigid_cost_function::initialise() {
 
     current_sim.ReSize(SOURCE.nvertices());
-    MVD = SOURCE.calculate_MeanVD();
-    min_sigma = MVD;
-    sim.Resize(TARGET.nvertices(), SOURCE.nvertices());  // creates sparse sim kernel to fill with similarities of nearest neighbours only
+    min_sigma = MVD = SOURCE.calculate_MeanVD();
+    sim.resize(TARGET.nvertices(), SOURCE.nvertices());  // creates sparse sim kernel to fill with similarities of nearest neighbours only
     sim.set_reference(FEAT->get_reference_data());
     sim.set_input(FEAT->get_input_data());
-    sim.Initialize(simmeasure);
+    sim.initialise(simmeasure);
     nbh = std::make_shared<Neighbourhood>();
     nbh->update(SOURCE, TARGET, 2 * asin(4 * MVD / (2 * RAD)), numthreads);
     sim.set_neighbourhood(nbh);
     targettree = std::make_shared<newresampler::Octree>(TARGET);
-    update_similarity();
+
+    #pragma omp parallel for num_threads(numthreads)
+    for (int i = 0; i < SOURCE.nvertices(); i++)
+        sim.calculate_sim_column_nbh(i);
 }
 
 void Rigid_cost_function::set_parameters(myparam& PAR){
@@ -53,16 +55,6 @@ void Rigid_cost_function::set_parameters(myparam& PAR){
     it = PAR.find("stepsize"); stepsize = std::get<float>(it->second);
     it = PAR.find("gradsampling"); spacing = std::get<float>(it->second);
     it = PAR.find("numthreads"); numthreads = std::get<int>(it->second);
-}
-
-void Rigid_cost_function::update_similarity() {
-
-    sim.set_input(FEAT->get_input_data());
-    sim.set_reference(FEAT->get_reference_data());
-
-    #pragma omp parallel for num_threads(numthreads)
-    for (int i = 0; i < SOURCE.nvertices(); i++)
-        sim.calculate_sim_column_nbh(i);
 }
 
 void Rigid_cost_function::WLS_simgradient(const newresampler::Tangs& tangs, int index, const std::vector<int>& querypoints) {
@@ -83,7 +75,7 @@ void Rigid_cost_function::WLS_simgradient(const newresampler::Tangs& tangs, int 
         {
             double weight = exp(-(dist_1 * dist_1 + dist_2 * dist_2) / (2 * min_sigma * min_sigma));
             SUM += weight;
-            JPsim += sim.Peek(querypoint+1,index+1) * weight;
+            JPsim += sim.peek(querypoint+1,index+1) * weight;
         }
     }
 
@@ -121,11 +113,10 @@ void Rigid_cost_function::rotate_in_mesh(double a1, double a2, double a3){
     for (int index = 0; index < SOURCE.nvertices(); index++)
     {
         newresampler::Point cii = SOURCE.get_coord(index);
-        NEWMAT::ColumnVector V(3), VR(3);
+        NEWMAT::ColumnVector V(3);
         V(1) = cii.X; V(2) = cii.Y; V(3) = cii.Z;
-        VR = newresampler::euler_rotate(V, a1, a2, a3);
-        newresampler::Point ppc(VR(1), VR(2), VR(3));
-        SOURCE.set_coord(index,ppc);
+        NEWMAT::ColumnVector VR = newresampler::euler_rotate(V, a1, a2, a3);
+        SOURCE.set_coord(index,newresampler::Point(VR(1),VR(2),VR(3)));
     }
 }
 
@@ -138,12 +129,10 @@ double Rigid_cost_function::rigid_cost_mesh(double dw1, double dw2, double dw3){
 
     #pragma omp parallel for num_threads(numthreads)
     for (int index = 0; index < SOURCE.nvertices(); index++)
-    {
-        newresampler::Tangs T = calculate_tangs(index, SOURCE);
-        Evaluate_SIMGradient(index,T);
-        #pragma omp critical
-        SUM += current_sim(index + 1);
-    }
+        Evaluate_SIMGradient(index, calculate_tangs(index, SOURCE));
+
+    for(int i = 1; i <= SOURCE.nvertices(); i++)
+        SUM += current_sim(i);
 
     SOURCE = tmp;
     return SUM;

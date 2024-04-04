@@ -69,8 +69,7 @@ void Mesh_registration::initialize_level(int current_lvl) {
     {
         rigidcf = std::make_shared<Rigid_cost_function>(SPH_orig, SPH_orig, FEAT);
         rigidcf->set_parameters(PARAMETERS);
-        if(_simval[current_lvl] != 1) rigidcf->set_simmeasure(1);
-        rigidcf->Initialize();
+        rigidcf->initialise();
         isrigid = true;
     }
 

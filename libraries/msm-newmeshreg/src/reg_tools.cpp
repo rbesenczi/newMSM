@@ -45,7 +45,7 @@ void Neighbourhood::update(const newresampler::Mesh& source, const newresampler:
             newresampler::Point actual = target.get_coord(n);
             actual.normalize();
             if ((actual | cr) >= cos(angsep))
-                cr_neighbours.emplace_back(std::make_pair((actual - cr).norm(), n));
+                cr_neighbours.emplace_back((actual - cr).norm(), n);
         }
 
         std::sort(cr_neighbours.begin(), cr_neighbours.end(),
@@ -232,7 +232,6 @@ newresampler::Tangs calculate_tangs(int ind, const newresampler::Mesh& SPH_in) {
     newresampler::Tangs T;
     double mag;
     newresampler::Point a = SPH_in.local_normal(ind);
-    //newresampler::Point tmp = SPH_in.get_coord(ind);
 
     if((a|SPH_in.get_coord(ind)) < 0) a = a * -1;
 
@@ -248,8 +247,8 @@ newresampler::Tangs calculate_tangs(int ind, const newresampler::Mesh& SPH_in) {
         else
         {
             T.e1.X = 0;
-            T.e1.Y = -a.Z /mag;
-            T.e1.Z = a.Y /mag;
+            T.e1.Y = -a.Z/mag;
+            T.e1.Z = a.Y/mag;
         }
     }
     else if(abs(a.Y) >= abs(a.X) && abs(a.Y) >= abs(a.Z))
