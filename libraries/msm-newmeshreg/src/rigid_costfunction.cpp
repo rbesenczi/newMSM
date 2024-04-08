@@ -95,9 +95,9 @@ void Rigid_cost_function::Evaluate_SIMGradient(int i, const newresampler::Tangs&
         std::vector<int> querypoints;
         newresampler::Triangle closest_triangle = targettree->get_closest_triangle(point);
 
-        if(get_all_neighbours(i, querypoints, point, closest_triangle.get_vertex_no(0), TARGET, nbh, found)) update = true;
-        if(get_all_neighbours(i, querypoints, point, closest_triangle.get_vertex_no(1), TARGET, nbh, found) || update) update = true;
-        if(get_all_neighbours(i, querypoints, point, closest_triangle.get_vertex_no(2), TARGET, nbh, found) || update) update = true;
+        if(get_all_neighbours(i, querypoints, closest_triangle.get_vertex_no(0), TARGET, nbh, found)) update = true;
+        if(get_all_neighbours(i, querypoints, closest_triangle.get_vertex_no(1), TARGET, nbh, found) || update) update = true;
+        if(get_all_neighbours(i, querypoints, closest_triangle.get_vertex_no(2), TARGET, nbh, found) || update) update = true;
         if(update)
         {
             nbh->at(i) = querypoints;
@@ -136,6 +136,29 @@ double Rigid_cost_function::rigid_cost_mesh(double dw1, double dw2, double dw3){
 
     SOURCE = tmp;
     return SUM;
+}
+
+bool Rigid_cost_function::get_all_neighbours(int index, std::vector<int>& N, int n, const newresampler::Mesh& REF, std::shared_ptr<Neighbourhood>& nbh, MISCMATHS::SpMat<int>& found) {
+
+    bool update = false;
+
+    for (auto j = REF.tIDbegin(n); j != REF.tIDend(n); j++)
+    {
+        int n0 = REF.get_triangle(*j).get_vertex_no(0),
+                n1 = REF.get_triangle(*j).get_vertex_no(1),
+                n2 = REF.get_triangle(*j).get_vertex_no(2);
+
+        if((*nbh)(index, 0) != n0
+           || (*nbh)(index, 0) != n1
+           || (*nbh)(index, 0) != n2)
+            update = true;
+
+        if(found.Peek(n0 + 1,1) == 0) { N.push_back(n0); found.Set(n0 + 1,1,1); }
+        if(found.Peek(n1 + 1,1) == 0) { N.push_back(n1); found.Set(n1 + 1,1,1); }
+        if(found.Peek(n2 + 1,1) == 0) { N.push_back(n2); found.Set(n2 + 1,1,1); }
+    }
+
+    return update;
 }
 
 newresampler::Mesh Rigid_cost_function::run(){

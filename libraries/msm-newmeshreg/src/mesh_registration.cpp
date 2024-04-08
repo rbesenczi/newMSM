@@ -57,10 +57,10 @@ void Mesh_registration::initialize_level(int current_lvl) {
     FEAT->set_smoothing_parameters({_sigma_in[current_lvl], _sigma_ref[current_lvl]});
     FEAT->set_cutthreshold(_threshold); // will also generate exclusion masks at the same mesh resolution as datagrid
     FEAT->varnorm(_varnorm);// variance normalises
-    FEAT->intensitynormalize(_IN, _cut); // matches the intensities of the source to the target (will rescale all to the top feature of the target if scale is true)
+    FEAT->intensitynormalise(_IN, _cut); // matches the intensities of the source to the target (will rescale all to the top feature of the target if scale is true)
     FEAT->is_sparse(_issparse);
     FEAT->set_nthreads(_numthreads);
-    SPH_orig = FEAT->initialize(_genesis[current_lvl], MESHES, _exclude);  // downsamples and smooths data, creates and exclusion mask if exclude is true
+    SPH_orig = FEAT->initialise(_genesis[current_lvl], MESHES, _exclude);  // downsamples and smooths data, creates and exclusion mask if exclude is true
 
     SPHin_CFWEIGHTING = downsample_cfweighting(_sigma_in[current_lvl], SPH_orig, IN_CFWEIGHTING, FEAT->get_input_excl());
     SPHref_CFWEIGHTING = downsample_cfweighting(_sigma_ref[current_lvl], SPH_orig, REF_CFWEIGHTING, FEAT->get_reference_excl());
@@ -99,8 +99,8 @@ void Mesh_registration::initialize_level(int current_lvl) {
         }
         else
         {
-            if (_regmode == 5) throw MeshregException("STRAINS based regularisation requires anatomical meshes");
-            else if (_regmode == 4) throw MeshregException("You have specified angular based penalisation of anatomical warp, for which you require anatomical meshes");
+            if (_regmode == 4) throw MeshregException("--regoption 4 has been removed from newMSM. Use --regoption 3 for spherical mesh regularisation or --regoption 5 for anatomical mesh regularisation.");
+            if (_regmode == 5) throw MeshregException("--regoption 5 requires anatomical meshes. Use --regoption 3 for spherical mesh regularisation or provide anatomical meshes.");
         }
 
         model->Initialize(CONTROL);
@@ -477,7 +477,7 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
                                      false,Utilities::requires_argument);
     std::vector<int> intdefault;
     Utilities::Option<std::vector<int>> simval(std::string("--simval"), intdefault,
-                                    std::string("code for determining which similarty measure is used to assess cost during registration. Warning! Changes in newMSM: affine method uses SSD by default, Discrete uses Pearson's correlation only. NMI is removed from newMSM, as it was not working in the old version."),
+                                    std::string("code for determining which similarty measure is used to assess cost during registration. Warning! Changes in newMSM: rigid method uses SSD or Pearson's correlation, Discrete uses Pearson's correlation only. NMI has been removed from newMSM."),
                                false, Utilities::requires_argument);
     Utilities::Option<std::vector<int>> iterations(std::string("--it"), intdefault,
                                         std::string("number of iterations at each resolution (default -–it=3,3,3)"),
@@ -509,35 +509,26 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
                                              std::string("Upper and lower thresholds for defining cut vertices (default --cutthr=0,0)"),
                                         false, Utilities::requires_argument);
     Utilities::Option<int> regulariseroption(std::string("--regoption"), 1,
-                                  std::string("Choose option for regulariser form lambda*weight*pow(cost,rexp). Where cost can be PAIRWISE or TRI-CLIQUE based. Options are: 1) PAIRWISE - penalising diffences in rotations of neighbouring points (default); 2) TRI_CLIQUE Angle deviation penalty (for spheres); 3) TRI_CLIQUE: Strain-based (for spheres);  4) TRI_CLIQUE Angle deviation penalty (for anatomy); 5) TRI_CLIQUE: Strain-based (for anatomy)"),
+                                  std::string("Choose option for regulariser form lambda*weight*pow(cost,rexp). Where cost can be PAIRWISE or TRI-CLIQUE based. Options are: 1) PAIRWISE - penalising diffences in rotations of neighbouring points (FastPD only); 2) Removed from newMSM; 3) TRI_CLIQUE: Strain-based (for spheres);  4) Removed from newMSM; 5) TRI_CLIQUE: Strain-based (for anatomical mesh)"),
                                   false, Utilities::requires_argument);
     Utilities::Option<std::string> doptimizer(std::string("--dopt"),"FastPD",
-                                   std::string("discrete optimisation implementation. Choice of: FastPD (default) or HOCR (will reduce to QBPO for pairwise). Warning! ELC and ELC_approx removed from newMSM."),
+                                   std::string("discrete optimisation implementation. Choice of: FastPD (default), HOCR (will reduce to QBPO for pairwise) or MCMC. Warning! ELC and ELC_approx removed from newMSM."),
                               false,Utilities::requires_argument,false);
     Utilities::Option<bool> tricliquelikeihood(std::string("--triclique"), false,
                                     std::string("estimate similarity for triangular patches (rather than circular)"),
                                     false, Utilities::no_argument);
     Utilities::Option<float> shear(std::string("--shearmod"), 0.4,
-                        std::string("shear modulus (default 0.4); for use with --regoption 3 "),
+                        std::string("shear modulus (default 0.4); for use with --regoption 3 or 5"),
                         false,Utilities::requires_argument);
     Utilities::Option<float> bulk(std::string("--bulkmod"), 1.6,
-                       std::string("bulk mod (default 1.6); for use with --regoption 3 "),
+                       std::string("bulk mod (default 1.6); for use with --regoption 3 or 5"),
                        false,Utilities::requires_argument);
-    Utilities::Option<float> grouplambda(std::string("--glambda_pairs"), 1,
-                              std::string("scaling for pairwise term in group alignment"),
-                              false,Utilities::requires_argument,false);
     Utilities::Option<float> kexponent(std::string("--k_exponent"), 2,
                             std::string("exponent inside strain equation (default 2)"),
                             false, Utilities::requires_argument);
     Utilities::Option<float> regulariserexp(std::string("--regexp"), 2.0,
                                  std::string("Regulariser exponent 'rexp' (default 2.0)"),
                                  false,Utilities::requires_argument);
-    Utilities::Option<bool> distweight(std::string("--weight"), false,
-                            std::string("weight regulariser cost using areal distortion weighting"),
-                            false, Utilities::no_argument);
-    Utilities::Option<bool> anorm(std::string("--anorm"), false,
-                       std::string("norm regulariser cost using mean angle (for HCP compatibility)"),
-                       false, Utilities::no_argument);
     Utilities::Option<bool> fix_nan(std::string("--fixnan"), false,
                                   std::string("Fixes possible NaN values in cost function calculation"),
                             false, Utilities::no_argument);
@@ -559,9 +550,6 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
     Utilities::Option<bool> exclude(std::string("--excl"), false,
                          std::string("Ignore the cut when resampling the data"),
                          false, Utilities::no_argument);
-    Utilities::Option<bool> quartet(std::string("-Q"), false,
-                         std::string("Estimate quartet low rank cost for group reg"),
-                         false, Utilities::no_argument,false);
     Utilities::Option<float> affinestepsize(std::string("--stepsize"), 0.01,
                                  std::string("gradient stepping for affine optimisation (default 0.01)"),
                                  false, Utilities::requires_argument);
@@ -571,28 +559,10 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
     Utilities::Option<std::vector<int>> mciters(std::string("--mciters"), intdefault,
                                    std::string("number of iterations for Monte Carlo optimisation (default == 1000)"),
                                    false,Utilities::requires_argument);
-    Utilities::Option<std::vector<float>> labeldist(std::string("--labeldist"), floatdefault,
-                                   std::string("distance multiplier for max label distance (default == 0.5)"),
-                                   false,Utilities::requires_argument);
     Utilities::Option<int> threads(std::string("--numthreads"), 1,
                         std::string("number of threads for OpenMP (default is single thread)"),
                         false,Utilities::requires_argument);
-    //Removed parameters
-    Utilities::Option<std::vector<int>> alpha_knn(std::string("--aKNN"),intdefault,
-                                    std::string("Warning! This parameter is removed from newMSM."),
-                                    false, Utilities::requires_argument);
-    Utilities::Option<std::string> meshinterpolationmethod(std::string("--mInt"), "BARY",
-                                            std::string("Warning! This parameter is removed from newMSM. (BARY only for surface resampling)"),
-                                            false,Utilities::requires_argument);
-    Utilities::Option<std::string> datainterpolationmethod(std::string("--dInt"), "ADAP_BARY",
-                                            std::string("Warning! This parameter is removed from newMSM. (ADAP_BARY only for data resampling)"),
-                                            false,Utilities::requires_argument);
-    Utilities::Option<bool> logtransform(std::string("--log"), false,
-                              std::string("Warning! This parameter is removed from newMSM. (Not used in code)"),
-                               false, Utilities::no_argument);
-    Utilities::Option<bool> scaleintensity(std::string("--scale"), false,
-                                std::string("Warning! This parameter is removed from newMSM. (Not used in code)"),
-                                 false, Utilities::no_argument);
+
     try {
         // must include all wanted options here (the order determines how
         // the help message is printed)
@@ -613,29 +583,18 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
         options.add(shear);
         options.add(bulk);
         options.add(fix_nan);
-        options.add(grouplambda);
         options.add(kexponent);
         options.add(regulariserexp);
-        options.add(distweight);
-        options.add(anorm);
         options.add(rescale_labels);
         options.add(controlptrange);
         options.add(intensitynormalize);
         options.add(intensitynormalizewcut);
         options.add(variancenormalize);
         options.add(exclude);
-        options.add(quartet);
         options.add(affinestepsize);
         options.add(gradsampling);
         options.add(mciters);
-        options.add(labeldist);
         options.add(threads);
-        //removed parameters
-        options.add(alpha_knn);
-        options.add(meshinterpolationmethod);
-        options.add(datainterpolationmethod);
-        options.add(logtransform);
-        options.add(scaleintensity);
 
         if(parameters=="usage")
         {
@@ -663,18 +622,6 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
         options.usage();
         exit(EXIT_FAILURE);
     }
-
-    //Removed parameters warning messages.
-    if(alpha_knn.set())
-        std::cout << "Warning! --aKNN parameter is removed from newMSM." << std::endl;
-    if(meshinterpolationmethod.set())
-        std::cout << "Warning! --mInt parameter is removed from newMSM. (BARY only for surface resampling)" << std::endl;
-    if(datainterpolationmethod.set())
-        std::cout << "Warning! --dInt parameter is removed from newMSM. (ADAP_BARY only for surface resampling)" << std::endl;
-    if(logtransform.set())
-        std::cout << "Warning! --log parameter is removed from newMSM." << std::endl;
-    if(scaleintensity.set())
-        std::cout << "Warning! --scale parameter is removed from newMSM." << std::endl;
 
     if(parameters.empty())
     {
@@ -739,11 +686,6 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
     }
 
     _resolutionlevels = cost.size();
-    if(grouplambda.set())
-    {
-        _set_group_lambda=true;
-        _pairwiselambda=grouplambda.value();
-    }
     _regmode=regulariseroption.value();
     _discreteOPT=doptimizer.value();
     _tricliquelikeihood=tricliquelikeihood.value();
@@ -764,9 +706,6 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
     }
     _varnorm=variancenormalize.value();
     _exclude=exclude.value();
-    _quartet=quartet.value();
-    _weight=distweight.value();
-    _regoption2norm=anorm.value();
     _threshold=cutthreshold.value();
     _regexp=regulariserexp.value();
     _cprange=controlptrange.value();
@@ -775,8 +714,6 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
     _numthreads=threads.value();
     if(mciters.set()) _mciters=mciters.value();
     else _mciters.resize(cost.size(), 50000);
-    if(labeldist.set()) _labeldist=labeldist.value();
-    else _labeldist.resize(cost.size(), 0.5);
     _rescale_labels=rescale_labels.value();
 
     if(_verbose)
@@ -807,7 +744,6 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
         std::cout << "\nRegulariser: " <<  _regmode;
         if(_regmode == 3 || _regmode == 5) std::cout << "\nShearmod: " << _shearmod << "; Bulkmod: " << _bulkmod << "; k_exponent: " << _k_exp;
         std::cout << "\nRegulariser exponent: " <<  _regexp;
-        std::cout << "\nMultiplier for max label dist: "; for(const auto& e : _labeldist) std::cout << e << ' ';
         std::cout << "\nNumber of execution threads: " << _numthreads << "\n\n";
 
         std::cout << std::endl;
@@ -843,15 +779,12 @@ void Mesh_registration::fix_parameters_for_level(int i) {
 
     PARAMETERS.insert(parameterPair("dOPT", _discreteOPT));
     PARAMETERS.insert(parameterPair("lambda", _lambda[i]));
-    PARAMETERS.insert(parameterPair("lambda_pairs", _pairwiselambda));
-    PARAMETERS.insert(parameterPair("set_lambda_pairs", _set_group_lambda));
     PARAMETERS.insert(parameterPair("iters", _iters[i]));
     PARAMETERS.insert(parameterPair("simmeasure", _simval[i]));
     PARAMETERS.insert(parameterPair("sigma_in", _sigma_in[i]));
     PARAMETERS.insert(parameterPair("CPres", _gridres[i]));
     PARAMETERS.insert(parameterPair("SGres", _sampres[i]));
     PARAMETERS.insert(parameterPair("anatres", _anatres[i]));
-    PARAMETERS.insert(parameterPair("quartet", _quartet));
     PARAMETERS.insert(parameterPair("regularisermode", _regmode));
     PARAMETERS.insert(parameterPair("TriLikelihood", _tricliquelikeihood));
     PARAMETERS.insert(parameterPair("fixnan", fixnan));
@@ -860,8 +793,6 @@ void Mesh_registration::fix_parameters_for_level(int i) {
     PARAMETERS.insert(parameterPair("bulkmodulus", _bulkmod));
     PARAMETERS.insert(parameterPair("range", _cprange));
     PARAMETERS.insert(parameterPair("exponent", _regexp));
-    PARAMETERS.insert(parameterPair("weight", _weight));
-    PARAMETERS.insert(parameterPair("anorm", _regoption2norm));
     PARAMETERS.insert(parameterPair("scaling", _regscaling));
     PARAMETERS.insert(parameterPair("verbosity", _verbose));
     PARAMETERS.insert(parameterPair("outdir", _outdir));
@@ -869,38 +800,29 @@ void Mesh_registration::fix_parameters_for_level(int i) {
     PARAMETERS.insert(parameterPair("gradsampling", _affinegradsampling));
     PARAMETERS.insert(parameterPair("numthreads", _numthreads));
     PARAMETERS.insert(parameterPair("kexponent", _k_exp));
-    PARAMETERS.insert(parameterPair("labeldist", _labeldist[i]));
 }
 
 void Mesh_registration::check() {
-
-    if (((MESHES[0].get_coord(0)).norm() - RAD) > 1e-5)
+    if (((MESHES[0].get_coord(0)).norm() - RAD) > EPSILON)
         throw MeshregException("Reg_config ERROR:: input mesh radius has not been normalised to RAD=100");
-
-    if (IN_CFWEIGHTING && (IN_CFWEIGHTING->get_coord(0).norm() - RAD) > 1e-5)
+    if (IN_CFWEIGHTING && (IN_CFWEIGHTING->get_coord(0).norm() - RAD) > EPSILON)
         throw MeshregException("Reg_config ERROR:: input exclusion mesh radius has not been normalised to RAD=100");
-
-    if (REF_CFWEIGHTING && (REF_CFWEIGHTING->get_coord(0).norm() - RAD) > 1e-5)
-        throw MeshregException(
-                "Reg_config ERROR::reference exclusion mesh radius has not been normalised to RAD=100");
+    if (REF_CFWEIGHTING && (REF_CFWEIGHTING->get_coord(0).norm() - RAD) > EPSILON)
+        throw MeshregException("Reg_config ERROR::reference exclusion mesh radius has not been normalised to RAD=100");
 }
 
 void Mesh_registration::set_output_format(const std::string& type) {
 
-    if (type == "GIFTI")
-    {
+    if (type == "GIFTI") {
         _surfformat = ".surf.gii";
         _dataformat = ".func.gii";
     }
-    else if (type == "ASCII" || type == "ASCII_MAT")
-    {
+    else if (type == "ASCII" || type == "ASCII_MAT") {
         _surfformat = ".asc";
-        if (type == "ASCII")
-            _dataformat = ".dpv";
-        else
-            _dataformat = ".txt"; // for multivariate
-    } else
-    {
+        if (type == "ASCII") _dataformat = ".dpv";
+        else _dataformat = ".txt"; // for multivariate
+    }
+    else {
         _surfformat = ".vtk";
         _dataformat = ".txt";
     }
@@ -911,8 +833,7 @@ void Mesh_registration::set_output_format(const std::string& type) {
 // and also sets exclusion weighting then the reference weighting will be multivariate
 // and the source weighting will be univariate - this combines into one mask on the
 // source grid (therefore resampling much be reimplemented at every registration step)
-NEWMAT::Matrix Mesh_registration::combine_costfunction_weighting(const NEWMAT::Matrix& sourceweight,
-                                                          const NEWMAT::Matrix& resampledtargetweight) {
+NEWMAT::Matrix Mesh_registration::combine_costfunction_weighting(const NEWMAT::Matrix& sourceweight, const NEWMAT::Matrix& resampledtargetweight) {
 
     NEWMAT::Matrix NEW;
     int nrows;

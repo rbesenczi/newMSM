@@ -57,9 +57,6 @@ public:
     const std::vector<int>& at(int i) const { return neighbours[i]; }
 };
 
-bool get_all_neighbours(int index, std::vector<int>& N, const newresampler::Point& point, int n,
-                        const newresampler::Mesh& REF, std::shared_ptr<Neighbourhood>& _rel, MISCMATHS::SpMat<int>& found);
-
 //---UNFOLD---//
 void computeNormal2EdgeOfTriangle(const newresampler::Point& v0, const newresampler::Point& v1, const newresampler::Point& v2, newresampler::Point& norm2edge);
 newresampler::Point computeGradientOfBarycentricTriangle(const newresampler::Point& v0, const newresampler::Point& v1, const newresampler::Point& v2);
@@ -82,11 +79,10 @@ double calculate_triangular_strain(const newresampler::Triangle& ORIG_tr, const 
 
 //---HIST NORMALISATION---//
 void multivariate_histogram_normalization(MISCMATHS::BFMatrix& IN, MISCMATHS::BFMatrix& REF, const std::shared_ptr<newresampler::Mesh>& EXCL_IN, const std::shared_ptr<newresampler::Mesh>& EXCL_REF, int nthreads = 1);
+void variance_normalise(std::shared_ptr<MISCMATHS::BFMatrix>& DATA, std::shared_ptr<newresampler::Mesh>& EXCL, int nthreads = 1);
 
 //---READ DATA---//
 void set_data(const std::string& dataname, std::shared_ptr<MISCMATHS::BFMatrix>& BF, newresampler::Mesh& M, bool issparse = false);
-
-template<typename Iterator> inline bool next_combination(const Iterator first, Iterator k, const Iterator last);
 
 } // namespace newmeshreg
 

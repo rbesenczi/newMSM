@@ -56,30 +56,6 @@ void Neighbourhood::update(const newresampler::Mesh& source, const newresampler:
     }
 }
 
-bool get_all_neighbours(int index, std::vector<int>& N, const newresampler::Point& point, int n,
-                        const newresampler::Mesh& REF, std::shared_ptr<Neighbourhood>& nbh, MISCMATHS::SpMat<int>& found) {
-
-    bool update = false;
-
-    for (auto j = REF.tIDbegin(n); j != REF.tIDend(n); j++)
-    {
-        int n0 = REF.get_triangle(*j).get_vertex_no(0),
-            n1 = REF.get_triangle(*j).get_vertex_no(1),
-            n2 = REF.get_triangle(*j).get_vertex_no(2);
-
-        if((*nbh)(index, 0) != n0
-        || (*nbh)(index, 0) != n1
-        || (*nbh)(index, 0) != n2)
-            update = true;
-
-        if(found.Peek(n0 + 1,1) == 0) { N.push_back(n0); found.Set(n0 + 1,1,1); }
-        if(found.Peek(n1 + 1,1) == 0) { N.push_back(n1); found.Set(n1 + 1,1,1); }
-        if(found.Peek(n2 + 1,1) == 0) { N.push_back(n2); found.Set(n2 + 1,1,1); }
-    }
-
-    return update;
-}
-
 void computeNormal2EdgeOfTriangle(const newresampler::Point& v0, const newresampler::Point& v1, const newresampler::Point& v2, newresampler::Point& norm2edge) {
 
     newresampler::Point s1 = v2 - v0, s2 = v1 - v0;
@@ -158,7 +134,6 @@ void unfold(newresampler::Mesh& SOURCE, bool verbosity) {
     std::vector<newresampler::Point> foldinggradients;
     bool folded = true;
     int it = 0;
-    //const double RAD = 100;
 
     while (folded)
     {
@@ -827,6 +802,48 @@ void multivariate_histogram_normalization(MISCMATHS::BFMatrix& IN, MISCMATHS::BF
     }
 }
 
+void variance_normalise(std::shared_ptr<MISCMATHS::BFMatrix>& DATA, std::shared_ptr<newresampler::Mesh>& EXCL, int nthreads) {
+
+    std::vector<std::vector<double>> _data(DATA->Nrows());
+
+    #pragma omp parallel for num_threads(nthreads)
+    for (unsigned int k = 1; k <= DATA->Nrows(); k++)
+        for (unsigned int i = 1; i <= DATA->Ncols(); i++)
+            if (!EXCL || EXCL->get_pvalue(i - 1) > 0.0)
+                _data[k - 1].push_back(DATA->Peek(k, i));
+
+    std::vector<double> mean(DATA->Nrows(), 0.0),
+            var(DATA->Nrows(), 0.0);
+
+    #pragma omp parallel for num_threads(nthreads)
+    for (unsigned int i = 0; i < _data.size(); ++i)
+    {
+        for(unsigned int j = 0; j < _data[i].size(); j++)
+        {
+            double delta = _data[i][j] - mean[i];
+            mean[i] += delta / (j + 1);
+            var[i] += delta * (_data[i][j] - mean[i]);
+        }
+
+        var[i] /= (_data[i].size()-1);
+
+        for(unsigned int j = 0; j < _data[i].size(); ++j)
+        {
+            _data[i][j] -= mean[i];
+            if(var[i] > 0.0) _data[i][j] /= std::sqrt(var[i]);
+        }
+    }
+
+    #pragma omp parallel for num_threads(nthreads)
+    for(int i = 1; i <= DATA->Nrows(); ++i)
+    {
+        int data_index = 0;
+        for (int j = 1; j <= DATA->Ncols(); ++j)
+            if (!EXCL || EXCL->get_pvalue(j - 1) > 0.0)
+                DATA->Set(i, j, _data[i - 1][data_index++]);
+    }
+}
+
 void set_data(const std::string& dataname, std::shared_ptr<MISCMATHS::BFMatrix>& BF, newresampler::Mesh& M, bool issparse) {
 
     if(issparse)
@@ -848,42 +865,6 @@ void set_data(const std::string& dataname, std::shared_ptr<MISCMATHS::BFMatrix>&
         else
             BF = BF->Transpose();
     }
-}
-
-template<typename Iterator> inline bool next_combination(const Iterator first, Iterator k, const Iterator last) {
-    if ((first == last) || (first == k) || (last == k))
-        return false;
-    Iterator itr1 = first;
-    Iterator itr2 = last;
-    ++itr1;
-    if (last == itr1)
-        return false;
-    itr1 = last;
-    --itr1;
-    itr1 = k;
-    --itr2;
-    while (first != itr1)
-    {
-        if (*--itr1 < *itr2)
-        {
-            Iterator j = k;
-            while (*itr1 >= *j) ++j;
-            std::iter_swap(itr1,j);
-            ++itr1;
-            ++j;
-            itr2 = k;
-            std::rotate(itr1,j,last);
-            while (last != j)
-            {
-                ++j;
-                ++itr2;
-            }
-            std::rotate(k,itr2,last);
-            return true;
-        }
-    }
-    std::rotate(first,k,last);
-    return false;
 }
 
 } //namespace newmeshreg

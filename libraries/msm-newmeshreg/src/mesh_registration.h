@@ -126,10 +126,6 @@ protected:
     bool _varnorm = false; // variance normalise
     bool _tricliquelikeihood = false;
     bool _anat = false;
-    bool _weight = false;
-    bool _regoption2norm = false;
-    bool _quartet = false;
-    bool _set_group_lambda = false;
     bool _rescale_labels = false;
     bool _incfw = false;
     bool _refcfw = false;
@@ -141,11 +137,9 @@ protected:
     //---REGULARISER OPTIONS---//
     float _regexp = 0.0; // choice of exponent
     float _regscaling = 0.0; // choice of exponent scaling for options 2 and 3
-    float _pairwiselambda = 0.0; //scaling for group alignment
     float _shearmod = 0.4; // for strain regulariser
     float _bulkmod = 1.6;    // for strain regulariser
     float _cprange = 1.0;
-    std::vector<float> _labeldist;
     std::vector<int> _mciters;
 
     //---AFFINE PARAMETERS---//

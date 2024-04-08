@@ -35,7 +35,6 @@ void NonLinearSRegDiscreteModel::set_parameters(myparam& PAR) {
     it=PAR.find("TriLikelihood"); m_triclique = std::get<bool>(it->second);
     it=PAR.find("rescalelabels"); m_rescalelabels = std::get<bool>(it->second);
     it=PAR.find("numthreads"); _nthreads = std::get<int>(it->second);
-    it=PAR.find("labeldist"); _labeldist = std::get<float>(it->second);
     it=PAR.find("range"); range=std::get<float>(it->second);
     if(m_regoption == 1) _pairwise = true;
 }
@@ -243,7 +242,7 @@ void NonLinearSRegDiscreteModel::setupCostFunction() {
     m_num_labels = m_labels.size();
 
     costfct->set_labels(m_labels,m_ROT);
-    if(m_verbosity) std::cout << " initialize cost function " << m_iter <<  std::endl;
+    if(m_verbosity) std::cout << " initialise cost function " << m_iter <<  std::endl;
 
     costfct->initialize(m_num_nodes,m_num_labels,m_num_pairs,m_num_triplets);
     costfct->get_source_data();

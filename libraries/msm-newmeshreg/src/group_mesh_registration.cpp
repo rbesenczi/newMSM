@@ -35,10 +35,10 @@ void Group_Mesh_registration::initialize_level(int current_lvl) {
     FEAT->set_smoothing_parameters(sigma);
     FEAT->set_cutthreshold(_threshold);
     FEAT->varnorm(_varnorm);
-    FEAT->intensitynormalize(_IN, _cut);
+    FEAT->intensitynormalise(_IN, _cut);
     FEAT->is_sparse(_issparse);
     FEAT->set_nthreads(_numthreads);
-    SPH_orig = FEAT->initialize(_genesis[current_lvl], MESHES, _exclude);
+    SPH_orig = FEAT->initialise(_genesis[current_lvl], MESHES, _exclude);
     if(FEAT->get_dim() > 1)
         throw MeshregException("Multivariate registration is not supported in groupwise mode yet.");
     PARAMETERS.insert(parameterPair("multivariate", false));

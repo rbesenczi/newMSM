@@ -55,6 +55,7 @@ class Rigid_cost_function {
     //---TRANSFORM AND EVALUATE---//
     void rotate_in_mesh(double a1, double a2, double a3);
     double rigid_cost_mesh(double dw1, double dw2, double dw3);
+    bool get_all_neighbours(int index, std::vector<int>& N, int n, const newresampler::Mesh& REF, std::shared_ptr<Neighbourhood>& _rel, MISCMATHS::SpMat<int>& found);
 
 public:
     Rigid_cost_function(newresampler::Mesh target, newresampler::Mesh source,

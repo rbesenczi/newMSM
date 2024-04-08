@@ -137,9 +137,6 @@ protected:
     float _k_exp = 2.0;
     double MAXstrain = 0.0;
 
-    //---REGULARISER OPTIONS---//
-    bool _dweight = false;
-    bool _anorm = false;
     bool fixnan = false;
 
     std::vector<std::vector<double>> _sourcedata;
