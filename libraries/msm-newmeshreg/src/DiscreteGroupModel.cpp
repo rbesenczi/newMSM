@@ -87,7 +87,7 @@ void DiscreteGroupModel::get_rotations() {
 
 void DiscreteGroupModel::get_patch_data() {
 
-    std::vector<std::map<int,float>> patch_data(control_grid_size * m_num_subjects * m_num_labels);
+    std::vector<std::map<int,std::vector<double>>> patch_data(control_grid_size * m_num_subjects * m_num_labels);
 
     #pragma omp parallel for num_threads(_nthreads)
     for (int subject = 0; subject < m_num_subjects; subject++)
@@ -102,16 +102,18 @@ void DiscreteGroupModel::get_patch_data() {
                                            estimate_rotation_matrix(centre, rotated_mesh.get_coord(datapoint)) *
                                            m_labels[label]); // rigid rotation, bugs expected
 
-            rotated_mesh = newresampler::metric_resample(rotated_mesh, m_template);
+            rotated_mesh = newresampler::metric_resample(rotated_mesh, target_space);
 
             for (int vertex = 0; vertex < control_grid_size; vertex++) {
-                std::map<int, float> patchdata;
+                std::map<int, std::vector<double>> patchdata;
                 const newresampler::Point rotated_CP = m_ROT[subject * control_grid_size + vertex] * m_labels[label];
                 for (int datapoint = 0; datapoint < rotated_mesh.nvertices(); datapoint++)
-                    if (((2 * RAD * asin((rotated_CP - rotated_mesh.get_coord(datapoint)).norm() / (2 * RAD)))
-                            < range * spacings[subject](vertex + 1)))
-                        patchdata[datapoint] = rotated_mesh.get_pvalue(datapoint);
-
+                    if (((2 * RAD * asin((rotated_CP - rotated_mesh.get_coord(datapoint)).norm() / (2 * RAD))) < range * spacings[subject](vertex + 1))) {
+                        std::vector<double> tmp(rotated_mesh.get_dimension());
+                        for (int dim = 0; dim < rotated_mesh.get_dimension(); dim++)
+                            tmp[dim] = rotated_mesh.get_pvalue(datapoint, dim);
+                        patchdata[datapoint] = tmp;
+                    }
                 patch_data[subject * control_grid_size * m_num_labels + vertex * m_num_labels + label] = patchdata;
             }
         }
@@ -159,6 +161,7 @@ void DiscreteGroupModel::Initialize(const newresampler::Mesh& controlgrid) {
     estimate_triplets();
 
     costfct->set_meshes(m_datameshes, controlgrid, m_num_subjects);
+    if(is_masked) costfct->set_masks(mask);
 }
 
 void DiscreteGroupModel::setupCostFunction() {
@@ -174,8 +177,6 @@ void DiscreteGroupModel::setupCostFunction() {
 
     get_spacings();
     get_rotations();
-
-    costfct->set_iter(m_iter);
 
     if (m_iter % 2 == 0) m_labels = m_samples;
     else m_labels = m_barycentres;

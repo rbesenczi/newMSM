@@ -62,7 +62,6 @@ public:
 
     //---MODIFY---//
     virtual void applyLabeling(int *discreteLabeling) {}
-    virtual void report() {}
 
 protected:
     void resetLabeling() { if(labeling) std::fill(labeling,labeling + m_num_nodes,0.0); }
@@ -97,8 +96,7 @@ public:
         initialize_cost_function(m_multivariate, PAR);
     }
 
-    virtual //---INIT---//
-    void Initialize(const newresampler::Mesh&);
+    virtual void Initialize(const newresampler::Mesh&);
     void initialize_cost_function(bool MV, myparam &P);
     void set_parameters(myparam& PAR);
     void Initialize_sampling_grid();
@@ -138,25 +136,16 @@ public:
     }
 
     virtual inline void reset_CPgrid(const newresampler::Mesh& grid, int num) { m_CPgrid = grid; }
-
     virtual inline void warp_CPgrid(newresampler::Mesh& START, newresampler::Mesh& END, int num) {
-        barycentric_mesh_interpolation(m_CPgrid,START,END, _nthreads);
+        newresampler::sphere_project_warp(m_CPgrid,START,END, _nthreads);
         unfold(m_CPgrid, m_verbosity);
     }
-
-    //---DEBUG AND REPORT---//
-    inline void set_debug(){ m_debug = true; costfct->debug(); } // for debuging
-    inline void report() override { if (costfct) costfct->report(); }
-
-    //---GET---//
+    inline void set_debug(){ m_debug = true; } // for debuging
     inline newresampler::Mesh get_TARGET() { return m_TARGET; }
-
     virtual inline newresampler::Mesh get_CPgrid(int num) { return m_CPgrid; }
+    virtual void set_masks(const newresampler::Mesh& m) {}
     inline std::shared_ptr<DiscreteCostFunction> getCostFunction() override { return costfct; }
-    inline bool is_triclique() const { return m_triclique; }
-
     virtual void applyLabeling();
-    virtual void set_warps(const std::vector<std::vector<newresampler::Mesh>>& warps) {}
 
 protected:
     newresampler::Mesh m_TARGET; // TARGET MESH
@@ -168,12 +157,10 @@ protected:
     std::shared_ptr<featurespace> FEAT;
 
     int m_SGres = 4; // sampling grid resolution
-    int m_CPres = 2;
     int m_iter = 0; // iteration of the discrete optimisation
     int m_centroid = 0; // used for selecting which sampling grid vertex will form the center of the sampling grid
     int m_regoption = 2; // sim measure i.e. correlation
     double m_maxs_dist = 0.0; // define maximum distance between the centre of the sampling grid and the furthest label
-    double MVD = 0.0;
     double _labeldist = 0.5;
     double range = 1;
     float m_scale = 0.0;

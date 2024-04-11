@@ -31,7 +31,7 @@ void applywarp(const std::string& to_be_def, const std::string& warp_sph, const 
     newresampler::true_rescale(to_be_deformed,RAD);
     newresampler::true_rescale(warp, RAD);
 
-    newresampler::barycentric_mesh_interpolation(to_be_deformed, to_be_deformed, warp);
+    newresampler::sphere_project_warp(to_be_deformed, to_be_deformed, warp);
 
     to_be_deformed.save(output_name + "warped.surf");
 }

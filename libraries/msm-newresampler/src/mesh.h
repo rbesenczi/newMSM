@@ -41,7 +41,7 @@ class Mesh {
 
     std::vector<Point> normals;
 
-    std::vector<std::vector<float>> pvalues;
+    std::vector<std::vector<double>> pvalues;
 
     //---METADATA---//
     std::vector<NEWMESH::GIFTImeta> global_metaData;
@@ -63,7 +63,7 @@ public:
     //---ACCESS---//
     int nvertices() const { return (int) points.size(); }
     int ntriangles() const { return (int) triangles.size(); }
-    float get_pvalue(int i, int dim = 0) const;
+    double get_pvalue(int i, int dim = 0) const;
     int get_dimension() const { return (int) pvalues.size(); }
     int npvalues (int dim = 0) const { return (int) pvalues[dim].size(); }
     const Point& get_coord(int n) const;
@@ -133,12 +133,12 @@ public:
     //---MANIPULATION---//
     std::vector<std::shared_ptr<Mpoint>>& get_all_points() { return points; }
     inline void set_coord(int i, const Point &p) { points[i]->set_coord(p); }
-    void set_pvalue(unsigned int i, float val, int dim = 0);
+    void set_pvalue(unsigned int i, double val, int dim = 0);
     void set_pvalues(const NEWMAT::Matrix &M, bool appendFieldData = false);
     void initialize_pvalues(int dim = 1, bool appendFieldData = false); // initialize new data array
     void clear_triangles() { triangles.clear(); }
     void push_point(const std::shared_ptr<Mpoint>& mesh_point) { points.push_back(mesh_point); }
-    void push_pvalues(const std::vector<float>& pvals) { pvalues.push_back(pvals); }
+    void push_pvalues(const std::vector<double>& pvals) { pvalues.push_back(pvals); }
     void push_triangle(const Triangle &t);
     void clear();
     void clear_data();
@@ -166,7 +166,7 @@ public:
     void load_ascii(const std::string &filename, bool loadSurfaceData = true, bool appendFieldData = false);
     void load_vtk(const std::string &filename);
     void load_matrix(const std::string &filename, const Mesh::FileType &type);
-    void load_ascii_file(const std::string &filename);
+    //void load_ascii_file(const std::string &filename);
 
     void save(const std::string &filename) const;
     void save_ascii(const std::string &s) const;
@@ -189,7 +189,7 @@ void retessellate(Mesh&, std::vector<std::vector<int>>&);
 void check_scale(Mesh& in, const Mesh& ref);
 void true_rescale(Mesh& m, double rad);
 void recentre(Mesh& sphere);
-Mesh create_exclusion(const Mesh& data_mesh, float thrl, float thru);
+Mesh create_exclusion(const Mesh& data_mesh, double thrl, double thru);
 double compute_vertex_area(int, const Mesh &); // averages adjoining face areas for each vertex
 
 //---Mesh operators---//

@@ -43,14 +43,14 @@ public:
     std::vector<std::map<int,double>> get_barycentric_weights(const Mesh& low, const Mesh& orig, const Octree& oct, int nthreads = 1);
 };
 //---UTILITY---//
-Mesh project_mesh(const Mesh& orig, const Mesh& target, const Mesh& anat, int nthreads = 1);
+Mesh project_anatomical_mesh(const Mesh& orig, const Mesh& target, const Mesh& anat, int nthreads = 1);
 
 //---ENTRY POINTS FOR RESAMPLER---//
 Mesh surface_resample(const Mesh&, const Mesh&, const Mesh&, int nthreads = 1);
 Mesh metric_resample(const Mesh&, const Mesh&, int nthreads = 1, std::shared_ptr<Mesh> = std::shared_ptr<Mesh>());
 Mesh smooth_data(Mesh& orig, const Mesh& sphLow, double sigma, int nthreads = 1, std::shared_ptr<Mesh> EXCL = std::shared_ptr<Mesh>());
 Mesh nearest_neighbour_interpolation(Mesh &orig, const Mesh &sphLow, int nthreads = 1, std::shared_ptr<Mesh> EXCL = std::shared_ptr<Mesh>());
-void barycentric_mesh_interpolation(Mesh& SPH_up, const Mesh& SPH_low_init, const Mesh& SPH_low_final, int nthreads = 1);
+void sphere_project_warp(Mesh& sphere, const Mesh& from, const Mesh& to, int nthreads = 1);
 
 } //namespace newresampler
 

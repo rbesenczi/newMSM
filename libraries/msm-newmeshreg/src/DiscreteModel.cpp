@@ -27,7 +27,6 @@ void NonLinearSRegDiscreteModel::set_parameters(myparam& PAR) {
     myparam::iterator it;
     it=PAR.find("dOPT"); optimiser = std::get<std::string>(it->second);
     it=PAR.find("SGres"); m_SGres = std::get<int>(it->second);
-    it=PAR.find("CPres"); m_CPres = std::get<int>(it->second);
     it=PAR.find("regularisermode"); m_regoption = std::get<int>(it->second);
     it=PAR.find("multivariate"); m_multivariate = std::get<bool>(it->second);
     it=PAR.find("verbosity"); m_verbosity = std::get<bool>(it->second);
@@ -57,7 +56,6 @@ void NonLinearSRegDiscreteModel::initialize_cost_function(bool MV, myparam& P) {
 
 void NonLinearSRegDiscreteModel::Initialize(const newresampler::Mesh& CONTROLGRID) {
 
-    MVD = 0.0;
     m_CPgrid = CONTROLGRID;
 
     //---SET LOW RES DEFORMATION GRID & INITIALISE ASSOCIATED MRF PARAMS---//
@@ -74,22 +72,18 @@ void NonLinearSRegDiscreteModel::Initialize(const newresampler::Mesh& CONTROLGRI
     for (int k = 0; k < m_CPgrid.nvertices(); k++)
     {
         newresampler::Point CP = m_CPgrid.get_coord(k);
-        for (auto it = m_CPgrid.nbegin(k); it != m_CPgrid.nend(k); it++)
-        {
+        for (auto it = m_CPgrid.nbegin(k); it != m_CPgrid.nend(k); it++) {
             double dist = 2 * RAD * asin((CP-m_CPgrid.get_coord(*it)).norm() / (2 * RAD));
             if(dist > vMAXmvd(k+1)) vMAXmvd(k+1) = dist;
         }
     }
 
-    MVD = m_CPgrid.calculate_MeanVD();
     double MVDmax = m_CPgrid.calculate_MaxVD();
 
     m_maxs_dist = _labeldist * MVDmax;
 
     //---INITIALIZE COSTFCT---//
     costfct->set_meshes(m_TARGET, m_SOURCE, m_CPgrid, 0);
-    std::vector<std::vector<double>> orig_angles = m_CPgrid.get_face_angles();
-    costfct->set_initial_angles(orig_angles);
     costfct->set_spacings(vMAXmvd, MVDmax);
 
     m_iter = 1;
@@ -102,7 +96,6 @@ void NonLinearSRegDiscreteModel::Initialize(const newresampler::Mesh& CONTROLGRI
 
     //---INITIALIAZE LABEL GRID---//
     Initialize_sampling_grid();
-    get_rotations();  // enables rotation of sampling grid onto every CP
 
     //---INITIALIZE NEIGHBOURHOODS---//
     m_inputtree = std::make_shared<newresampler::Octree>(m_TARGET);
@@ -135,7 +128,7 @@ void NonLinearSRegDiscreteModel::label_sampling_grid(int centroid, double dist, 
     m_samples.push_back(centre);
     m_barycentres.push_back(centre);
 
-    // searches for neighbours of the cnetroid that are within the max sampling distance
+    // searches for neighbours of the centroid that are within the max sampling distance
     while(!getneighbours.empty())
     {
         for(int& getneighbour : getneighbours)
@@ -270,7 +263,7 @@ void NonLinearSRegDiscreteModel::estimate_pairs() {
         m_num_pairs += m_CPgrid.get_total_neighbours(i);
 
     m_num_pairs /= 2;
-    pairs = new int[m_num_pairs * 2];
+    pairs = new int[m_num_pairs*2];
 
     for (int i = 0; i < m_CPgrid.nvertices(); i++)
         for (auto j = m_CPgrid.nbegin(i); j != m_CPgrid.nend(i); j++)
@@ -278,8 +271,8 @@ void NonLinearSRegDiscreteModel::estimate_pairs() {
             {
                 int node_ids[2] = {i, *j};
                 std::sort(std::begin(node_ids), std::end(node_ids));
-                pairs[2 * pair] = node_ids[0];
-                pairs[2 * pair + 1] = node_ids[1];
+                pairs[2*pair  ] = node_ids[0];
+                pairs[2*pair+1] = node_ids[1];
                 pair++;
             }
 }
@@ -287,7 +280,7 @@ void NonLinearSRegDiscreteModel::estimate_pairs() {
 void NonLinearSRegDiscreteModel::estimate_triplets() {
 
     m_num_triplets = m_CPgrid.ntriangles();
-    triplets = new int[m_num_triplets * 3];
+    triplets = new int[m_num_triplets*3];
 
     for(int i = 0; i < m_CPgrid.ntriangles(); i++)
     {
@@ -295,9 +288,9 @@ void NonLinearSRegDiscreteModel::estimate_triplets() {
                            m_CPgrid.get_triangle(i).get_vertex_no(1),
                            m_CPgrid.get_triangle(i).get_vertex_no(2) };
         std::sort(std::begin(node_ids), std::end(node_ids));
-        triplets[3 * i] = node_ids[0];
-        triplets[3 * i + 1] = node_ids[1];
-        triplets[3 * i + 2] = node_ids[2];
+        triplets[3*i  ] = node_ids[0];
+        triplets[3*i+1] = node_ids[1];
+        triplets[3*i+2] = node_ids[2];
     }
 }
 

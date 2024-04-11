@@ -24,7 +24,7 @@ SOFTWARE.
 namespace newmeshreg {
 
 Mesh_registration::Mesh_registration(){
-    MESHES.resize(2, newresampler::Mesh());
+    MESHES.resize(2);
 }
 
 void Mesh_registration::run_multiresolutions(const std::string& parameters) {
@@ -62,8 +62,8 @@ void Mesh_registration::initialize_level(int current_lvl) {
     FEAT->set_nthreads(_numthreads);
     SPH_orig = FEAT->initialise(_genesis[current_lvl], MESHES, _exclude);  // downsamples and smooths data, creates and exclusion mask if exclude is true
 
-    SPHin_CFWEIGHTING = downsample_cfweighting(_sigma_in[current_lvl], SPH_orig, IN_CFWEIGHTING, FEAT->get_input_excl());
-    SPHref_CFWEIGHTING = downsample_cfweighting(_sigma_ref[current_lvl], SPH_orig, REF_CFWEIGHTING, FEAT->get_reference_excl());
+    SPHin_CFWEIGHTING = downsample_cfweighting(SPH_orig, IN_CFWEIGHTING, FEAT->get_input_excl());
+    SPHref_CFWEIGHTING = downsample_cfweighting(SPH_orig, REF_CFWEIGHTING, FEAT->get_reference_excl());
 
     if(cost[current_lvl] == "RIGID" || cost[current_lvl] == "AFFINE")
     {
@@ -105,6 +105,144 @@ void Mesh_registration::initialize_level(int current_lvl) {
 
         model->Initialize(CONTROL);
     }
+}
+
+//---MAIN FUNCTION---//
+void Mesh_registration::evaluate() {
+    //Initialise deformation mesh
+    SPH_reg = project_CPgrid(SPH_orig,SPH_reg);
+    // first project data grid through any predefined transformation or,
+    // from transformation from previous resolution level.
+
+    if(isrigid)
+    {
+        rigidcf->update_source(SPH_reg);
+        SPH_reg = rigidcf->run();
+    }
+    else
+    {
+        run_discrete_opt();
+    }
+
+    if(_verbose) std::cout << "Exit main algorithm." << std::endl;
+}
+
+//---PROJECT TRANSFORMATION FROM PREVIOUS LEVEL TO UPSAMPLED SOURCE---//
+newresampler::Mesh Mesh_registration::project_CPgrid(newresampler::Mesh SPH_in, const newresampler::Mesh& REG, int num) {
+    // num indices which warp for group registration
+
+    if(level == 1)
+    {
+        if(transformed_mesh.nvertices() > 0)
+        { // project into alignment with transformed mesh
+            if (transformed_mesh == MESHES[num]) std::cout << " WARNING: transformed mesh has the same coordinates as the input mesh " << std::endl;
+            else
+            {
+                newresampler::sphere_project_warp(SPH_in, MESHES[num], transformed_mesh, _numthreads);
+                model->warp_CPgrid(MESHES[num],transformed_mesh, num);
+            }
+        }
+    }
+    else
+    {   // following first round always start by projecting Control and data grids through warp at previous level
+        // PROJECT CPgrid into alignment with warp from previous level
+        newresampler::Mesh icotmp = newresampler::make_mesh_from_icosa(REG.get_resolution());
+        true_rescale(icotmp,RAD);
+        // project datagrid though warp defined for the high resolution meshes (the equivalent to if registration is run one level at a time )
+        newresampler::Mesh inorig = MESHES[num], incurrent = MESHES[num];
+        newresampler::sphere_project_warp(incurrent,icotmp,REG, _numthreads);
+        newresampler::sphere_project_warp(SPH_in,inorig,incurrent, _numthreads);
+        model->warp_CPgrid(inorig, incurrent, num);
+        if(_debug) incurrent.save(_outdir + "sphere.regLR.Res" + std::to_string(level) + ".surf");
+    }
+
+    unfold(SPH_in, _verbose);
+
+    return SPH_in;
+}
+
+void Mesh_registration::run_discrete_opt() {
+
+    double energy = 0.0, newenergy = 0.0;
+    int max_iter = std::get<int>(PARAMETERS.find("iters")->second);
+
+    for(int iter = 0; iter < max_iter; iter++) {
+        // resample and combine the reference cost function weighting with the source if provided
+        model->setupCostFunctionWeighting(combine_weighting());
+        model->reset_meshspace(SPH_reg,0);
+        model->setupCostFunction();
+
+        if(_verbose) std::cout << "Run optimisation." << std::endl;
+
+        if(_discreteOPT == "MCMC") {
+            if(!_tricliquelikeihood) model->computeUnaryCosts();
+            newenergy = MCMC::optimise(model, _verbose, _mciters[level-1]);
+        }
+        else if(_discreteOPT == "FastPD") {
+#ifdef HAS_FPD
+            model->computeUnaryCosts();
+            model->computePairwiseCosts();
+            FPD::FastPD opt(model, 100);
+            newenergy = opt.run();
+            opt.getLabeling(model->getLabeling());
+#else
+            throw MeshregException("FastPD is not supported in this version of newMSM. Please use MCMC.");
+#endif
+        }
+        else if(_discreteOPT == "HOCR") {
+#ifdef HAS_HOCR
+            newenergy = Fusion::optimize(model, _verbose, _numthreads);
+#else
+            #ifdef HAS_FPD
+        throw MeshregException("HOCR is not supported in this version of newMSM. Please use MCMC or FastPD.");
+#else
+        throw MeshregException("HOCR and FastPD are not supported in this version of newMSM. Please use MCMC.");
+#endif
+#endif
+        }
+        else
+            throw MeshregException("Unrecognized optimiser");
+
+        if(iter > 1 && ((iter - 1) % 2 == 0) && (energy - newenergy < 0.001) && _discreteOPT != "MCMC") {
+            if(_verbose) {
+                std::cout << iter << " level has converged." << std::endl;
+                std::cout <<  "newenergy " << newenergy <<  "\tenergy " << energy
+                          <<  "\tEnergy decrease: " <<  energy-newenergy << std::endl;
+            }
+            break;
+        }
+
+        if (_verbose)
+            std::cout << "newenergy " << newenergy << "\tenergy " << energy << "\tEnergy decrease: " << energy - newenergy << std::endl;
+
+        newresampler::Mesh previous_controlgrid = model->get_CPgrid(0);
+
+        model->applyLabeling();
+        // apply these choices in order to deform the CP grid
+        newresampler::Mesh transformed_controlgrid = model->get_CPgrid(0);
+        // use the control point updates to warp the source mesh
+        newresampler::sphere_project_warp(SPH_reg, previous_controlgrid, transformed_controlgrid, _numthreads);
+        // higher order frameowrk continuous deforms the CP grid whereas the original FW resets the grid each time
+        unfold(transformed_controlgrid, _verbose);
+        model->reset_CPgrid(transformed_controlgrid,0); // source mesh is updated and control point grids are reset
+        unfold(SPH_reg, _verbose);
+        energy = newenergy;
+    }
+}
+
+NEWMAT::Matrix Mesh_registration::combine_weighting() {
+    NEWMAT::Matrix CombinedWeight;
+    CombinedWeight.resize(1, SPH_reg.nvertices());
+    CombinedWeight = 1;
+
+    if(_incfw && _refcfw) {
+        NEWMAT::Matrix ResampledRefWeight = SPHref_CFWEIGHTING;
+        newresampler::Mesh targetmesh = model->get_TARGET();
+        targetmesh.set_pvalues(ResampledRefWeight);
+        ResampledRefWeight = newresampler::metric_resample(targetmesh, SPH_reg, _numthreads).get_pvalues();
+        CombinedWeight = combine_costfunction_weighting(SPHin_CFWEIGHTING, ResampledRefWeight);
+    }
+    return CombinedWeight;
 }
 
 newresampler::Mesh Mesh_registration::resample_anatomy(const newresampler::Mesh& control_grid,
@@ -191,55 +329,27 @@ newresampler::Mesh Mesh_registration::resample_anatomy(const newresampler::Mesh&
     return ANAT_ico;
 }
 
-NEWMAT::Matrix Mesh_registration::downsample_cfweighting(double sigma,
-                                                         const newresampler::Mesh& SPH,
+NEWMAT::Matrix Mesh_registration::downsample_cfweighting(const newresampler::Mesh& SPH,
                                                          std::shared_ptr<newresampler::Mesh> CFWEIGHTING,
                                                          std::shared_ptr<newresampler::Mesh> EXCL) {
     NEWMAT::Matrix newdata;
 
-    if(EXCL)
-    {
-        if (!CFWEIGHTING)
-            CFWEIGHTING = std::make_shared<newresampler::Mesh>(*EXCL);
-
+    if(EXCL) {
+        if (!CFWEIGHTING) CFWEIGHTING = std::make_shared<newresampler::Mesh>(*EXCL);
         newdata = newresampler::nearest_neighbour_interpolation(*CFWEIGHTING, SPH, _numthreads, EXCL).get_pvalues();
     }
-    else if(CFWEIGHTING)
-    {
+    else if (CFWEIGHTING)
         newdata = newresampler::nearest_neighbour_interpolation(*CFWEIGHTING, SPH, _numthreads, EXCL).get_pvalues();
-    }
-    else
-    {
-        newdata.ReSize(1, SPH.nvertices());
-        newdata = 1;
+    else {
+        newdata.ReSize(1, SPH.nvertices()); newdata = 1;
     }
 
     return newdata;
 }
 
-//---MAIN FUNCTION---//
-void Mesh_registration::evaluate() {
-    //Initialise deformation mesh
-    SPH_reg = project_CPgrid(SPH_orig,SPH_reg);
-    // first project data grid through any predefined transformation or,
-    // from transformation from previous resolution level.
-
-    if(isrigid)
-    {
-        rigidcf->update_source(SPH_reg);
-        SPH_reg = rigidcf->run();
-    }
-    else
-    {
-        run_discrete_opt();
-    }
-
-    if(_verbose) std::cout << "Exit main algorithm." << std::endl;
-}
-
 void Mesh_registration::transform(const std::string& filename) {
 
-    barycentric_mesh_interpolation(MESHES[0], SPH_orig, SPH_reg, _numthreads);
+    newresampler::sphere_project_warp(MESHES[0], SPH_orig, SPH_reg, _numthreads);
     MESHES[0].save(filename + "sphere.reg" + _surfformat);
 }
 
@@ -268,14 +378,11 @@ void Mesh_registration::save_transformed_data(const std::string& filename) {
     }
 
     MESHES[0].set_pvalues(DATA->AsMatrix());
-    newresampler::Mesh tmp;
-
-    tmp = newresampler::metric_resample(MESHES[0], MESHES[1], _numthreads, IN_EXCL);
-
+    newresampler::Mesh tmp = newresampler::metric_resample(MESHES[0], MESHES[1], _numthreads, IN_EXCL);
     DATA = std::make_shared<MISCMATHS::FullBFMatrix>(tmp.get_pvalues());
 
     newresampler::Mesh TRANSFORMED = MESHES[1];
-    std::shared_ptr<MISCMATHS::FullBFMatrix > pin = std::dynamic_pointer_cast<MISCMATHS::FullBFMatrix>(DATA);
+    std::shared_ptr<MISCMATHS::FullBFMatrix> pin = std::dynamic_pointer_cast<MISCMATHS::FullBFMatrix>(DATA);
 
     if(pin)
     {
@@ -287,7 +394,7 @@ void Mesh_registration::save_transformed_data(const std::string& filename) {
 
     if(_anat)
     {
-        newresampler::Mesh ANAT_TRANS = newresampler::project_mesh(MESHES[0], MESHES[1],ref_anat, _numthreads);
+        newresampler::Mesh ANAT_TRANS = newresampler::project_anatomical_mesh(MESHES[0], MESHES[1],ref_anat, _numthreads);
         ANAT_TRANS.save(_outdir + "anat.reg.surf");
 
         in_anat.estimate_normals();
@@ -295,124 +402,6 @@ void Mesh_registration::save_transformed_data(const std::string& filename) {
         if(_verbose) std::cout << "Calculate strains." << std::endl;
         newresampler::Mesh STRAINSmesh = calculate_strains(2, in_anat, ANAT_TRANS, _numthreads);
         STRAINSmesh.save(_outdir + "STRAINS.func");
-    }
-}
-
-//---PROJECT TRANSFORMATION FROM PREVIOUS LEVEL TO UPSAMPLED SOURCE---//
-newresampler::Mesh Mesh_registration::project_CPgrid(newresampler::Mesh SPH_in, const newresampler::Mesh& REG, int num) {
-    // num indices which warp for group registration
-
-    if(level == 1)
-    {
-        if(transformed_mesh.nvertices() > 0)
-        { // project into alignment with transformed mesh
-            if (transformed_mesh == MESHES[num]) std::cout << " WARNING:: transformed mesh has the same coordinates as the input mesh " << std::endl;
-            else
-            {
-                barycentric_mesh_interpolation(SPH_in, MESHES[num], transformed_mesh, _numthreads);
-                if (model) model->warp_CPgrid(MESHES[num],transformed_mesh, num);
-                // for tri clique model control grid is continously deformed
-            }
-        }
-    }
-    else
-    {   // following first round always start by projecting Control and data grids through warp at previous level
-        // PROJECT CPgrid into alignment with warp from previous level
-        newresampler::Mesh icotmp = newresampler::make_mesh_from_icosa(REG.get_resolution());
-        true_rescale(icotmp,RAD);
-        // project datagrid though warp defined for the high resolution meshes (the equivalent to if registration is run one level at a time )
-        newresampler::Mesh inorig = MESHES[num], incurrent = MESHES[num];
-        barycentric_mesh_interpolation(incurrent,icotmp,REG, _numthreads);
-        barycentric_mesh_interpolation(SPH_in,inorig,incurrent, _numthreads);
-        if(model) model->warp_CPgrid(inorig, incurrent, num);
-        if(_debug) incurrent.save(_outdir + "sphere.regLR.Res" + std::to_string(level) + ".surf");
-    }
-
-    unfold(SPH_in, _verbose);
-
-    return SPH_in;
-}
-
-void Mesh_registration::run_discrete_opt() {
-
-    double energy = 0.0, newenergy = 0.0;
-
-    for(int iter = 1; iter <= std::get<int>(PARAMETERS.find("iters")->second); iter++) {
-        // resample and combine the reference cost function weighting with the source if provided
-        NEWMAT::Matrix CombinedWeight;
-        if(_incfw && _refcfw) {
-            NEWMAT::Matrix ResampledRefWeight = SPHref_CFWEIGHTING;
-            newresampler::Mesh targetmesh = model->get_TARGET();
-            targetmesh.set_pvalues(ResampledRefWeight);
-            ResampledRefWeight = newresampler::metric_resample(targetmesh, SPH_reg, _numthreads).get_pvalues();
-            CombinedWeight = combine_costfunction_weighting(SPHin_CFWEIGHTING, ResampledRefWeight);
-        }
-        else {
-            CombinedWeight.resize(1, SPH_reg.nvertices());
-            CombinedWeight = 1;
-        }
-        model->setupCostFunctionWeighting(CombinedWeight);
-
-        model->reset_meshspace(SPH_reg,0);
-        model->setupCostFunction();
-
-        if(_verbose) std::cout << "Run optimisation." << std::endl;
-
-        if(_discreteOPT == "MCMC") {
-            if(!_tricliquelikeihood) model->computeUnaryCosts();
-            newenergy = MCMC::optimise(model, _verbose, _mciters[level-1]);
-        }
-        else if(_discreteOPT == "FastPD") {
-#ifdef HAS_FPD
-            model->computeUnaryCosts();
-            model->computePairwiseCosts();
-            FPD::FastPD opt(model, 100);
-            newenergy = opt.run();
-            opt.getLabeling(model->getLabeling());
-#else
-            throw MeshregException("FastPD is not supported in this version of newMSM. Please use MCMC.");
-#endif
-        }
-        else if(_discreteOPT == "HOCR") {
-#ifdef HAS_HOCR
-            newenergy = Fusion::optimize(model, _verbose, _numthreads);
-#else
-#ifdef HAS_FPD
-            throw MeshregException("HOCR is not supported in this version of newMSM. Please use MCMC or FastPD.");
-#else
-            throw MeshregException("HOCR and FastPD are not supported in this version of newMSM. Please use MCMC.");
-#endif
-#endif
-        }
-        else
-            throw MeshregException("Unrecognized optimiser");
-
-        if(iter > 1 && ((iter - 1) % 2 == 0) && (energy - newenergy < 0.001) && _discreteOPT != "MCMC") {
-            if(_verbose) {
-                std::cout << iter << " level has converged." << std::endl;
-                std::cout <<  "newenergy " << newenergy <<  "\tenergy " << energy
-                          <<  "\tEnergy decrease: " <<  energy-newenergy << std::endl;
-            }
-            break;
-        }
-
-        if(_verbose) {
-            std::cout << "newenergy " << newenergy << "\tenergy " << energy
-                      << "\tEnergy decrease: " << energy - newenergy << std::endl;
-        }
-
-        newresampler::Mesh previous_controlgrid = model->get_CPgrid(0);
-
-        model->applyLabeling();
-        // apply these choices in order to deform the CP grid
-        newresampler::Mesh transformed_controlgrid = model->get_CPgrid(0);
-        // use the control point updates to warp the source mesh
-        newresampler::barycentric_mesh_interpolation(SPH_reg, previous_controlgrid, transformed_controlgrid, _numthreads);
-        // higher order frameowrk continuous deforms the CP grid whereas the original FW resets the grid each time
-        unfold(transformed_controlgrid, _verbose);
-        model->reset_CPgrid(transformed_controlgrid,0); // source mesh is updated and control point grids are reset
-        unfold(SPH_reg, _verbose);
-        energy = newenergy;
     }
 }
 
@@ -647,15 +636,14 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
         if (simval.set()) _simval = simval.value();
         else _simval.resize(cost.size(), 2);
         for(int i = 0; i < _simval.size(); ++i) {
-            if (_simval[i] == 3)
-                std::cout << "Warning! NMI similarity metric has been removed from newMSM (was not working in old MSM)."
-                          << std::endl;
-            if (_simval[i] == 1 && cost[i] == "DISCRETE")
-                std::cout << "Warning! SSD similarity metric is not supported for discrete method in newMSM (Pearson's correlation only)."
-                          << std::endl;
-            if (_simval[i] == 2 && (cost[i] == "AFFINE" || cost[i] == "RIGID"))
-                std::cout << "Warning! Pearson's correlation similarity metric is not supported for affine/rigid method in newMSM (SSD only)."
-                          << std::endl;
+            if (_simval[i] == 3) {
+                std::cout << "Warning! NMI similarity metric has been removed from newMSM. Using Pearson's correlation instead." << std::endl;
+                _simval[i] = 2;
+            }
+            if (_simval[i] == 1 && cost[i] == "DISCRETE") {
+                std::cout << "Warning! SSD similarity metric is not supported for discrete method in newMSM (Pearson's correlation only)." << std::endl;
+                _simval[i] = 2;
+            }
         }
         if (iterations.set()) _iters = iterations.value();
         else _iters.resize(cost.size(), 3);

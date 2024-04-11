@@ -27,9 +27,6 @@ SOFTWARE.
 #include "newresampler/resampler.h"
 #include "similarities.h"
 
-//#define RAD 100.0
-//#define EPSILON 1.0E-8
-
 namespace newmeshreg {
 
 class DiscreteCostFunction {
@@ -42,7 +39,6 @@ public:
     }
 
     //---SET--//
-    virtual void reset(); //Resets all costs to zero.
     void setPairs(int* p) { _pairs = p; } //Sets the pairs index buffer.
     void setTriplets(int* p) { _triplets = p; } //Sets the pairs index buffer.
 
@@ -79,7 +75,6 @@ protected:
     float _reglambda = 1.0;  // scaling parameter for regulariser
 
     int _threads = 1;
-    bool _debug = false;
     bool _verbosity = false;
 };
 
@@ -117,22 +112,15 @@ protected:
     std::vector<newresampler::Point> _labels;
     std::shared_ptr<std::vector<NEWMAT::Matrix>> ROTATIONS; // rotates label set onto each control point
 
-    std::string dopt;
-
-    int _iter = 0;
     double MVDmax = 0.0; // max distance between CPs
-    double _MEANANGLE = 0.0;
     float _controlptrange = 1.0;
-
-    double sumlikelihood = 0.0;
-    double sumregcost = 0.0;
 
     float _mu = 0.4; // shear modulus
     float _kappa = 1.6; // bulk modulus
     float _rexp = 2.0;
 
     //---USER DEFINED PARAMETERS---//
-    int _simmeasure = 2;
+    int _simmeasure = 3;
     int  _rmode = 1;
     float _k_exp = 2.0;
     double MAXstrain = 0.0;
@@ -186,8 +174,8 @@ public:
         _TARGET = target; _SOURCE = source; _ORIG = source; _CPgrid = GRID; _oCPgrid = GRID;
     }
 
+    virtual void set_masks(const newresampler::Mesh& m) {}
     virtual void set_meshes(const std::vector<newresampler::Mesh>& source, const newresampler::Mesh& GRID, int num) { }
-    inline void set_iter(int iter) { _iter = iter; }
     void set_featurespace(const std::shared_ptr<featurespace>& features) {
         FEAT = features;
     }
@@ -196,22 +184,16 @@ public:
         ROTATIONS = std::make_shared<std::vector<NEWMAT::Matrix>>(ROT);
     }
 
-    virtual void set_patch_data(const std::vector<std::map<int,float>>& patches) { }
+    virtual void set_patch_data(const std::vector<std::map<int,std::vector<double>>>& patches) { }
     virtual void set_spacings(const NEWMAT::ColumnVector& spacings, double MAX) { MAXSEP = spacings; MVDmax = MAX; }
     void set_octrees(std::shared_ptr<newresampler::Octree>& targett) { targettree = targett; }
     virtual void reset_source(const newresampler::Mesh& source, int num) { _SOURCE = source; }
     virtual void reset_CPgrid(const newresampler::Mesh& grid, int num) { _CPgrid = grid; }
-    void set_initial_angles(const std::vector<std::vector<double>>& angles);
 
-    //---REPORT AND DEBUG---//
-    void report() { if(_debug) std::cout << " sumlikelihood " << sumlikelihood << " sumregcost " << sumregcost <<std::endl; }
-    void debug() { _debug = true; } // for debuging
     void set_mcmc_threads(int threads) { mcmc_threads = threads; }
 
     //---UTILITY---//
-    bool within_controlpt_range(int CPindex, int sourceindex);
-    virtual void set_warps(const std::vector<std::vector<newresampler::Mesh>>& ws) {}
-    virtual void set_warp_rotations(const std::vector<std::vector<std::vector<NEWMAT::Matrix>>>& w_rot) {}
+    inline bool within_controlpt_range(int CPindex, int sourceindex);
 };
 
 class UnivariateNonLinearSRegDiscreteCostFunction: public NonLinearSRegDiscreteCostFunction {

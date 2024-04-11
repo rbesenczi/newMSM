@@ -55,7 +55,7 @@ public:
                 unarycosts[i * numNodes + j] = unaryenergies[j][i];
     }
 
-    void reset() override {
+    void reset() {
         unaryenergies.clear();
         pairenergies.clear();
     }
@@ -124,7 +124,7 @@ public:
         const int* triplets = energy->getTriplets();
 
         const int NUM_SWEEPS = 2;
-        const int MAX_FPD_ITERS = 100;
+        const int MAX_FPD_ITERS = 25;
         const int num_nodes = energy->getNumNodes();
 
         int* labeling = energy->getLabeling();
@@ -226,7 +226,6 @@ public:
 
                     if(verbose)
                     {
-                        energy->report();
                         std::cout << "  LAB " << label << ":\t" << lastEnergy << " -> " << newEnergy << " / "
                                   << nodesChanged / (float)num_nodes * 100 << "% CHN" << std::endl;
                         lastEnergy = newEnergy;

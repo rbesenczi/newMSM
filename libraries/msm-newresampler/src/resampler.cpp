@@ -41,11 +41,11 @@ Mesh Resampler::barycentric_data_interpolation(const Mesh& metric_in, const Mesh
         #pragma omp parallel for num_threads(nthreads)
         for (int k = 0; k < interpolated_mesh.nvertices(); k++)
         {
-            float val = 0.0;
+            double val = 0.0;
 
             for (const auto &it: weights[k])
                 if (!EXCL || EXCL->get_pvalue(it.first) != 0)
-                    val += metric_in.get_pvalue(it.first, feat_dim) * (float) it.second;
+                    val += metric_in.get_pvalue(it.first, feat_dim) * it.second;
 
             interpolated_mesh.set_pvalue(k, val, feat_dim);
         }
@@ -55,11 +55,11 @@ Mesh Resampler::barycentric_data_interpolation(const Mesh& metric_in, const Mesh
         #pragma omp parallel for num_threads(nthreads)
         for (int k = 0; k < exclusion.nvertices(); k++)
         {
-            float excl_val = 0.0;
+            double excl_val = 0.0;
 
             for (const auto &it: weights[k])
                 if (EXCL->get_pvalue(it.first) != 0)
-                    excl_val += EXCL->get_pvalue(it.first) * (float) it.second;
+                    excl_val += EXCL->get_pvalue(it.first) * it.second;
 
             exclusion.set_pvalue(k, excl_val);
         }
@@ -257,7 +257,7 @@ Mesh nearest_neighbour_interpolation(Mesh& orig, const Mesh& sphLow, int nthread
     return interpolated;
 }
 
-Mesh project_mesh(const Mesh& orig, const Mesh& target, const Mesh& anat, int nthreads) {
+Mesh project_anatomical_mesh(const Mesh& orig, const Mesh& target, const Mesh& anat, int nthreads) {
 //---ANATOMICAL MESH PROJECTION---//
     Resampler resampler;
     Mesh TRANS = orig;
@@ -308,22 +308,22 @@ Mesh metric_resample(const Mesh& metric_in, const Mesh& sphLow, int nthreads, st
     return resampler.barycentric_data_interpolation(metric_in, sphLow, nthreads, EXCL);
 }
 
-void barycentric_mesh_interpolation(Mesh& SPH_up, const Mesh& SPH_low_init, const Mesh& SPH_low_final, int nthreads) {
+void sphere_project_warp(Mesh& sphere, const Mesh& from, const Mesh& to, int nthreads) {
 
     Resampler resampler;
-    Octree octree_search(SPH_low_init);
-    std::vector<std::map<int,double>> weights = resampler.get_barycentric_weights(SPH_up, SPH_low_init, octree_search);
+    Octree octree_search(from);
+    std::vector<std::map<int,double>> weights = resampler.get_barycentric_weights(sphere, from, octree_search);
 
     #pragma omp parallel for num_threads(nthreads)
-    for(int i = 0; i < SPH_up.nvertices(); i++)
+    for(int i = 0; i < sphere.nvertices(); i++)
     {
         Point newPt;
         for(const auto& it : weights[i])
-            newPt += SPH_low_final.get_coord(it.first) * it.second;
+            newPt += to.get_coord(it.first) * it.second;
 
         newPt.normalize();
         newPt *= 100;
-        SPH_up.set_coord(i, newPt);
+        sphere.set_coord(i, newPt);
     }
 }
 

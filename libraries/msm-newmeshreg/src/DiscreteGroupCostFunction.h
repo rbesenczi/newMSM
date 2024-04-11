@@ -45,7 +45,8 @@ public:
     }
 
     void reset_CPgrid(const newresampler::Mesh& grid, int num) override { _CONTROLMESHES[num] = grid; }
-    void set_patch_data(const std::vector<std::map<int,float>>& patches) override { patch_data = patches; }
+    void set_patch_data(const std::vector<std::map<int,std::vector<double>>>& patches) override { patch_data = patches; }
+    void set_masks(const newresampler::Mesh& m) { _MASK = m; is_masked = true; }
 
     //---Compute costs---//
     double computeTripletCost(int triplet, int labelA, int labelB, int labelC) override;
@@ -54,11 +55,13 @@ public:
 private:
     std::vector<newresampler::Mesh> _CONTROLMESHES;
     std::vector<newresampler::Mesh> _ORIG_MESHES;
+    newresampler::Mesh _MASK;
 
-    std::vector<std::map<int,float>> patch_data;
+    std::vector<std::map<int,std::vector<double>>> patch_data;
 
     int TRIPLETS_PER_SUBJ = 0;
     int VERTICES_PER_SUBJ = 0;
+    bool is_masked = false;
 };
 
 } //namespace newmeshreg

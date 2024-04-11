@@ -1,23 +1,14 @@
 #include "msmOptions.h"
 #include "NewMeshReg/group_mesh_registration.h"
 
-msmOptions *msmOptions::gopt = nullptr;
+msmOptions* msmOptions::gopt = nullptr;
 
-int main(int argc, char *argv[]) try {
+int main(int argc, char* argv[]) try {
 
-    std::cout << "This is newMSM v0.6.2-BETA." << std::endl;
-
-    msmOptions &opts = msmOptions::getInstance();
+    msmOptions& opts = msmOptions::getInstance();
     opts.parse_command_line(argc, argv);
 
-    if(opts.in_register.set())
-        std::cout << "Warning! --in_register parameter is removed from newMSM." << std::endl;
-
-    if(opts.multiresolutionlevels.set())
-        std::cout << "Warning! --levels parameter is removed from newMSM." << std::endl;
-
-    if(opts.smoothoutput.set())
-        std::cout << "Warning! --smoothout parameter is removed from newMSM." << std::endl;
+    if (opts.verbose.value()) std::cout << "This is newMSM v0.6.2-BETA." << std::endl;
 
     if(opts.groupwise.value())
     {
@@ -31,6 +22,7 @@ int main(int argc, char *argv[]) try {
         GMR.set_inputs(opts.meshes.value());
         GMR.set_template(opts.templatemesh.value());
         GMR.set_data_list(opts.data.value());
+        if(opts.mask.set()) GMR.set_mask(opts.mask.value());
 
         GMR.run_multiresolutions(opts.parameters.value());
     }

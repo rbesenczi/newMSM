@@ -130,14 +130,16 @@ double sparsesimkernel::corr(const std::vector<double>& A, const std::vector<dou
 
     double prod = 0.0, varA = 0.0, varB = 0.0, meanA = 0.0, meanB = 0.0;
     double sum = std::accumulate(weights.begin(), weights.end(), 0.0);
-    auto len = A.size();
 
-    for(unsigned int i = 0; i < len; i++) {
+    for(unsigned int i = 0; i < A.size(); i++) {
         meanA += weights[i] * A[i];
         meanB += weights[i] * B[i];
     }
 
-    meanA /= sum; meanB /= sum;
+    if(sum > 0.0) {
+        meanA /= sum;
+        meanB /= sum;
+    }
 
     for (unsigned int s = 0; s < A.size(); s++) {
         prod += weights[s] * (A[s] - meanA) * (B[s] - meanB);
@@ -145,7 +147,11 @@ double sparsesimkernel::corr(const std::vector<double>& A, const std::vector<dou
         varB += weights[s] * (B[s] - meanB) * (B[s] - meanB);
     }
 
-    prod /= sum; varA /= sum; varB /= sum;
+    if(sum > 0.0) {
+        prod /= sum;
+        varA /= sum;
+        varB /= sum;
+    }
 
     if (varA == 0.0 || varB == 0.0) return 0.0;
     else return prod / (sqrt(varA) * sqrt(varB));

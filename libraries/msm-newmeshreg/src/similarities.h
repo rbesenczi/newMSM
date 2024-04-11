@@ -45,8 +45,7 @@ public:
 
     //---FOR DISCRETE---//
     inline double get_sim_for_min(const std::vector<double>& input, const std::vector<double>& reference, const std::vector<double>& weights = std::vector<double>()) {
-        if(weights.empty()) return 1 - ( 1 + corr(input,reference)) * 0.5;
-        else return 1 - ( 1 + corr(input,reference, weights)) * 0.5;
+        return 1 - ( 1 + corr(input,reference,weights)) * 0.5;
     }
 
 private:

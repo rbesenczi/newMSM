@@ -751,7 +751,6 @@ void multivariate_histogram_normalization(MISCMATHS::BFMatrix& IN, MISCMATHS::BF
     for(int d = 1; d <= (int) IN.Nrows(); d++)
     {
         NEWMAT::ColumnVector datain(IN.Ncols()), dataref(REF.Ncols());
-        double max, min;
         NEWMAT::ColumnVector excluded_in(IN.Ncols()); excluded_in = 1;
         NEWMAT::ColumnVector excluded_ref(REF.Ncols()); excluded_ref = 1;
         const int numbins = 256;

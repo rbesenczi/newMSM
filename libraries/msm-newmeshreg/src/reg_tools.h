@@ -27,6 +27,9 @@ SOFTWARE.
 #include <omp.h>
 #include <variant>
 
+#define FOLDING 1e7
+#define FIX_NAN 1e7
+
 namespace newmeshreg {
 
 typedef std::map<std::string, std::variant<int, std::string, double, float, bool>> myparam;

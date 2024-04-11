@@ -53,31 +53,32 @@ void DiscreteCostFunction::initialize(int numNodes, int numLabels, int numPairs,
     std::fill(tripletcosts,tripletcosts+m_num_triplets*m_num_labels*m_num_labels*m_num_labels,0.0f);
 }
 
-void DiscreteCostFunction::reset() {
-    if(unarycosts) std::fill(unarycosts,unarycosts+m_num_labels*m_num_nodes,0.0f);
-    if(paircosts) std::fill(paircosts,paircosts+m_num_labels*m_num_labels*m_num_pairs,0.0f);
-    if(tripletcosts) std::fill(tripletcosts,tripletcosts+m_num_triplets*m_num_labels*m_num_labels*m_num_labels,0.0f);
-}
-
 double DiscreteCostFunction::evaluateTotalCostSum(const int *labeling, const int *pairs, const int *triplets) {
 
     double cost_sum_unary = 0.0f;
     double cost_sum_pairwise = 0.0f;
     double cost_sum_triplet = 0.0f;
 
+    #pragma omp parallel for num_threads(_threads)
     for (int i = 0; i < m_num_nodes; ++i) {
         double unary_cost = computeUnaryCost(i, labeling[i]);
+        #pragma omp critical
         cost_sum_unary += unary_cost;
     }
 
+    #pragma omp parallel for num_threads(_threads)
     for (int p = 0; p < m_num_pairs; ++p) {
         double pair_cost = computePairwiseCost(p, labeling[pairs[p * 2]], labeling[pairs[p * 2 + 1]]);
+        #pragma omp critical
         cost_sum_pairwise += pair_cost;
     }
 
+    #pragma omp parallel for num_threads(_threads)
     for (int t = 0; t < m_num_triplets; ++t) {
-        double triplet_cost = computeTripletCost(t, labeling[triplets[t * 3]], labeling[triplets[t * 3 + 1]],
+        double triplet_cost = computeTripletCost(t, labeling[triplets[t * 3]],
+                                                 labeling[triplets[t * 3 + 1]],
                                                  labeling[triplets[t * 3 + 2]]);
+        #pragma omp critical
         cost_sum_triplet += triplet_cost;
     }
 
@@ -92,8 +93,8 @@ double DiscreteCostFunction::evaluateTotalCostSum(const int *labeling, const int
 
 newresampler::Mesh NonLinearSRegDiscreteCostFunction::project_anatomical() {
     newresampler::Mesh _aICOtrans = _aICO;
-    barycentric_mesh_interpolation(_aICOtrans,_ORIG,_SOURCE, _threads);
-    return newresampler::project_mesh(_aICOtrans,_TARGEThi,_aTARGET, _threads);
+    newresampler::sphere_project_warp(_aICOtrans,_ORIG,_SOURCE, _threads);
+    return newresampler::project_anatomical_mesh(_aICOtrans,_TARGEThi,_aTARGET, _threads);
 }
 
 void NonLinearSRegDiscreteCostFunction::reset_anatomical() {
@@ -111,15 +112,6 @@ void NonLinearSRegDiscreteCostFunction::reset_anatomical() {
             if(strainstmp(i+1) > MAXstrain)
                 MAXstrain = strainstmp(i+1);
     }
-}
-
-void NonLinearSRegDiscreteCostFunction::set_initial_angles(const std::vector<std::vector<double>>& angles) {
-    double meanang = 0.0;
-    for (const auto& angle : angles)
-        for (double j : angle)
-            meanang += j;
-
-    _MEANANGLE = meanang / (3.0*angles.size());
 }
 
 bool NonLinearSRegDiscreteCostFunction::within_controlpt_range(int CPindex, int sourceindex) {
@@ -152,13 +144,11 @@ void NonLinearSRegDiscreteCostFunction::set_parameters(myparam& ALLPARAMS) {
     it=ALLPARAMS.find("verbosity"); _verbosity=std::get<bool>(it->second);
     it=ALLPARAMS.find("regularisermode"); _rmode=std::get<int>(it->second);
     it=ALLPARAMS.find("numthreads"); _threads=std::get<int>(it->second);
-    it=ALLPARAMS.find("dOPT"); dopt=std::get<std::string>(it->second);
 }
 
 double NonLinearSRegDiscreteCostFunction::computeTripletCost(int triplet, int labelA, int labelB, int labelC) {
 
     double cost = 0.0;
-    if(_debug && triplet == 0) { sumlikelihood = 0.0; sumregcost = 0.0; }
     std::map<int,newresampler::Point> rotated_triangle;
 
     rotated_triangle[_triplets[3*triplet  ]] = (*ROTATIONS)[_triplets[3*triplet  ]] * _labels[labelA];
@@ -173,7 +163,7 @@ double NonLinearSRegDiscreteCostFunction::computeTripletCost(int triplet, int la
                                      _CPgrid.get_coord(_triplets[3*triplet+2]),0);
 
     // only estimate cost if it doesn't cause folding
-    if ((TRI.normal() | TRI_noDEF.normal()) < 0) return std::numeric_limits<double>::max();
+    if ((TRI.normal() | TRI_noDEF.normal()) < 0.0) return FOLDING;
 
     double likelihood =
             triplet_likelihood(triplet, _triplets[3*triplet], _triplets[3*triplet+1], _triplets[3*triplet+2],
@@ -208,59 +198,49 @@ double NonLinearSRegDiscreteCostFunction::computeTripletCost(int triplet, int la
             throw MeshregException("DiscreteModel computeTripletCost regoption does not exist");
     }
 
-    if(_debug)
-    {
-        sumlikelihood += likelihood;
-        sumregcost += _reglambda * MISCMATHS::pow(cost,_rexp);
-    }
-
     return likelihood + _reglambda * MISCMATHS::pow(cost,_rexp); // normalise to try and ensure equivalent lambda for each resolution level
 }
 
 double NonLinearSRegDiscreteCostFunction::computePairwiseCost(int pair, int labelA, int labelB) {
 
-    NEWMAT::Matrix R1 = estimate_rotation_matrix(_CPgrid.get_coord(_pairs[2*pair]),(*ROTATIONS)[_pairs[2*pair]]*_labels[labelA]);
-    NEWMAT::Matrix R2 = estimate_rotation_matrix(_CPgrid.get_coord(_pairs[2*pair+1]),(*ROTATIONS)[_pairs[2*pair+1]]*_labels[labelB]);
+    newresampler::Point v0 = _CPgrid.get_coord(_pairs[2*pair]);
+    newresampler::Point v1 = _CPgrid.get_coord(_pairs[2*pair+1]);
+
+    NEWMAT::Matrix R1 = estimate_rotation_matrix(v0,(*ROTATIONS)[_pairs[2*pair]]*_labels[labelA]);
+    NEWMAT::Matrix R2 = estimate_rotation_matrix(v1,(*ROTATIONS)[_pairs[2*pair+1]]*_labels[labelB]);
     NEWMAT::Matrix R_diff = R1.t() * R2;
 
     const double theta_MVD = 2 * asin(MVDmax/(2*RAD));
     const double theta = acos((R_diff.Trace()-1)/2);
-    double weight = 1.0, totalcost = 0.0, cost = 0.0;
-
-    newresampler::Point v0 = _CPgrid.get_coord(_pairs[2*pair]);
-    newresampler::Point v1 = _CPgrid.get_coord(_pairs[2*pair+1]);
+    double cost = 0.0;
 
     _CPgrid.set_coord(_pairs[2*pair],(*ROTATIONS)[_pairs[2*pair]]*_labels[labelA]);
     _CPgrid.set_coord(_pairs[2*pair+1],(*ROTATIONS)[_pairs[2*pair+1]]*_labels[labelB]);
 
     if(fabs(1 - (R_diff.Trace() - 1) / 2) > EPSILON)
     {
-        for(auto j = _CPgrid.tIDbegin(_pairs[2*pair]); j != _CPgrid.tIDend(_pairs[2*pair]); j++)
-        {
-            if((_oCPgrid.get_triangle(*j).normal() | _CPgrid.get_triangle(*j).normal()) < 0)
-            {
-                cost = 1.0;
-                weight += 1e6;
-                break;
+        for(auto j = _CPgrid.tIDbegin(_pairs[2*pair]); j != _CPgrid.tIDend(_pairs[2*pair]); j++) {
+            if((_oCPgrid.get_triangle(*j).normal() | _CPgrid.get_triangle(*j).normal()) < 0.0) { //folding
+                _CPgrid.set_coord(_pairs[2*pair  ],v0);
+                _CPgrid.set_coord(_pairs[2*pair+1],v1);
+                return FOLDING;
             }
         }
 
-        cost = (sqrt(2) * theta) / theta_MVD;
-
         if(_rexp == 1)
-            totalcost = weight * _reglambda * cost;
+            cost = _reglambda * ((sqrt(2) * theta) / theta_MVD);
         else
-            totalcost = weight * _reglambda * MISCMATHS::pow(cost,_rexp);
+            cost = _reglambda * MISCMATHS::pow(((sqrt(2) * theta) / theta_MVD),_rexp);
     }
 
-    _CPgrid.set_coord(_pairs[2*pair],v0);
+    _CPgrid.set_coord(_pairs[2*pair  ],v0);
     _CPgrid.set_coord(_pairs[2*pair+1],v1);
 
-    return totalcost;
+    return cost;
 }
 
 void NonLinearSRegDiscreteCostFunction::computePairwiseCosts(const int *pairs) {
-
+    //Note: can't run parallel as computePairwiseCost() changes class scope CP grid mesh geometry.
     for (int i = 0; i < m_num_pairs; i++)
         for (unsigned int j = 0; j < _labels.size(); j++)
             for (unsigned int k = 0; k < _labels.size(); k++)
@@ -289,7 +269,6 @@ newresampler::Triangle NonLinearSRegDiscreteCostFunction::deform_anatomy(int tri
             moved[tindex] = true;
             newresampler::Point newPt;
 
-            //newPt.X = 0; newPt.Y = 0; newPt.Z = 0;
             for (const auto& it: _ANATbaryweights[tindex])
                 newPt += vertex[it.first] * it.second;
 
@@ -331,6 +310,7 @@ void NonLinearSRegDiscreteCostFunction::resample_weights(){
     AbsoluteWeights.ReSize(_SOURCE.nvertices());
     AbsoluteWeights = 0;
 
+    #pragma omp parallel for num_threads(_threads)
     for (int k = 1; k <= _SOURCE.nvertices(); k++)
     {
         double maxweight = std::numeric_limits<double>::lowest();
@@ -359,6 +339,7 @@ void UnivariateNonLinearSRegDiscreteCostFunction::get_source_data() {
 
     for (auto& i : _sourcedata) i.clear();
 
+    #pragma omp parallel for num_threads(_threads)
     for (int k = 0; k < _CPgrid.nvertices(); k++)
         for (int i = 0; i < _SOURCE.nvertices(); i++)
             if (within_controlpt_range(k, i))
@@ -402,13 +383,7 @@ double UnivariateNonLinearSRegDiscreteCostFunction::computeUnaryCost(int node, i
 
     get_target_data(node,estimate_rotation_matrix(_CPgrid.get_coord(node),(*ROTATIONS)[node] * _labels[label]));
 
-    double cost = AbsoluteWeights(node + 1) *
-            sim.get_sim_for_min(_sourcedata[node], _targetdata[node],_weights[node]);
-
-    if(_simmeasure == 1 || _simmeasure == 2)
-        return cost;
-    else
-        return -cost;
+    return AbsoluteWeights(node + 1) * sim.get_sim_for_min(_sourcedata[node], _targetdata[node],_weights[node]);
 }
 
 void MultivariateNonLinearSRegDiscreteCostFunction::initialize(int numNodes, int numLabels, int numPairs, int numTriplets) {
@@ -483,10 +458,7 @@ double MultivariateNonLinearSRegDiscreteCostFunction::computeUnaryCost(int node,
 
     if(!_sourceinrange[node].empty()) cost /= (_sourceinrange[node].size());
 
-    if(_simmeasure==1 || _simmeasure==2)
-        return AbsoluteWeights(node + 1) * cost;
-    else
-        return -AbsoluteWeights(node + 1) * cost;
+    return AbsoluteWeights(node + 1) * cost;
 }
 
 void HOUnivariateNonLinearSRegDiscreteCostFunction::initialize(int numNodes, int numLabels, int numPairs, int numTriplets) {
@@ -559,13 +531,8 @@ double HOUnivariateNonLinearSRegDiscreteCostFunction::triplet_likelihood(int tri
 
     get_target_data(triplet, CP_def0, CP_def1, CP_def2);
 
-    double cost = (AbsoluteWeights(CP_id0+1) + AbsoluteWeights(CP_id1+1) + AbsoluteWeights(CP_id2+1)) / 3.0 *
-            sim.get_sim_for_min(_sourcedata[triplet], _targetdata[triplet],_weights[triplet]);
-
-    if(_simmeasure == 1 || _simmeasure == 2)
-        return cost;
-    else
-        return -cost;
+    return (AbsoluteWeights(CP_id0+1) + AbsoluteWeights(CP_id1+1) + AbsoluteWeights(CP_id2+1)) / 3.0 *
+           sim.get_sim_for_min(_sourcedata[triplet], _targetdata[triplet],_weights[triplet]);
 }
 
 void HOMultivariateNonLinearSRegDiscreteCostFunction::initialize(int numNodes, int numLabels, int numPairs, int numTriplets) {
@@ -653,10 +620,7 @@ double HOMultivariateNonLinearSRegDiscreteCostFunction::triplet_likelihood(int t
 
     if(_sourceinrange[triplet].size() > 0) cost /= _sourceinrange[triplet].size();
 
-    if(_simmeasure==1 || _simmeasure==2)
-        return (AbsoluteWeights(CP_id0+1)+AbsoluteWeights(CP_id1+1)+AbsoluteWeights(CP_id2+1)) / 3.0 * cost;
-    else
-        return -(AbsoluteWeights(CP_id0+1)+AbsoluteWeights(CP_id1+1)+AbsoluteWeights(CP_id2+1)) / 3.0 * cost;
+    return (AbsoluteWeights(CP_id0+1)+AbsoluteWeights(CP_id1+1)+AbsoluteWeights(CP_id2+1)) / 3.0 * cost;
 }
 
 } //namespace newmeshreg

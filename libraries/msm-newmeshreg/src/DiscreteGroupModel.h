@@ -31,12 +31,14 @@ class DiscreteGroupModel : public NonLinearSRegDiscreteModel {
 
     std::vector<newresampler::Mesh> m_datameshes;
     std::vector<newresampler::Mesh> m_controlmeshes;
-    newresampler::Mesh m_template;
+    newresampler::Mesh mask;
+    newresampler::Mesh target_space;
     std::vector<NEWMAT::ColumnVector> spacings;
 
     int m_num_subjects = 0;
     int control_grid_size = 0;
     int cp_triangles = 0;
+    bool is_masked = false;
 
 public:
     DiscreteGroupModel() = default;
@@ -46,8 +48,10 @@ public:
         costfct->set_parameters(p);
     }
 
+    void set_masks(const newresampler::Mesh& m) { mask = m; is_masked = true; }
+
     void set_meshspace(const newresampler::Mesh& target, const newresampler::Mesh& source, int num) override {
-        m_template = target;
+        target_space = target;
         m_datameshes.clear();
         m_datameshes.resize(num, source);
         m_num_subjects = num;
@@ -63,7 +67,7 @@ public:
     }
 
     void warp_CPgrid(newresampler::Mesh& start, newresampler::Mesh& end, int num) override {
-        newresampler::barycentric_mesh_interpolation(m_controlmeshes[num], start, end, _nthreads);
+        newresampler::sphere_project_warp(m_controlmeshes[num], start, end, _nthreads);
         unfold(m_controlmeshes[num], m_verbosity);
     }
 

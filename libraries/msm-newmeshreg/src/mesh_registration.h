@@ -64,12 +64,6 @@ public:
     inline void set_CMpathin(const std::string& s) { CMfile_in = s; }
     inline void set_CMpathref(const std::string& s) { CMfile_ref = s; }
 
-    //---GET FUNCTIONS---//
-    inline newresampler::Mesh return_registered_input_mesh() const { return MESHES[0]; }
-    inline std::string get_indata_path() const { return CMfile_in; }
-    inline std::string get_surf_format() const { return _surfformat; }
-    inline std::string get_refdata_path() const { return CMfile_ref; }
-
 protected:
     int level = 0;
     bool isrigid = false;
@@ -113,9 +107,8 @@ protected:
     std::vector<int> _genesis;           // ico mesh resolution at this level
     std::vector<float> _sigma_in;        // smoothing of input
     std::vector<float> _sigma_ref;      // smoothing of reference
-    std::vector<int> _simval; // code determines how similarity is assessed 1 is aleks' correlation measure 2 is conventional correlation 3=SSD 4=NMI 5 alpha entropy
+    std::vector<int> _simval; // code determines how similarity is assessed 1=SSD; 2=Pearson's correlation;
     std::vector<float> _lambda;         // controls regularisation
-    std::vector<float> max_distortion_penalty;         // controls regularisation
     std::vector<float> _threshold;         // controls cut exclusion (2D upper and lower thresholds for defining cut vertices)
     std::vector<int> _iters; // total per resolution level
     std::vector<int> _gridres; // control point grid resolution (for discrete reg)
@@ -161,8 +154,9 @@ protected:
     virtual void initialize_level(int current_lvl);
     NEWMAT::Matrix combine_costfunction_weighting(const NEWMAT::Matrix &, const NEWMAT::Matrix &);
     newresampler::Mesh resample_anatomy(const newresampler::Mesh& control_grid, std::vector<std::map<int,double>>& baryweights, std::vector<std::vector<int>>& ANAT_to_CPgrid_neighbours, int current_lvl);
-    NEWMAT::Matrix downsample_cfweighting(double sigma, const newresampler::Mesh& SPH, std::shared_ptr<newresampler::Mesh> CFWEIGHTING, std::shared_ptr<newresampler::Mesh> EXCL);
+    NEWMAT::Matrix downsample_cfweighting(const newresampler::Mesh& SPH, std::shared_ptr<newresampler::Mesh> CFWEIGHTING, std::shared_ptr<newresampler::Mesh> EXCL);
     newresampler::Mesh project_CPgrid(newresampler::Mesh SPH_in, const newresampler::Mesh& REG, int num = 0);
+    NEWMAT::Matrix combine_weighting();
 
     //---RUN---//
     virtual void evaluate();

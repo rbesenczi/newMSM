@@ -31,14 +31,16 @@ namespace newmeshreg {
 class Group_Mesh_registration : public Mesh_registration {
 
     std::vector<newresampler::Mesh> ALL_SPH_REG;
-    newresampler::Mesh templ;
+    newresampler::Mesh target_space;
+    newresampler::Mesh mask;
     int num_subjects = 1;
+    bool is_masked = false;
 
 public:
     void initialize_level(int current_lvl) override;
     void evaluate() override;
-    void transform(const std::string& filename) override;
     void run_discrete_opt() override;
+    void transform(const std::string& filename) override;
     void save_transformed_data(const std::string& filename) override;
 
     inline void set_inputs(const std::string& s) {
@@ -54,6 +56,12 @@ public:
         }
     }
 
+    inline void set_mask(const std::string& mask_file){
+        mask = target_space;
+        mask.load(mask_file, false, false);
+        is_masked = true;
+    }
+
     inline void set_data_list(const std::string& s) {
         DATAlist = read_ascii_list(s);
         if (_verbose)
@@ -63,9 +71,9 @@ public:
 
     inline void set_template(const std::string &M) {
         if(_verbose) std::cout << "Template is " << M << std::endl;
-        templ.load(M);
-        recentre(templ);
-        true_rescale(templ,RAD);
+        target_space.load(M);
+        recentre(target_space);
+        true_rescale(target_space, RAD);
     }
 
     inline void saveSPH_reg(const std::string& filename) const override {

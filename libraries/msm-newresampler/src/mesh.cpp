@@ -182,7 +182,7 @@ std::vector<int> Mesh::getTrianglesAsVector() const {
     return ret;
 }
 
-void Mesh::set_pvalue(unsigned int i, float val, int dim) {
+void Mesh::set_pvalue(unsigned int i, double val, int dim) {
 
     if (pvalues.empty())
     {
@@ -229,7 +229,7 @@ void Mesh::set_pvalues(const NEWMAT::Matrix &M, bool appendFieldData) {
     {
         for (int i = 1; i <= M.Nrows(); i++)
         {
-            std::vector<float> tmp_pvalues;
+            std::vector<double> tmp_pvalues;
             for (int j = 1; j <= M.Ncols(); j++)
                 tmp_pvalues.push_back(M(i, j));
 
@@ -240,7 +240,7 @@ void Mesh::set_pvalues(const NEWMAT::Matrix &M, bool appendFieldData) {
     {
         for (int i = 1; i <= M.Ncols(); i++)
         {
-            std::vector<float> tmp_pvalues;
+            std::vector<double> tmp_pvalues;
             for (int j = 1; j <= M.Nrows(); j++)
                 tmp_pvalues.push_back(M(j, i));
 
@@ -254,7 +254,7 @@ void Mesh::initialize_pvalues(int dim, bool appendFieldData) {
     if (!appendFieldData)
         pvalues.clear();
 
-    pvalues.resize(dim + pvalues.size(), std::vector<float>(points.size(), 0.0));
+    pvalues.resize(dim + pvalues.size(), std::vector<double>(points.size(), 0.0));
 }
 
 double Mesh::calculate_MaxVD() const {
@@ -343,7 +343,7 @@ void Mesh::load(const std::string &filename, const bool loadSurfaceData, const b
         load_matrix(filename, type);
     } else {
         std::cerr << "Mesh::load:error reading file: " << filename << "  ... Unknown format" << std::endl;
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 }
 
@@ -380,7 +380,7 @@ void Mesh::load_gifti(const std::string &filename, const bool loadSurfaceData, c
 
     for (auto & dim : nonSurfaceData) {
         if (points.empty() || dim.getDim(0) == (int) points.size()) {
-            std::vector<float> tmp_pvalues;
+            std::vector<double> tmp_pvalues;
             for (point = 0; point < dim.getDim(0); point++) {
                 tmp_pvalues.push_back(dim.fScalar(point));
             }
@@ -481,7 +481,7 @@ void Mesh::load_ascii(const std::string &filename, const bool loadSurfaceData,
         f >> NVertices >> NFaces;
 
         if (!loadSurfaceData) {
-            std::vector<float> tmp_pvalues(NVertices, 0);
+            std::vector<double> tmp_pvalues(NVertices, 0);
             pvalues.push_back(tmp_pvalues);
         }
         //reading the points
@@ -513,7 +513,7 @@ void Mesh::load_ascii(const std::string &filename, const bool loadSurfaceData,
         exit(EXIT_FAILURE);
     }
 }
-
+/*
 void Mesh::load_ascii_file(const std::string &filename) { //load a freesurfer ascii mesh for pvalues only
     // loads surface & data
     clear();
@@ -533,7 +533,7 @@ void Mesh::load_ascii_file(const std::string &filename) { //load a freesurfer as
         int NVertices, NFaces;
         f >> NVertices >> NFaces;
 
-        std::vector<float> tmp_pvalues;
+        std::vector<double> tmp_pvalues;
 
         for (int i = 0; i < NVertices; i++) {
             double x, y, z;
@@ -559,7 +559,7 @@ void Mesh::load_ascii_file(const std::string &filename) { //load a freesurfer as
         exit(1);
     }
 }
-
+*/
 void Mesh::load_matrix(const std::string &filename,
                        const Mesh::FileType &type) {  // for pvalues only - when data is held in a textfile
     // cannot provide field data - surface only (also reads .dpv files)
@@ -839,7 +839,7 @@ double Mesh::get_triangle_area(int tID) const {
     return triangles[tID].get_area();
 }
 
-float Mesh::get_pvalue(int i, int dim) const {
+double Mesh::get_pvalue(int i, int dim) const {
     if (dim >= (int) pvalues.size() || dim < 0)
         throw MeshException("get_pvalue: invalid dimension");
     if ((int) pvalues[dim].size() < i || i < 0)
@@ -1235,7 +1235,7 @@ Mesh make_mesh_from_icosa(int n) {
     for (int io = 0; io < n; io++)
         retessellate(ret);
 
-    std::vector<float> tmp_pvalues(ret.nvertices(), 0);
+    std::vector<double> tmp_pvalues(ret.nvertices(), 0);
     ret.push_pvalues(tmp_pvalues);
 
     return ret;
@@ -1300,7 +1300,7 @@ void recentre(Mesh& sphere) {
     }
 }
 
-Mesh create_exclusion(const Mesh& data_mesh, float thrl, float thru) {
+Mesh create_exclusion(const Mesh& data_mesh, double thrl, double thru) {
 
     Mesh EXCL = data_mesh;
 

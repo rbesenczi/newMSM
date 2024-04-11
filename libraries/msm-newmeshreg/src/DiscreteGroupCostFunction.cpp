@@ -38,7 +38,7 @@ double DiscreteGroupCostFunction::computeTripletCost(int triplet, int labelA, in
                                      _CONTROLMESHES[subject].get_coord(vertex_1),
                                      _CONTROLMESHES[subject].get_coord(vertex_2), 0);
 
-    if((TRI.normal() | TRI_noDEF.normal()) < 0) { return 1e7; } // folded
+    if ((TRI.normal() | TRI_noDEF.normal()) < 0.0) return FOLDING;  // folded
 
     newresampler::Triangle TRI_ORIG(_ORIG_MESHES[subject].get_coord(vertex_0),
                                     _ORIG_MESHES[subject].get_coord(vertex_1),
@@ -47,15 +47,18 @@ double DiscreteGroupCostFunction::computeTripletCost(int triplet, int labelA, in
     double strain_energy = calculate_triangular_strain(TRI_ORIG,TRI,_mu,_kappa,
                                                        std::shared_ptr<NEWMAT::ColumnVector>(), _k_exp);
 
-    if(fixnan && std::isnan(strain_energy)) return 1e7;
+    if(fixnan && std::isnan(strain_energy)) return FIX_NAN;
     else return _reglambda * MISCMATHS::pow(strain_energy,_rexp);
 }
 
 double DiscreteGroupCostFunction::computePairwiseCost(int pair, int labelA, int labelB) {
 
-    std::vector<double> patch_data_A, patch_data_B;
+    std::vector<std::vector<double>> patch_data_A, patch_data_B;
+    std::vector<double> weights;
     patch_data_A.reserve(1500);
     patch_data_B.reserve(1500);
+    weights.reserve(1500);
+    double pair_cost = 0.0;
 
     int subject_A = std::floor((double)_pairs[2*pair  ] / VERTICES_PER_SUBJ);
     int subject_B = std::floor((double)_pairs[2*pair+1] / VERTICES_PER_SUBJ);
@@ -63,20 +66,34 @@ double DiscreteGroupCostFunction::computePairwiseCost(int pair, int labelA, int 
     int node_A = _pairs[2*pair  ] - subject_A * VERTICES_PER_SUBJ;
     int node_B = _pairs[2*pair+1] - subject_B * VERTICES_PER_SUBJ;
 
-    const std::map<int,float>& patchA = patch_data[subject_A * VERTICES_PER_SUBJ * m_num_labels + node_A * m_num_labels + labelA];
-    const std::map<int,float>& patchB = patch_data[subject_B * VERTICES_PER_SUBJ * m_num_labels + node_B * m_num_labels + labelB];
+    const std::map<int,std::vector<double>>& patchA = patch_data[subject_A * VERTICES_PER_SUBJ * m_num_labels + node_A * m_num_labels + labelA];
+    const std::map<int,std::vector<double>>& patchB = patch_data[subject_B * VERTICES_PER_SUBJ * m_num_labels + node_B * m_num_labels + labelB];
 
     for (const auto& e: patchA) {
         auto it = patchB.find(e.first);
         if (it != patchB.end()) {
             patch_data_A.push_back(e.second);
             patch_data_B.push_back(it->second);
+            if (is_masked) weights.push_back(std::abs(_MASK.get_pvalue(e.first)));
+            else weights.push_back(1.0);
         }
     }
 
-    double pair_cost = sim.get_sim_for_min(patch_data_A, patch_data_B);
+    int patch_size = patch_data_A.size();
+    int dimensions = patch_data_A[0].size();
 
-    if(fixnan && std::isnan(pair_cost)) return 1e7;
+    std::vector<double> data_a(patch_size), data_b(patch_size);
+    for(int dim = 0; dim < dimensions; dim++) {
+        for (int datapoint = 0; datapoint < patch_data_A.size(); datapoint++) {
+            data_a[datapoint] = patch_data_A[datapoint][dim];
+            data_b[datapoint] = patch_data_B[datapoint][dim];
+        }
+        pair_cost += sim.get_sim_for_min(data_a, data_b, weights);
+    }
+
+    pair_cost /= dimensions;
+
+    if(fixnan && std::isnan(pair_cost)) return FIX_NAN;
     else return pair_cost;
 }
 
