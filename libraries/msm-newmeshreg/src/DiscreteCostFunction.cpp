@@ -163,7 +163,7 @@ double NonLinearSRegDiscreteCostFunction::computeTripletCost(int triplet, int la
                                      _CPgrid.get_coord(_triplets[3*triplet+2]),0);
 
     // only estimate cost if it doesn't cause folding
-    if ((TRI.normal() | TRI_noDEF.normal()) < 0.0) return FOLDING;
+    if ((TRI.normal() | TRI_noDEF.normal()) < 0.0) return FOLDING * _reglambda;
 
     double likelihood =
             triplet_likelihood(triplet, _triplets[3*triplet], _triplets[3*triplet+1], _triplets[3*triplet+2],

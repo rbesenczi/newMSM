@@ -203,9 +203,9 @@ void Mesh_registration::run_discrete_opt() {
         else
             throw MeshregException("Unrecognized optimiser");
 
-        if(iter > 1 && ((iter - 1) % 2 == 0) && (energy - newenergy < 0.001) && _discreteOPT != "MCMC") {
+        if(iter > 2 && ((iter - 1) % 2 == 0) && (energy - newenergy < 0.001) && _discreteOPT != "MCMC") {
             if(_verbose) {
-                std::cout << iter << " level has converged." << std::endl;
+                std::cout << iter+1 << " level has converged." << std::endl;
                 std::cout <<  "newenergy " << newenergy <<  "\tenergy " << energy
                           <<  "\tEnergy decrease: " <<  energy-newenergy << std::endl;
             }

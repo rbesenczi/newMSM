@@ -4,6 +4,7 @@
 #include "ELC/ELC.h"
 #include "../src/DiscreteCostFunction.h"
 #include "FastPD/FastPD.h"
+//#include <chrono>
 
 namespace newmeshreg {
 
@@ -124,7 +125,7 @@ public:
         const int* triplets = energy->getTriplets();
 
         const int NUM_SWEEPS = 2;
-        const int MAX_FPD_ITERS = 25;
+        const int MAX_FPD_ITERS = 5;
         const int num_nodes = energy->getNumNodes();
 
         int* labeling = energy->getLabeling();
@@ -210,9 +211,12 @@ public:
 
                     FPDMODEL->initialise();
                     int* Labels = FPDMODEL->getLabeling();
-
                     FPD::FastPD opt(FPDMODEL, MAX_FPD_ITERS);
+
+                    //std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
                     float newEnergy = opt.run();
+                    //std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+                    //std::cout << "FastPD opt time = " << std::chrono::duration_cast<std::chrono::seconds>(end - begin).count() << "s" << std::endl;
 
                     opt.getLabeling(Labels);
 
