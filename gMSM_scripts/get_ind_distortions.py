@@ -45,7 +45,6 @@ with open(group_subs_lists, "r", newline='') as csvfile:
 	for row in reader:
 		subjects.append(row['subject'])
 
-	#subjects = list(set(subjects))
 	group_95 = []
 	global_95 = []
 
@@ -53,7 +52,6 @@ with open(group_subs_lists, "r", newline='') as csvfile:
 		try:
 			group_subject_file = nibabel.load(group_reg + "/output/" + root_node_id + "/groupwise." + root_node_id + ".sphere-" + subject + ".distortion.func.gii")
 		except:
-			#print('file not found')
 			continue
 		group_subject_areal = group_subject_file.darrays[0].data * mask
 		group_subject_shape = group_subject_file.darrays[1].data * mask
@@ -65,22 +63,7 @@ with open(group_subs_lists, "r", newline='') as csvfile:
 		group_95.append(numpy.percentile(group_subject_areal, 95))
 		global_95.append(numpy.percentile(global_subject_areal, 95))
 
-		#print("Groupwise - subject {}: Areal mean: {:.4}; Areal Max: {:.4}; Areal 95%: {:.4}; Areal 98%: {:.4}; Shape mean: {:.4}; Shape Max: {:.4}".format(subject, numpy.mean(group_subject_areal), numpy.max(group_subject_areal), numpy.percentile(group_subject_areal, 95), numpy.percentile(group_subject_areal, 98), numpy.mean(group_subject_shape), numpy.max(group_subject_shape)))
-		#print("Globalreg - subject {}: Areal mean: {:.4}; Areal Max: {:.4}; Areal 95%: {:.4}; Areal 98%: {:.4}; Shape mean: {:.4}; Shape Max: {:.4}".format(subject, numpy.mean(global_subject_areal), numpy.max(global_subject_areal), numpy.percentile(global_subject_areal, 95), numpy.percentile(global_subject_areal, 98), numpy.mean(global_subject_shape), numpy.max(global_subject_shape)))
-		
-		#subject_group = file.darrays[0].data * mask
-		#subject_global = nibabel.load(global_reg + "/output/" + subject + ".MSMSulc.ico6.sphere.distortion.func.gii").darrays[0].data * mask
-
-		#print(subject, numpy.mean(subject_group), numpy.mean(subject_global))
-
 		filewriter.writerow([subject, numpy.percentile(group_subject_areal, 95), numpy.percentile(global_subject_areal, 95)])
 
 kstest_result = stats.kstest(group_95, global_95)
 print(kstest_result)
-
-#plt.title("Line Graph")
-#plt.xlabel("X Axis")
-#plt.ylabel("Y Axis")
-
-#plt.plot(list(range(group_95)), group_95, color="red")  # note a[0] instead of a
-#plt.show()
