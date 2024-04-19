@@ -80,12 +80,11 @@ with open(clustering, "r", newline='') as csvfile:
 
 	for key in groups.keys():
 		num_subs = len(groups[key])
-		if num_subs > 4:
-			no_small_groups.append(key)
-			for subject in groups[key]:
-				file_sublist.write(subject + '\n')
-			file.write(str(key) + ',' + str(num_subs) + '\n')
-			group_sizes[key] = num_subs
+		no_small_groups.append(key)
+		for subject in groups[key]:
+			file_sublist.write(subject + '\n')
+		file.write(str(key) + ',' + str(num_subs) + '\n')
+		group_sizes[key] = num_subs
 	
 	file.close()
 	file_sublist.close()

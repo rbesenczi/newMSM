@@ -1,14 +1,12 @@
 #!/bin/bash -l
 
 #SBATCH --partition=cpu
-#SBATCH --time=0-1:00
 #SBATCH --nodes=1
 #SBATCH --mem=2048
-#SBATCH --ntasks=8
 #SBATCH --job-name=cgMSM
 
 dataset=HCP
-workdir=/scratch/prj/cortical_imaging/Renato/groupwise/${dataset}
+workdir=/scratch/users/k2258483/groupwise/${dataset}
 outdir=$workdir/output
 resultdir=$workdir/results
 
@@ -31,6 +29,7 @@ do
       --refdata=$resultdir/$group_B_id/groupwise.$group_B_id.mean.sulc.affine.dedrifted.ico6.shape.gii \
       --inmesh=$workdir/templates/sunet.ico-6.template.surf.gii \
       --refmesh=$workdir/templates/sunet.ico-6.template.surf.gii \
+      --mask=$workdir/NODE2218_frontal_mask.shape.gii \
       --conf=$workdir/configs/cgMSM_v2_config.txt \
       --out=$outdir/$root_node_id/groupwise.$root_node_id.${SLURM_ARRAY_TASK_ID}. \
       --verbose
