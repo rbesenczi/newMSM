@@ -54,33 +54,19 @@ void DiscreteCostFunction::initialize(int numNodes, int numLabels, int numPairs,
 }
 
 double DiscreteCostFunction::evaluateTotalCostSum(const int *labeling, const int *pairs, const int *triplets) {
-
+    //polite reminder: do NOT parallelise any of this
     double cost_sum_unary = 0.0f;
     double cost_sum_pairwise = 0.0f;
     double cost_sum_triplet = 0.0f;
 
-    #pragma omp parallel for num_threads(_threads)
-    for (int i = 0; i < m_num_nodes; ++i) {
-        double unary_cost = computeUnaryCost(i, labeling[i]);
-        #pragma omp critical
-        cost_sum_unary += unary_cost;
-    }
+    for (int i = 0; i < m_num_nodes; ++i)
+        cost_sum_unary += computeUnaryCost(i, labeling[i]);
 
-    #pragma omp parallel for num_threads(_threads)
-    for (int p = 0; p < m_num_pairs; ++p) {
-        double pair_cost = computePairwiseCost(p, labeling[pairs[p * 2]], labeling[pairs[p * 2 + 1]]);
-        #pragma omp critical
-        cost_sum_pairwise += pair_cost;
-    }
+    for (int p = 0; p < m_num_pairs; ++p)
+        cost_sum_pairwise += computePairwiseCost(p, labeling[pairs[p * 2]], labeling[pairs[p * 2 + 1]]);
 
-    #pragma omp parallel for num_threads(_threads)
-    for (int t = 0; t < m_num_triplets; ++t) {
-        double triplet_cost = computeTripletCost(t, labeling[triplets[t * 3]],
-                                                 labeling[triplets[t * 3 + 1]],
-                                                 labeling[triplets[t * 3 + 2]]);
-        #pragma omp critical
-        cost_sum_triplet += triplet_cost;
-    }
+    for (int t = 0; t < m_num_triplets; ++t)
+        cost_sum_triplet += computeTripletCost(t, labeling[triplets[t*3]],labeling[triplets[t*3+1]],labeling[triplets[t*3+2]]);
 
     if(_verbosity)
         std::cout << "cost_sum_unary " << cost_sum_unary << " cost_sum_pairwise " << cost_sum_pairwise
