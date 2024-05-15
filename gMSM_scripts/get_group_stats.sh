@@ -1,7 +1,7 @@
 #!/bin/bash
 
 dataset="HCP"
-workdir="$HOME/${dataset}_to_template"
+workdir="$HOME/${dataset}Sulc_to_template"
 reg_folder=$workdir/output/
 metrics="$workdir/results"
 mesh=$workdir/sunet.ico-6.sphere.surf.gii

@@ -18,4 +18,4 @@ num_subjects=$(cat $sublist | wc -l)
 mkdir $outdir
 mkdir $logdir
 
-sbatch --array=1-${num_subjects} --output=$logdir/registration_%{a}.txt --export=ALL newMSM_HCP_to_template_v2.sh
+sbatch --array=1-${num_subjects} --output=$logdir/registration_%a.txt --export=ALL newMSM_HCP_to_template_v2.sh

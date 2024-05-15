@@ -23,40 +23,42 @@ for o, a in opts:
 
 home = environ['HOME']
 group_reg = home + "/groupwise/" + dataset
-global_reg = home + "/" + dataset + "_to_template"
-group_list = group_reg + "/group_list.txt"
-group_subs_lists = home + "/groupwise/data/frontal_subject_clusters_" + dataset + "_base.csv"
+global_reg = home + "/" + dataset + "Sulc_Curv_to_template_b"
+group_list = group_reg + "/group_list_b.txt"
+group_subs_lists = home + "/groupwise/data/frontal_subject_clusters_" + dataset + ".csv"
 
 mask_path = home + "/groupwise/NODE2218_frontal_mask.shape.gii"
 percentile = 75
 
 root_node_id = "NODE2218"
+groups = list(set([row['group'] for row in csv.DictReader(open(group_list, "r", newline=''), fieldnames=['group','size'])]))
 
 mask = nibabel.load(mask_path).darrays[0].data
 
-with open(group_subs_lists, "r", newline='') as csvfile:
-	file = open(group_reg+"/stats.csv", "w")
-	filewriter = csv.writer(file)
-	filewriter.writerow(['subject', 'group', 'global'])
+file = open(group_reg+"/stats.csv", "w")
+filewriter = csv.writer(file)
+filewriter.writerow(['subject', 'group', 'typical'])
 
+for group_id in groups:
+	csvfile = open(group_subs_lists, 'r', newline='')
 	reader = csv.DictReader(csvfile, fieldnames=['line','subject','group'])
-	
 	subjects = []
 	for row in reader:
-		subjects.append(row['subject'])
+		if row['group'] == group_id:
+			subjects.append(row['subject'])
 
 	group_95 = []
 	global_95 = []
 
 	for subject in subjects:
 		try:
-			group_subject_file = nibabel.load(group_reg + "/output/" + root_node_id + "/groupwise." + root_node_id + ".sphere-" + subject + ".distortion.func.gii")
+			group_subject_file = nibabel.load(group_reg + "/output/" + group_id + "/groupwise." + group_id + ".sphere-" + subject + ".distortion.func.gii")
 		except:
 			continue
 		group_subject_areal = group_subject_file.darrays[0].data * mask
 		group_subject_shape = group_subject_file.darrays[1].data * mask
 
-		global_subject_file = nibabel.load(global_reg + "/output/" + subject +  ".MSMSulc.ico6.sphere.distortion.func.gii")
+		global_subject_file = nibabel.load(global_reg + "/output/" + subject +  ".MSMSulc.Curv.ico6.sphere.distortion.func.gii")
 		global_subject_areal = global_subject_file.darrays[0].data * mask
 		global_subject_shape = global_subject_file.darrays[1].data * mask
 
@@ -65,5 +67,5 @@ with open(group_subs_lists, "r", newline='') as csvfile:
 
 		filewriter.writerow([subject, numpy.percentile(group_subject_areal, 95), numpy.percentile(global_subject_areal, 95)])
 
-kstest_result = stats.kstest(group_95, global_95)
-print(kstest_result)
+#kstest_result = stats.kstest(group_95, global_95)
+#print(kstest_result)
