@@ -23,8 +23,8 @@ for o, a in opts:
 
 home = environ['HOME']
 group_reg = home + "/groupwise/" + dataset
-global_reg = home + "/" + dataset + "Sulc_Curv_to_template_b"
-group_list = group_reg + "/group_list_b.txt"
+global_reg = home + "/" + dataset + "Sulc_Curv_to_template"
+group_list = group_reg + "/group_list.txt"
 group_subs_lists = home + "/groupwise/data/frontal_subject_clusters_" + dataset + ".csv"
 
 mask_path = home + "/groupwise/NODE2218_frontal_mask.shape.gii"

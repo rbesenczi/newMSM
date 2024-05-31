@@ -26,13 +26,14 @@ do
 
     time $HOME/fsldev/bin/newmsm \
       --indata=$outdir/$group_A_id/groupwise.$group_A_id.transformed_and_reprojected.dedrift-${subject}.func.gii \
-      --refdata=$resultdir/$group_B_id/groupwise.$group_B_id.mean.sulc.affine.dedrifted.ico6.shape.gii \
+      --refdata=$resultdir/$group_B_id/groupwise.$group_B_id.mean.sulc.curv.affine.dedrifted.ico6.shape.gii \
       --inmesh=$workdir/templates/sunet.ico-6.template.surf.gii \
       --refmesh=$workdir/templates/sunet.ico-6.template.surf.gii \
-      --mask=$workdir/NODE2218_frontal_mask.shape.gii \
       --conf=$workdir/configs/cgMSM_v2_config.txt \
       --out=$outdir/$root_node_id/groupwise.$root_node_id.${SLURM_ARRAY_TASK_ID}. \
       --verbose
+      #--inweight=$workdir/NODE2218_frontal_mask.shape.gii \
+      #--refweight=$workdir/NODE2218_frontal_mask.shape.gii \
 
     mv $outdir/$root_node_id/groupwise.$root_node_id.${SLURM_ARRAY_TASK_ID}.sphere.reg.surf.gii $outdir/$root_node_id/groupwise.$root_node_id.sphere-${subject}.reg.surf.gii
     mv $outdir/$root_node_id/groupwise.$root_node_id.${SLURM_ARRAY_TASK_ID}.transformed_and_reprojected.func.gii $outdir/$root_node_id/groupwise.$root_node_id.transformed_and_reprojected.dedrift-${subject}.func.gii
@@ -62,7 +63,8 @@ do
 
     echo "Calculating merge, mean, stdev, areal and shape distortion for $root_node_id..."
 
-    merge="wb_command -metric-merge $resultdir/$root_node_id/groupwise.$root_node_id.merge.sulc.affine.dedrifted.ico6.shape.gii "
+    sulcmerge="wb_command -metric-merge $resultdir/$root_node_id/groupwise.$root_node_id.merge.sulc.affine.dedrifted.ico6.shape.gii "
+    curvmerge="wb_command -metric-merge $resultdir/$root_node_id/groupwise.$root_node_id.merge.curv.affine.dedrifted.ico6.shape.gii "
     arealmerge="wb_command -metric-merge $resultdir/$root_node_id/groupwise.$root_node_id.areal.distortion.merge.sulc.affine.dedrifted.ico6.shape.gii "
     shapemerge="wb_command -metric-merge $resultdir/$root_node_id/groupwise.$root_node_id.shape.distortion.merge.sulc.affine.dedrifted.ico6.shape.gii "
 
@@ -70,7 +72,8 @@ do
     for subject in "${all_subjects[@]}"
     do
       echo $subject
-      merge+="-metric $outdir/$root_node_id/groupwise.$root_node_id.transformed_and_reprojected.dedrift-$subject.func.gii "
+      sulcmerge+="-metric $outdir/$root_node_id/groupwise.$root_node_id.transformed_and_reprojected.dedrift-$subject.func.gii -column 1 "
+      curvmerge+="-metric $outdir/$root_node_id/groupwise.$root_node_id.transformed_and_reprojected.dedrift-$subject.func.gii -column 2 "
       wb_command -surface-distortion $workdir/templates/sunet.ico-6.template.surf.gii $outdir/$root_node_id/groupwise.$root_node_id.sphere-$subject.reg.surf.gii $outdir/$root_node_id/groupwise.$root_node_id.sphere-$subject.distortion.func.gii -local-affine-method -log2
       arealmerge+="-metric $outdir/$root_node_id/groupwise.$root_node_id.sphere-$subject.distortion.func.gii -column 1 "
       shapemerge+="-metric $outdir/$root_node_id/groupwise.$root_node_id.sphere-$subject.distortion.func.gii -column 2 "
@@ -78,16 +81,24 @@ do
       ((index++))
     done
 
-    $merge
+    $sulcmerge
+    $curvmerge
     $arealmerge
     $shapemerge
 
     wb_command -metric-reduce $resultdir/$root_node_id/groupwise.$root_node_id.merge.sulc.affine.dedrifted.ico6.shape.gii MEAN $resultdir/$root_node_id/groupwise.$root_node_id.mean.sulc.affine.dedrifted.ico6.shape.gii
+    wb_command -metric-reduce $resultdir/$root_node_id/groupwise.$root_node_id.merge.curv.affine.dedrifted.ico6.shape.gii MEAN $resultdir/$root_node_id/groupwise.$root_node_id.mean.curv.affine.dedrifted.ico6.shape.gii
     wb_command -metric-reduce $resultdir/$root_node_id/groupwise.$root_node_id.merge.sulc.affine.dedrifted.ico6.shape.gii STDEV $resultdir/$root_node_id/groupwise.$root_node_id.stdev.sulc.affine.dedrifted.ico6.shape.gii
+    wb_command -metric-reduce $resultdir/$root_node_id/groupwise.$root_node_id.merge.curv.affine.dedrifted.ico6.shape.gii STDEV $resultdir/$root_node_id/groupwise.$root_node_id.stdev.curv.affine.dedrifted.ico6.shape.gii
 
     wb_command -set-structure $resultdir/$root_node_id/groupwise.$root_node_id.merge.sulc.affine.dedrifted.ico6.shape.gii CORTEX_LEFT
     wb_command -set-structure $resultdir/$root_node_id/groupwise.$root_node_id.mean.sulc.affine.dedrifted.ico6.shape.gii CORTEX_LEFT
     wb_command -set-structure $resultdir/$root_node_id/groupwise.$root_node_id.stdev.sulc.affine.dedrifted.ico6.shape.gii CORTEX_LEFT
+    wb_command -set-structure $resultdir/$root_node_id/groupwise.$root_node_id.merge.curv.affine.dedrifted.ico6.shape.gii CORTEX_LEFT
+    wb_command -set-structure $resultdir/$root_node_id/groupwise.$root_node_id.mean.curv.affine.dedrifted.ico6.shape.gii CORTEX_LEFT
+    wb_command -set-structure $resultdir/$root_node_id/groupwise.$root_node_id.stdev.curv.affine.dedrifted.ico6.shape.gii CORTEX_LEFT
+
+    wb_command -metric-merge $resultdir/$root_node_id/groupwise.$root_node_id.mean.sulc.curv.affine.dedrifted.ico6.shape.gii -metric $resultdir/$root_node_id/groupwise.$root_node_id.mean.sulc.affine.dedrifted.ico6.shape.gii -metric $resultdir/$root_node_id/groupwise.$root_node_id.mean.curv.affine.dedrifted.ico6.shape.gii
   fi
 
 done < <(sed -n "${SLURM_ARRAY_TASK_ID}p" $batch)

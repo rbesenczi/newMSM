@@ -1,42 +1,41 @@
 #!/bin/bash -l
 
 dataset=HCP
-#workdir=/scratch/users/k2258483/groupwise/${dataset}
 workdir=$HOME/groupwise/${dataset}
 grouplist=$workdir/group_list.txt
 
 while IFS=',' read -r group_id size
 do
 	ntasks=8
-	hours=6
-	mem=16384
+	hours=12
+	mem=24G
 
-	if [ $size -gt 16 ]
+	if [ $size -gt 15 ]
 	then
 		ntasks=16
-		hours=12
-		mem=32768
+		hours=24
+		mem=48G
 	fi
-	if [ $size -gt 32 ]
+	if [ $size -gt 31 ]
 	then
 		ntasks=32
-		hours=24
-		mem=65536
+		hours=48
+		mem=96G
 	fi
-	if [ $size -gt 64 ]
+	if [ $size -gt 63 ]
 	then
 		ntasks=64
 		hours=48
-		mem=131072
+		mem=192G
 	fi
-	if [ $size -gt 128 ]
+	if [ $size -gt 127 ]
 	then
 		ntasks=64
 		hours=48
-		mem=262144
+		mem=384G
 	fi
 
-	echo "sbatch --partition=cpu --nodes=1 --job-name=${group_id} --output=${workdir}/logs/groupwise_reg_${group_id}.txt --ntasks=${ntasks} --time=0-${hours}:00 --mem=${mem} --export=ALL,ntasks=${ntasks},group_id=${group_id} run_gMSM.sh"
-	sbatch --partition=cpu --nodes=1 --job-name=${group_id} --output=${workdir}/logs/groupwise_reg_${group_id}.txt --ntasks=${ntasks} --time=0-${hours}:00 --mem=${mem} --export=ALL,ntasks=${ntasks},group_id=${group_id} run_gMSM.sh
+	echo "sbatch --partition=cpu --nodes=1 --job-name=${group_id} --output=${workdir}/logs/${group_id}.txt --ntasks=${ntasks} --time=0-${hours}:00 --mem=${mem} --export=ALL,ntasks=${ntasks},group_id=${group_id} run_gMSM.sh"
+	sbatch --partition=cpu --nodes=1 --job-name=${group_id} --output=${workdir}/logs/${group_id}.txt --ntasks=${ntasks} --time=0-${hours}:00 --mem=${mem} --export=ALL,ntasks=${ntasks},group_id=${group_id} run_gMSM.sh
 
 done < $grouplist

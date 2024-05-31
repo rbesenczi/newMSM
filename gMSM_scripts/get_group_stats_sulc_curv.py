@@ -19,16 +19,22 @@ for o, a in opts:
 	if o in ("-d", "--dataset"):
 		dataset = a
 
+
 home = environ['HOME']
 group_reg = home + "/groupwise/" + dataset
-global_reg = home + "/" + dataset + "Sulc_Curv_to_template_b"
-group_list = group_reg + "/group_list_b.txt"
-group_subs_lists = home + "/groupwise/data/frontal_subject_clusters_" + dataset + ".csv"
+global_reg = home + "/" + dataset + "Sulc_Curv_to_template"
+group_list = group_reg + "/group_list.txt"
+group_subs_lists = home + "/groupwise/" + dataset + "/frontal_subject_clusters_" + dataset + ".csv"
+
+stats_file = open(group_reg + "/dist.csv", "a")
+stats_writer = csv.writer(stats_file, delimiter=',')
+stats_writer.writerow(["Group","Size","Lambda","CC similarity","Dice","Areal 95%"])
 
 mask_path = home + "/groupwise/NODE2218_frontal_mask.shape.gii"
 percentile = 75
 
-groups = list(set([row['group'] for row in csv.DictReader(open(group_list, "r", newline=''), fieldnames=['group','size'])]))
+#groups = [row['group'] for row in csv.DictReader(open(group_list, "r", newline=''), fieldnames=['group','size'])]
+groups = ["NODE2078","NODE2152","NODE2162","NODE2139","NODE2158","NODE2146"]
 
 mask = nibabel.load(mask_path).darrays[0].data
 
@@ -42,9 +48,11 @@ for group_id in groups:
 		reader = csv.DictReader(csvfile, fieldnames=['line','subject','group'])
 		
 		subjects = []
+		size = 0
 		for row in reader:
 			if row['group'] == group_id:
 				subjects.append(row['subject'])
+				size += 1
 
 		num_subjects = len(subjects)
 		num_pairs = (num_subjects*(num_subjects-1))/2
@@ -101,3 +109,7 @@ for group_id in groups:
 		print("\t\tAreal mean: {:.4}; Areal Max: {:.4}; Areal 95%: {:.4}; Areal 98%: {:.4}; Shape mean: {:.4}; Shape Max: {:.4}".format(numpy.mean(areal_group), numpy.max(areal_group), numpy.percentile(areal_group, 95), numpy.percentile(areal_group, 98), numpy.mean(shape_group), numpy.max(shape_group)))
 		print("\t\tAreal mean: {:.4}; Areal Max: {:.4}; Areal 95%: {:.4}; Areal 98%: {:.4}; Shape mean: {:.4}; Shape Max: {:.4}".format(numpy.mean(areal_global), numpy.max(areal_global), numpy.percentile(areal_global, 95), numpy.percentile(areal_global, 98), numpy.mean(shape_global), numpy.max(shape_global)))
 		print('\n')
+
+		stats_writer.writerow([group_id,size,"0.6",corrsum_group_sulc/num_pairs,(dice_sum_group_sulc/num_pairs)*100,numpy.percentile(areal_group, 95)])
+
+stats_file.close()

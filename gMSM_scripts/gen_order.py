@@ -5,7 +5,7 @@ import copy
 home = environ['HOME']
 dataset = "HCP"
 workdir = home + "/groupwise/" + dataset
-clustering = home + "/groupwise/data/frontal_subject_clusters_HCP_base.csv"
+clustering = workdir + "/frontal_subject_clusters_HCP.csv"
 path = workdir + "/frontal_hierarchical_path_study.csv"
 order = workdir + "/order.txt"
 

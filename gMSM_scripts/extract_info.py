@@ -18,8 +18,8 @@ for o, a in opts:
 
 home = environ['HOME']
 workdir = home + "/groupwise/" + dataset
-clustering = home + "/groupwise/data/frontal_subject_clusters_" + dataset + ".csv"
-hierarchy = home + "/groupwise/data/frontal_hierarchical_path_all.csv"
+clustering = workdir + "/frontal_subject_clusters_" + dataset + ".csv"
+hierarchy = workdir + "/frontal_hierarchical_path_all.csv"
 root = "NODE2218"
 
 groups = {}
@@ -80,11 +80,12 @@ with open(clustering, "r", newline='') as csvfile:
 
 	for key in groups.keys():
 		num_subs = len(groups[key])
-		no_small_groups.append(key)
-		for subject in groups[key]:
-			file_sublist.write(subject + '\n')
-		file.write(str(key) + ',' + str(num_subs) + '\n')
-		group_sizes[key] = num_subs
+		if num_subs > 4:
+			no_small_groups.append(key)
+			for subject in groups[key]:
+				file_sublist.write(subject + '\n')
+			file.write(str(key) + ',' + str(num_subs) + '\n')
+			group_sizes[key] = num_subs
 	
 	file.close()
 	file_sublist.close()

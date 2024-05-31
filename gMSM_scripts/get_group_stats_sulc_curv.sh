@@ -6,7 +6,7 @@ reg_folder=$workdir/output/
 metrics="$workdir/results"
 mesh=$workdir/sunet.ico-6.sphere.surf.gii
 group_list=$HOME/groupwise/${dataset}/group_list.txt
-clustering=$HOME/groupwise/data/frontal_subject_clusters_${dataset}.csv
+clustering=$HOME/groupwise/${dataset}/frontal_subject_clusters_${dataset}.csv
 
 mkdir $metrics
 

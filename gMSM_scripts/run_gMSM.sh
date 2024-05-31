@@ -9,18 +9,17 @@ template=$workdir/templates/sunet.ico-6.template.surf.gii
 config_file=$workdir/configs/gMSM_config_8.txt
 outdir=$workdir/output
 resultdir=$workdir/results
-clustering=$HOME/groupwise/data/frontal_subject_clusters_${dataset}.csv
-group_list=$workdir/group_list.txt
+clustering=$workdir/frontal_subject_clusters_${dataset}.csv
 
-if [ $ntasks -gt 16 ]
+if [ $ntasks -gt 15 ]
 then
   config_file=$workdir/configs/gMSM_config_16.txt
 fi
-if [ $ntasks -gt 32 ]
+if [ $ntasks -gt 31 ]
 then
   config_file=$workdir/configs/gMSM_config_32.txt
 fi
-if [ $ntasks -gt 64 ]
+if [ $ntasks -gt 63 ]
 then
   config_file=$workdir/configs/gMSM_config_64.txt
 fi
@@ -133,9 +132,12 @@ wb_command -metric-reduce $resultdir/$group_id/groupwise.$group_id.merge.curv.af
 wb_command -metric-reduce $resultdir/$group_id/groupwise.$group_id.merge.sulc.affine.dedrifted.ico6.shape.gii STDEV $resultdir/$group_id/groupwise.$group_id.stdev.sulc.affine.dedrifted.ico6.shape.gii
 wb_command -metric-reduce $resultdir/$group_id/groupwise.$group_id.merge.curv.affine.dedrifted.ico6.shape.gii STDEV $resultdir/$group_id/groupwise.$group_id.stdev.curv.affine.dedrifted.ico6.shape.gii
 
+wb_command -metric-merge $resultdir/$group_id/groupwise.$group_id.mean.sulc.curv.affine.dedrifted.ico6.shape.gii -metric $resultdir/$group_id/groupwise.$group_id.mean.sulc.affine.dedrifted.ico6.shape.gii -metric $resultdir/$group_id/groupwise.$group_id.mean.curv.affine.dedrifted.ico6.shape.gii
+
 wb_command -set-structure $resultdir/$group_id/groupwise.$group_id.merge.sulc.affine.dedrifted.ico6.shape.gii CORTEX_LEFT
 wb_command -set-structure $resultdir/$group_id/groupwise.$group_id.merge.curv.affine.dedrifted.ico6.shape.gii CORTEX_LEFT
 wb_command -set-structure $resultdir/$group_id/groupwise.$group_id.mean.sulc.affine.dedrifted.ico6.shape.gii CORTEX_LEFT
 wb_command -set-structure $resultdir/$group_id/groupwise.$group_id.mean.curv.affine.dedrifted.ico6.shape.gii CORTEX_LEFT
 wb_command -set-structure $resultdir/$group_id/groupwise.$group_id.stdev.sulc.affine.dedrifted.ico6.shape.gii CORTEX_LEFT
 wb_command -set-structure $resultdir/$group_id/groupwise.$group_id.stdev.curv.affine.dedrifted.ico6.shape.gii CORTEX_LEFT
+wb_command -set-structure $resultdir/$group_id/groupwise.$group_id.mean.sulc.curv.affine.dedrifted.ico6.shape.gii CORTEX_LEFT
