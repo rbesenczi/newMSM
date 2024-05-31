@@ -43,7 +43,7 @@ class Rigid_cost_function {
 
     // user defined parameters
     int simmeasure = 1, iters = 20;
-    float stepsize = 0.01, spacing = 0.5;
+    double stepsize = 0.01, spacing = 0.5;
     bool verbosity = false;
     int numthreads = 1;
 

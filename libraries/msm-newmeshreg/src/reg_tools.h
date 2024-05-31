@@ -32,8 +32,8 @@ SOFTWARE.
 
 namespace newmeshreg {
 
-typedef std::map<std::string, std::variant<int, std::string, double, float, bool>> myparam;
-typedef std::pair<std::string, std::variant<int, std::string, double, float, bool>> parameterPair;
+typedef std::map<std::string, std::variant<int, std::string, double, bool>> myparam;
+typedef std::pair<std::string, std::variant<int, std::string, double, bool>> parameterPair;
 
 class MeshregException : public std::exception {
 

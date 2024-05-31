@@ -52,8 +52,8 @@ void Rigid_cost_function::set_parameters(myparam& PAR){
     it = PAR.find("iters"); iters = std::get<int>(it->second);
     it = PAR.find("simmeasure"); simmeasure = std::get<int>(it->second);
     it = PAR.find("verbosity"); verbosity = std::get<bool>(it->second);
-    it = PAR.find("stepsize"); stepsize = std::get<float>(it->second);
-    it = PAR.find("gradsampling"); spacing = std::get<float>(it->second);
+    it = PAR.find("stepsize"); stepsize = std::get<double>(it->second);
+    it = PAR.find("gradsampling"); spacing = std::get<double>(it->second);
     it = PAR.find("numthreads"); numthreads = std::get<int>(it->second);
 }
 

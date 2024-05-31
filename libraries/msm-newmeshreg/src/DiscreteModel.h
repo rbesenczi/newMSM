@@ -163,7 +163,7 @@ protected:
     double m_maxs_dist = 0.0; // define maximum distance between the centre of the sampling grid and the furthest label
     double _labeldist = 0.5;
     double range = 1;
-    float m_scale = 0.0;
+    double m_scale = 0.0;
     bool m_multivariate = false;
     bool m_debug = false;
     bool m_triclique = false;

@@ -119,13 +119,13 @@ void NonLinearSRegDiscreteCostFunction::initialize(int numNodes, int numLabels, 
 
 void NonLinearSRegDiscreteCostFunction::set_parameters(myparam& ALLPARAMS) {
     myparam::iterator it;
-    it=ALLPARAMS.find("exponent");_rexp=std::get<float>(it->second);
+    it=ALLPARAMS.find("exponent");_rexp=std::get<double>(it->second);
     it=ALLPARAMS.find("fixnan");fixnan=std::get<bool>(it->second);
-    it=ALLPARAMS.find("shearmodulus");_mu=std::get<float>(it->second);
-    it=ALLPARAMS.find("bulkmodulus");_kappa=std::get<float>(it->second);
-    it=ALLPARAMS.find("kexponent");_k_exp=std::get<float>(it->second);
-    it=ALLPARAMS.find("lambda"); _reglambda=std::get<float>(it->second);
-    it=ALLPARAMS.find("range"); _controlptrange=std::get<float>(it->second);
+    it=ALLPARAMS.find("shearmodulus");_mu=std::get<double>(it->second);
+    it=ALLPARAMS.find("bulkmodulus");_kappa=std::get<double>(it->second);
+    it=ALLPARAMS.find("kexponent");_k_exp=std::get<double>(it->second);
+    it=ALLPARAMS.find("lambda"); _reglambda=std::get<double>(it->second);
+    it=ALLPARAMS.find("range"); _controlptrange=std::get<double>(it->second);
     it=ALLPARAMS.find("simmeasure"); _simmeasure=std::get<int>(it->second); sim.set_simval(_simmeasure);
     it=ALLPARAMS.find("verbosity"); _verbosity=std::get<bool>(it->second);
     it=ALLPARAMS.find("regularisermode"); _rmode=std::get<int>(it->second);
@@ -184,7 +184,7 @@ double NonLinearSRegDiscreteCostFunction::computeTripletCost(int triplet, int la
             throw MeshregException("DiscreteModel computeTripletCost regoption does not exist");
     }
 
-    return likelihood + _reglambda * MISCMATHS::pow(cost,_rexp); // normalise to try and ensure equivalent lambda for each resolution level
+    return likelihood + _reglambda * std::pow(cost,_rexp); // normalise to try and ensure equivalent lambda for each resolution level
 }
 
 double NonLinearSRegDiscreteCostFunction::computePairwiseCost(int pair, int labelA, int labelB) {
@@ -216,7 +216,7 @@ double NonLinearSRegDiscreteCostFunction::computePairwiseCost(int pair, int labe
         if(_rexp == 1)
             cost = _reglambda * ((sqrt(2) * theta) / theta_MVD);
         else
-            cost = _reglambda * MISCMATHS::pow(((sqrt(2) * theta) / theta_MVD),_rexp);
+            cost = _reglambda * std::pow(((sqrt(2) * theta) / theta_MVD),_rexp);
     }
 
     _CPgrid.set_coord(_pairs[2*pair  ],v0);

@@ -8,23 +8,23 @@
 
 namespace newmeshreg {
 
-struct UnaryData    { float buffer[2]; };
-struct PairData     { float buffer[4]; };
-struct TripletData  { float buffer[8]; };
+struct UnaryData    { double buffer[2]; };
+struct PairData     { double buffer[4]; };
+struct TripletData  { double buffer[8]; };
 
 class DummyCostFunction: public DiscreteCostFunction {
 
 public:
     DummyCostFunction() { m_num_labels = 2; }
 
-    void setUnaryCost(int node, float cost0, float cost1) {
-        unaryenergies.insert(std::pair<int, std::vector<float>>(node, std::vector<float>()));
+    void setUnaryCost(int node, double cost0, double cost1) {
+        unaryenergies.insert(std::pair<int, std::vector<double>>(node, std::vector<double>()));
         unaryenergies[node].push_back(cost0);
         unaryenergies[node].push_back(cost1);
     }
 
-    void setPairwiseCost(int ind, float E00, float E01, float E10, float E11) {
-        pairenergies.insert(std::pair<int, std::vector<float>>(ind, std::vector<float>()));
+    void setPairwiseCost(int ind, double E00, double E01, double E10, double E11) {
+        pairenergies.insert(std::pair<int, std::vector<double>>(ind, std::vector<double>()));
         pairenergies[ind].push_back(E00);
         pairenergies[ind].push_back(E01);
         pairenergies[ind].push_back(E10);
@@ -62,8 +62,8 @@ public:
     }
 
 protected:
-    std::map<int,std::vector<float>> unaryenergies; // maps of nodes  xlabels x vals
-    std::map<int,std::vector<float>> pairenergies;
+    std::map<int,std::vector<double>> unaryenergies; // maps of nodes  xlabels x vals
+    std::map<int,std::vector<double>> pairenergies;
 };
 
 class DiscreteModelDummy : public DiscreteModel {
@@ -81,10 +81,10 @@ public:
     void AddNode(int num){ m_num_nodes = num; }
 
     // Adds unary term Ei(x_i) to the energy function with cost values Ei(0)=E0, Ei(1)=E1.
-    void AddUnaryTerm(int node, float E0, float E1) { costfct->setUnaryCost(node,E0, E1); }
+    void AddUnaryTerm(int node, double E0, double E1) { costfct->setUnaryCost(node,E0, E1); }
 
     // adds pairwise term for binary costs with label combinations 00,01,10,11
-    void AddPairwiseTerm(int node1, int node2, float E00, float E01, float E10, float E11) {
+    void AddPairwiseTerm(int node1, int node2, double E00, double E01, double E10, double E11) {
         pairIDs.insert(std::pair<int,std::vector<int>>(m_num_pairs, std::vector<int>()));
         pairIDs[m_num_pairs].push_back(node1);
         pairIDs[m_num_pairs].push_back(node2);
@@ -119,7 +119,7 @@ protected:
 
 class Fusion {
 public:
-    static float optimize(const std::shared_ptr<DiscreteModel>& energy, bool verbose, int numthreads) {
+    static double optimize(const std::shared_ptr<DiscreteModel>& energy, bool verbose, int numthreads) {
 
         const int* pairs    = energy->getPairs();
         const int* triplets = energy->getTriplets();
@@ -131,16 +131,16 @@ public:
         int* labeling = energy->getLabeling();
         std::shared_ptr<DiscreteModelDummy> FPDMODEL = std::make_shared<DiscreteModelDummy>();
 
-        float initEnergy = energy->evaluateTotalCostSum();
-        float lastEnergy = initEnergy;
-        float sumlabeldiff = 0.0;
+        double initEnergy = energy->evaluateTotalCostSum();
+        double lastEnergy = initEnergy;
+        double sumlabeldiff = 0.0;
 
         for(int sweep = 0; sweep < NUM_SWEEPS; ++sweep)
         {
             for(int label = 0; label < energy->getNumLabels(); ++label)
             {
                 sumlabeldiff = 0.0;
-                ELCReduce::PBF<float> pbf;
+                ELCReduce::PBF<double> pbf;
                 int nodesChanged = 0;
 
                 std::vector<UnaryData> unary_data(num_nodes);
@@ -203,7 +203,7 @@ public:
 
                     FPDMODEL->reset();
 
-                    ELCReduce::PBF<float> qpbf;
+                    ELCReduce::PBF<double> qpbf;
                     pbf.toQuadratic(qpbf, pbf.maxID()+1); // Reduce to Quadratic pseudo-Boolean function using HOCR.
                     qpbf.convert(*FPDMODEL, qpbf.maxID()+1);
                     pbf.clear();
@@ -214,7 +214,7 @@ public:
                     FPD::FastPD opt(FPDMODEL, MAX_FPD_ITERS);
 
                     //std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-                    float newEnergy = opt.run();
+                    double newEnergy = opt.run();
                     //std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
                     //std::cout << "FastPD opt time = " << std::chrono::duration_cast<std::chrono::seconds>(end - begin).count() << "s" << std::endl;
 
@@ -231,7 +231,7 @@ public:
                     if(verbose)
                     {
                         std::cout << "  LAB " << label << ":\t" << lastEnergy << " -> " << newEnergy << " / "
-                                  << nodesChanged / (float)num_nodes * 100 << "% CHN" << std::endl;
+                                  << nodesChanged / (double)num_nodes * 100 << "% CHN" << std::endl;
                         lastEnergy = newEnergy;
                     }
                 }

@@ -48,7 +48,7 @@ double DiscreteGroupCostFunction::computeTripletCost(int triplet, int labelA, in
                                                        std::shared_ptr<NEWMAT::ColumnVector>(), _k_exp);
 
     if(fixnan && std::isnan(strain_energy)) return FIX_NAN;
-    else return _reglambda * MISCMATHS::pow(strain_energy,_rexp);
+    else return subcorr * _reglambda * std::pow(strain_energy,_rexp);
 }
 
 double DiscreteGroupCostFunction::computePairwiseCost(int pair, int labelA, int labelB) {

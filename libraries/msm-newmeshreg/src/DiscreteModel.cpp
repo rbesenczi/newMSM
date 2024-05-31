@@ -34,7 +34,7 @@ void NonLinearSRegDiscreteModel::set_parameters(myparam& PAR) {
     it=PAR.find("TriLikelihood"); m_triclique = std::get<bool>(it->second);
     it=PAR.find("rescalelabels"); m_rescalelabels = std::get<bool>(it->second);
     it=PAR.find("numthreads"); _nthreads = std::get<int>(it->second);
-    it=PAR.find("range"); range=std::get<float>(it->second);
+    it=PAR.find("range"); range=std::get<double>(it->second);
     if(m_regoption == 1) _pairwise = true;
 }
 

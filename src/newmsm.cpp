@@ -66,4 +66,7 @@ int main(int argc, char* argv[]) try {
 } catch (std::exception& e) {
     e.what();
     exit(EXIT_FAILURE);
+} catch (...) {
+    std::cout << "Some error occured..." << std::endl;
+    exit(EXIT_FAILURE);
 }

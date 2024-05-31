@@ -42,6 +42,7 @@ public:
         VERTICES_PER_SUBJ = GRID.nvertices();
         TRIPLETS_PER_SUBJ = GRID.ntriangles();
         _CONTROLMESHES.resize(num,GRID);
+        subcorr = num;
     }
 
     void reset_CPgrid(const newresampler::Mesh& grid, int num) override { _CONTROLMESHES[num] = grid; }
@@ -62,6 +63,7 @@ private:
     int TRIPLETS_PER_SUBJ = 0;
     int VERTICES_PER_SUBJ = 0;
     bool is_masked = false;
+    double subcorr = 0.0;
 };
 
 } //namespace newmeshreg

@@ -766,10 +766,10 @@ void Mesh_registration::fix_parameters_for_level(int i) {
     PARAMETERS.clear();
 
     PARAMETERS.insert(parameterPair("dOPT", _discreteOPT));
-    PARAMETERS.insert(parameterPair("lambda", _lambda[i]));
+    PARAMETERS.insert(parameterPair("lambda", (double)_lambda[i]));
     PARAMETERS.insert(parameterPair("iters", _iters[i]));
     PARAMETERS.insert(parameterPair("simmeasure", _simval[i]));
-    PARAMETERS.insert(parameterPair("sigma_in", _sigma_in[i]));
+    PARAMETERS.insert(parameterPair("sigma_in", (double)_sigma_in[i]));
     PARAMETERS.insert(parameterPair("CPres", _gridres[i]));
     PARAMETERS.insert(parameterPair("SGres", _sampres[i]));
     PARAMETERS.insert(parameterPair("anatres", _anatres[i]));

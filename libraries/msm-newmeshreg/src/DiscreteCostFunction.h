@@ -72,7 +72,7 @@ protected:
     int* _pairs = nullptr;
     int* _triplets = nullptr;
 
-    float _reglambda = 1.0;  // scaling parameter for regulariser
+    double _reglambda = 1.0;  // scaling parameter for regulariser
 
     int _threads = 1;
     bool _verbosity = false;
@@ -113,16 +113,16 @@ protected:
     std::shared_ptr<std::vector<NEWMAT::Matrix>> ROTATIONS; // rotates label set onto each control point
 
     double MVDmax = 0.0; // max distance between CPs
-    float _controlptrange = 1.0;
+    double _controlptrange = 1.0;
 
-    float _mu = 0.4; // shear modulus
-    float _kappa = 1.6; // bulk modulus
-    float _rexp = 2.0;
+    double _mu = 0.4; // shear modulus
+    double _kappa = 1.6; // bulk modulus
+    double _rexp = 2.0;
 
     //---USER DEFINED PARAMETERS---//
     int _simmeasure = 3;
     int  _rmode = 1;
-    float _k_exp = 2.0;
+    double _k_exp = 2.0;
     double MAXstrain = 0.0;
 
     bool fixnan = false;

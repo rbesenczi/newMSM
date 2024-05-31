@@ -123,21 +123,21 @@ protected:
     bool _incfw = false;
     bool _refcfw = false;
     bool fixnan = false;
-    float _k_exp = 2.0;
+    double _k_exp = 2.0;
     int _resolutionlevels = 1;  // default 1
     int _regmode = 0; //regulariser option
 
     //---REGULARISER OPTIONS---//
-    float _regexp = 0.0; // choice of exponent
-    float _regscaling = 0.0; // choice of exponent scaling for options 2 and 3
-    float _shearmod = 0.4; // for strain regulariser
-    float _bulkmod = 1.6;    // for strain regulariser
-    float _cprange = 1.0;
+    double _regexp = 0.0; // choice of exponent
+    double _regscaling = 0.0; // choice of exponent scaling for options 2 and 3
+    double _shearmod = 0.4; // for strain regulariser
+    double _bulkmod = 1.6;    // for strain regulariser
+    double _cprange = 1.0;
     std::vector<int> _mciters;
 
     //---AFFINE PARAMETERS---//
-    float _affinestepsize = 0.0;
-    float _affinegradsampling = 0.0;
+    double _affinestepsize = 0.0;
+    double _affinegradsampling = 0.0;
 
     //---MISC---//
     int _numthreads = 1;
