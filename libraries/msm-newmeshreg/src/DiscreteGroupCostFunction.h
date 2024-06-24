@@ -42,7 +42,7 @@ public:
         VERTICES_PER_SUBJ = GRID.nvertices();
         TRIPLETS_PER_SUBJ = GRID.ntriangles();
         _CONTROLMESHES.resize(num,GRID);
-        subcorr = num;
+        subcorr = 0.1 * num;
     }
 
     void reset_CPgrid(const newresampler::Mesh& grid, int num) override { _CONTROLMESHES[num] = grid; }
