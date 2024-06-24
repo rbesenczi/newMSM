@@ -3,7 +3,7 @@
 #SBATCH --partition=cpu
 #SBATCH --nodes=1
 #SBATCH --mem=2048
-#SBATCH --job-name=cgMSM
+#SBATCH --job-name=cgMSMreg
 
 dataset=HCP
 workdir=/scratch/users/k2258483/groupwise/${dataset}
@@ -29,14 +29,20 @@ do
       --refdata=$resultdir/$group_B_id/groupwise.$group_B_id.mean.sulc.curv.affine.dedrifted.ico6.shape.gii \
       --inmesh=$workdir/templates/sunet.ico-6.template.surf.gii \
       --refmesh=$workdir/templates/sunet.ico-6.template.surf.gii \
+      --trans=$outdir/$group_A_id/groupwise.$group_A_id.sphere-${subject}.reg.corrected.surf.gii \
       --conf=$workdir/configs/cgMSM_v2_config.txt \
       --out=$outdir/$root_node_id/groupwise.$root_node_id.${SLURM_ARRAY_TASK_ID}. \
       --verbose
-      #--inweight=$workdir/NODE2218_frontal_mask.shape.gii \
-      #--refweight=$workdir/NODE2218_frontal_mask.shape.gii \
 
-    mv $outdir/$root_node_id/groupwise.$root_node_id.${SLURM_ARRAY_TASK_ID}.sphere.reg.surf.gii $outdir/$root_node_id/groupwise.$root_node_id.sphere-${subject}.reg.surf.gii
+    retval=$?
+    if [ $retval -ne 0 ]; then
+        echo "Error at step $filenum"
+        exit $retval
+    fi
+
+    mv $outdir/$root_node_id/groupwise.$root_node_id.${SLURM_ARRAY_TASK_ID}.sphere.reg.surf.gii $outdir/$root_node_id/groupwise.$root_node_id.sphere-${subject}.reg.corrected.surf.gii
     mv $outdir/$root_node_id/groupwise.$root_node_id.${SLURM_ARRAY_TASK_ID}.transformed_and_reprojected.func.gii $outdir/$root_node_id/groupwise.$root_node_id.transformed_and_reprojected.dedrift-${subject}.func.gii
+    wb_command -surface-distortion $workdir/templates/sunet.ico-6.template.surf.gii $outdir/$root_node_id/groupwise.$root_node_id.sphere-$subject.reg.corrected.surf.gii $outdir/$root_node_id/groupwise.$root_node_id.sphere-$subject.distortion.func.gii -local-affine-method -log2
     wb_command -set-structure $outdir/$root_node_id/groupwise.$root_node_id.sphere-${subject}.reg.surf.gii CORTEX_LEFT
     wb_command -set-structure $outdir/$root_node_id/groupwise.$root_node_id.transformed_and_reprojected.dedrift-${subject}.func.gii CORTEX_LEFT
     rm $outdir/$root_node_id/groupwise.$root_node_id.${SLURM_ARRAY_TASK_ID}.sphere.LR.reg.surf.gii
@@ -71,10 +77,8 @@ do
     index=0
     for subject in "${all_subjects[@]}"
     do
-      echo $subject
       sulcmerge+="-metric $outdir/$root_node_id/groupwise.$root_node_id.transformed_and_reprojected.dedrift-$subject.func.gii -column 1 "
       curvmerge+="-metric $outdir/$root_node_id/groupwise.$root_node_id.transformed_and_reprojected.dedrift-$subject.func.gii -column 2 "
-      wb_command -surface-distortion $workdir/templates/sunet.ico-6.template.surf.gii $outdir/$root_node_id/groupwise.$root_node_id.sphere-$subject.reg.surf.gii $outdir/$root_node_id/groupwise.$root_node_id.sphere-$subject.distortion.func.gii -local-affine-method -log2
       arealmerge+="-metric $outdir/$root_node_id/groupwise.$root_node_id.sphere-$subject.distortion.func.gii -column 1 "
       shapemerge+="-metric $outdir/$root_node_id/groupwise.$root_node_id.sphere-$subject.distortion.func.gii -column 2 "
       echo "$index,$subject,$root_node_id" >> $clustering_out
@@ -85,6 +89,12 @@ do
     $curvmerge
     $arealmerge
     $shapemerge
+
+    retval=$?
+    if [ $retval -ne 0 ]; then
+        echo "Error at step $filenum"
+        exit $retval
+    fi
 
     wb_command -metric-reduce $resultdir/$root_node_id/groupwise.$root_node_id.merge.sulc.affine.dedrifted.ico6.shape.gii MEAN $resultdir/$root_node_id/groupwise.$root_node_id.mean.sulc.affine.dedrifted.ico6.shape.gii
     wb_command -metric-reduce $resultdir/$root_node_id/groupwise.$root_node_id.merge.curv.affine.dedrifted.ico6.shape.gii MEAN $resultdir/$root_node_id/groupwise.$root_node_id.mean.curv.affine.dedrifted.ico6.shape.gii

@@ -4,14 +4,10 @@ dataset="HCP"
 workdir="$HOME/${dataset}Sulc_Curv_to_template"
 reg_folder=$workdir/output/
 metrics="$workdir/results"
-mesh=$workdir/sunet.ico-6.sphere.surf.gii
 group_list=$HOME/groupwise/${dataset}/group_list.txt
 clustering=$HOME/groupwise/${dataset}/frontal_subject_clusters_${dataset}.csv
 
-mkdir $metrics
-
-#groups=( $(cat $group_list | cut -d ',' -f1) ) #for all groups
-groups=(NODE2159) #for testing
+groups=( $(cat $group_list | cut -d ',' -f1) ) #for all groups
 
 for group in "${groups[@]}"
 do
@@ -30,10 +26,10 @@ do
 
     for subject in "${subjects[@]}"
     do
-        datasulcmerge+="-metric $reg_folder/$subject.MSMSulc.Curv.ico6.transformed_and_reprojected.func.gii -column 1 "
-        datacurvmerge+="-metric $reg_folder/$subject.MSMSulc.Curv.ico6.transformed_and_reprojected.func.gii -column 2 "
-        arealmerge+="-metric $reg_folder/$subject.MSMSulc.Curv.ico6.sphere.distortion.func.gii -column 1 "
-        shapemerge+="-metric $reg_folder/$subject.MSMSulc.Curv.ico6.sphere.distortion.func.gii -column 2 "
+        datasulcmerge+="-metric $reg_folder/$subject.MSMSulc.ico6.transformed_and_reprojected.func.gii -column 1 "
+        datacurvmerge+="-metric $reg_folder/$subject.MSMSulc.ico6.transformed_and_reprojected.func.gii -column 2 "
+        arealmerge+="-metric $reg_folder/$subject.MSMSulc.ico6.sphere.distortion.func.gii -column 1 "
+        shapemerge+="-metric $reg_folder/$subject.MSMSulc.ico6.sphere.distortion.func.gii -column 2 "
     done
 
     echo "Calculating metrics of group $group with ${#subjects[@]} subjects."

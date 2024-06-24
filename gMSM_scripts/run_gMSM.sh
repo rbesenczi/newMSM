@@ -6,22 +6,19 @@ dataset=HCP
 workdir=$HOME/groupwise/$dataset
 input_folder=$HOME/affined_${dataset}_sulc_curv
 template=$workdir/templates/sunet.ico-6.template.surf.gii
-config_file=$workdir/configs/gMSM_config_8.txt
+config_file=$workdir/configs/gMSM_config_4.txt
 outdir=$workdir/output
 resultdir=$workdir/results
 clustering=$workdir/frontal_subject_clusters_${dataset}.csv
 
 if [ $ntasks -gt 15 ]
 then
-  config_file=$workdir/configs/gMSM_config_16.txt
+  config_file=$workdir/configs/gMSM_config_8.txt
 fi
+
 if [ $ntasks -gt 31 ]
 then
-  config_file=$workdir/configs/gMSM_config_32.txt
-fi
-if [ $ntasks -gt 63 ]
-then
-  config_file=$workdir/configs/gMSM_config_64.txt
+  config_file=$workdir/configs/gMSM_config_16.txt
 fi
 
 ###########################################################
@@ -51,7 +48,6 @@ time $HOME/fsldev/bin/newmsm \
   --data=$workdir/file_lists/input_data_$group_id.txt \
   --meshes=$workdir/file_lists/input_meshes_$group_id.txt \
   --template=$template \
-  --mask=$workdir/NODE2218_frontal_mask.shape.gii \
   --conf=$config_file \
   --out=$outdir/$group_id/groupwise.$group_id. \
   --verbose --groupwise
