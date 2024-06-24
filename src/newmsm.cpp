@@ -8,7 +8,7 @@ int main(int argc, char* argv[]) try {
     msmOptions& opts = msmOptions::getInstance();
     opts.parse_command_line(argc, argv);
 
-    if (opts.verbose.value()) std::cout << "This is newMSM v0.6.2-BETA." << std::endl;
+    if (opts.verbose.value()) std::cout << "This is newMSM v0.6.3-BETA." << std::endl;
 
     if(opts.groupwise.value())
     {
