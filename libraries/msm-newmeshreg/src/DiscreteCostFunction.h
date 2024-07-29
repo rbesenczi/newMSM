@@ -53,6 +53,7 @@ public:
     virtual void computePairwiseCosts(const int *pairs) {} //Computes the pairwise costs look-up table.
     virtual double computePairwiseCost(int pair, int labelA, int labelB) { return 0; } //Computes the pairwise potential for a the given pair and labels.
 
+    virtual void computeTripletCosts() {};
     virtual double computeTripletCost(int triplet, int labelA, int labelB, int labelC) { return 0; } //Computes the triplet potential for a the given triplet and labels.
 
     virtual double evaluateTotalCostSum(const int *labeling, const int *pairs, const int *triplets); //Evaluates the total cost for the given labeling.
@@ -144,6 +145,7 @@ public:
     void computeUnaryCosts() override;
     double computePairwiseCost(int pair, int labelA, int labelB) override;
     void computePairwiseCosts(const int *pairs) override;
+    void computeTripletCosts() override;
     double computeTripletCost(int triplet, int labelA, int labelB, int labelC) override;
 
     void resample_weights();

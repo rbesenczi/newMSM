@@ -176,6 +176,7 @@ void Mesh_registration::run_discrete_opt() {
 
         if(_discreteOPT == "MCMC") {
             if(!_tricliquelikeihood) model->computeUnaryCosts();
+            model->computeTripletCosts();
             newenergy = MCMC::optimise(model, _verbose, _mciters[level-1]);
         }
         else if(_discreteOPT == "FastPD") {
