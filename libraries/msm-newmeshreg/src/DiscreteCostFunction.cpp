@@ -27,6 +27,7 @@ void DiscreteCostFunction::initialize(int numNodes, int numLabels, int numPairs,
 
     if (m_num_nodes != numNodes || m_num_labels != numLabels)
     {
+        //std::cout << "Allocating unary array with elements " << numNodes * numLabels << std::endl;
         delete[] unarycosts;
         unarycosts = new double[numNodes * numLabels];
     }
@@ -39,6 +40,7 @@ void DiscreteCostFunction::initialize(int numNodes, int numLabels, int numPairs,
 
     if (m_num_triplets != numTriplets || m_num_labels != numLabels)
     {
+        //std::cout << "Allocating tripletcosts array with elements " << numTriplets * numLabels * numLabels * numLabels << std::endl;
         delete[] tripletcosts;
         tripletcosts = new double[numTriplets * numLabels * numLabels * numLabels];
     }
@@ -243,13 +245,13 @@ void NonLinearSRegDiscreteCostFunction::computeUnaryCosts() {
 }
 
 void NonLinearSRegDiscreteCostFunction::computeTripletCosts() {
-    //std::cout << "Calculating tripletcosts" << std::endl;
     #pragma omp parallel for num_threads(_threads)
     for(int triplet = 0; triplet < m_num_triplets; triplet++)
         for(int label_a = 0; label_a < m_num_labels; label_a++)
             for(int label_b = 0; label_b < m_num_labels; label_b++)
-                for(int label_c = 0; label_c < m_num_labels; label_c++)
-                    tripletcosts[triplet * m_num_triplets + label_a * m_num_labels + label_b * m_num_labels + label_c] = computeTripletCost(triplet,label_a,label_b,label_c);
+                for (int label_c = 0; label_c < m_num_labels; label_c++)
+                    tripletcosts[label_c + m_num_labels * (label_b + m_num_labels * (label_a + m_num_labels * triplet))] =
+                            computeTripletCost(triplet, label_a, label_b, label_c);
 }
 
 newresampler::Triangle NonLinearSRegDiscreteCostFunction::deform_anatomy(int trip, int n, std::map<int,newresampler::Point>& vertex,
@@ -496,7 +498,7 @@ void HOUnivariateNonLinearSRegDiscreteCostFunction::get_target_data(int triplet,
     newresampler::Point CP1 = _CPgrid.get_coord(_triplets[3*triplet+1]);
     newresampler::Point CP2 = _CPgrid.get_coord(_triplets[3*triplet+2]);
 
-    #pragma omp parallel for num_threads(mcmc_threads)
+    //#pragma omp parallel for num_threads(mcmc_threads)
     for(int i = 0; i < _sourceinrange[triplet].size(); ++i)
     {
         newresampler::Point SP = newresampler::project_point(_SOURCE.get_coord(_sourceinrange[triplet][i]), CP0, CP1, CP2);
@@ -572,7 +574,7 @@ void HOMultivariateNonLinearSRegDiscreteCostFunction::get_target_data(int triple
     newresampler::Point CP1 = _CPgrid.get_coord(_triplets[3*triplet+1]);
     newresampler::Point CP2 = _CPgrid.get_coord(_triplets[3*triplet+2]);
 
-    #pragma omp parallel for num_threads(mcmc_threads)
+    //#pragma omp parallel for num_threads(mcmc_threads)
     for(int i = 0; i < _sourceinrange[triplet].size(); ++i)
     {
         _targetdata[_sourceinrange[triplet][i]].clear();
