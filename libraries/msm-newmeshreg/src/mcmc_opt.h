@@ -45,9 +45,10 @@ public:
 
         for(int i = 0; i < mciters; ++i)
         {
-            for(int triplet = 0; triplet < energy->getNumTriplets(); ++triplet) {
-                int label = distribution(gen);
-                //std::cout << "label: " << label << std::endl;
+            int label = distribution(gen);
+
+            for(int triplet = 0; triplet < energy->getNumTriplets(); ++triplet)
+            {
                 std::vector<double> costs(8,0.0);
 
                 const int nodeA = triplets[triplet*3];
@@ -87,55 +88,40 @@ public:
                            + unary_costs[label * num_nodes + nodeB]
                            + unary_costs[label * num_nodes + nodeC];
 
-                auto it = std::min_element(costs.begin(), costs.end());
-                auto index = std::distance(costs.begin(), it);
-                //std::cout << "index " << index << std::endl;
+                auto index = std::distance(costs.begin(), std::min_element(costs.begin(), costs.end()));
 
-                switch(index) {
-                    case 0:
-                        //std::cout << "no movement" << std::endl;
-                        continue;
-                    case 1:
-                        //std::cout << "moving node " << nodeC << " to label ";
-                        labeling[nodeC] = label;
-                        //std::cout << labeling[nodeC] << std::endl;
-                        break;
-                    case 2:
-                        //std::cout << "moving node " << nodeB << " to label ";
-                        labeling[nodeB] = label;
-                        //std::cout << labeling[nodeB] << std::endl;
-                        break;
-                    case 3:
-                        //std::cout << "moving node " << nodeB << " and " << nodeC << " to label ";
-                        labeling[nodeB] = labeling[nodeC] = label;
-                        //std::cout << labeling[nodeB] << " " << labeling[nodeC] << std::endl;
-                        break;
-                    case 4:
-                        //std::cout << "moving node " << nodeA << " to label ";
-                        labeling[nodeA] = label;
-                        //std::cout << labeling[nodeA] << std::endl;
-                        break;
-                    case 5:
-                        //std::cout << "moving node " << nodeA << " and " << nodeC << " to label ";
-                        labeling[nodeA] = labeling[nodeC] = label;
-                        //std::cout << labeling[nodeA] << " " << labeling[nodeC] << std::endl;
-                        break;
-                    case 6:
-                        //std::cout << "moving node " << nodeA << " and " << nodeB << " to label ";
-                        labeling[nodeA] = labeling[nodeB] = label;
-                        //std::cout << labeling[nodeA] << " " << labeling[nodeB] << std::endl;
-                        break;
-                    case 7:
-                        //std::cout << "moving node " << nodeA << ", " << nodeB << " and " << nodeC << " to label ";
-                        labeling[nodeA] = labeling[nodeB] = labeling[nodeC] = label;
-                        //std::cout << labeling[nodeA] << " " << labeling[nodeB] << " " << labeling[nodeC] << std::endl;
-                        break;
-                    default:
-                        std::cout << index << std::endl;
-                        throw MeshregException("Unknown error");
-                }
+                if(index > 0)
+                    switch(index) {
+                        case 1:
+                            labeling[nodeC] = label;
+                            break;
+                        case 2:
+                            labeling[nodeB] = label;
+                            break;
+                        case 3:
+                            labeling[nodeB] = label;
+                            labeling[nodeC] = label;
+                            break;
+                        case 4:
+                            labeling[nodeA] = label;
+                            break;
+                        case 5:
+                            labeling[nodeA] = label;
+                            labeling[nodeC] = label;
+                            break;
+                        case 6:
+                            labeling[nodeA] = label;
+                            labeling[nodeB] = label;
+                            break;
+                        case 7:
+                            labeling[nodeA] = label;
+                            labeling[nodeB] = label;
+                            labeling[nodeC] = label;
+                            break;
+                        default:
+                            throw MeshregException("Unknown error");
+                    }
             }
-            //exit(0);
 
             if (verbose && i % 10000 == 0 && i > 0)
             {

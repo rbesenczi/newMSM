@@ -27,7 +27,6 @@ void DiscreteCostFunction::initialize(int numNodes, int numLabels, int numPairs,
 
     if (m_num_nodes != numNodes || m_num_labels != numLabels)
     {
-        //std::cout << "Allocating unary array with elements " << numNodes * numLabels << std::endl;
         delete[] unarycosts;
         unarycosts = new double[numNodes * numLabels];
     }
@@ -40,7 +39,6 @@ void DiscreteCostFunction::initialize(int numNodes, int numLabels, int numPairs,
 
     if (m_num_triplets != numTriplets || m_num_labels != numLabels)
     {
-        //std::cout << "Allocating tripletcosts array with elements " << numTriplets * numLabels * numLabels * numLabels << std::endl;
         delete[] tripletcosts;
         tripletcosts = new double[numTriplets * numLabels * numLabels * numLabels];
     }
@@ -252,6 +250,7 @@ void NonLinearSRegDiscreteCostFunction::computeTripletCosts() {
                 for (int label_c = 0; label_c < m_num_labels; label_c++)
                     tripletcosts[label_c + m_num_labels * (label_b + m_num_labels * (label_a + m_num_labels * triplet))] =
                             computeTripletCost(triplet, label_a, label_b, label_c);
+
 }
 
 newresampler::Triangle NonLinearSRegDiscreteCostFunction::deform_anatomy(int trip, int n, std::map<int,newresampler::Point>& vertex,
