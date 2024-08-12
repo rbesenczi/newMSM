@@ -133,8 +133,6 @@ protected:
     std::vector<std::vector<double>> _weights;
     std::vector<std::map<int,double>> _ANATbaryweights;
 
-    int mcmc_threads = 1;
-
 public:
     //---INIT---//
     void initialize(int numNodes, int numLabels, int numPairs, int numTriplets) override;
@@ -191,8 +189,6 @@ public:
     void set_octrees(std::shared_ptr<newresampler::Octree>& targett) { targettree = targett; }
     virtual void reset_source(const newresampler::Mesh& source, int num) { _SOURCE = source; }
     virtual void reset_CPgrid(const newresampler::Mesh& grid, int num) { _CPgrid = grid; }
-
-    void set_mcmc_threads(int threads) { mcmc_threads = threads; }
 
     //---UTILITY---//
     inline bool within_controlpt_range(int CPindex, int sourceindex);

@@ -27,7 +27,7 @@ SOFTWARE.
 #include <omp.h>
 #include <variant>
 
-#define FOLDING 100
+#define FOLDING 1e7
 #define FIX_NAN 1e7
 
 namespace newmeshreg {
