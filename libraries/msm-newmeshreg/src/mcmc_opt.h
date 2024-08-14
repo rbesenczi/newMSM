@@ -33,11 +33,11 @@ public:
         int* labeling = energy->getLabeling();
         const int num_nodes = energy->getNumNodes();
         const int num_labels = energy->getNumLabels();
-        const double* unary_costs = energy->getCostFunction()->getUnaryCosts();
-        const double* triplet_costs = energy->getCostFunction()->getTripletCosts();
         const int* triplets = energy->getTriplets();
+        const double* unary_costs = energy->getCostFunction()->getUnaryCosts();
+        const auto& tcosts = energy->getCostFunction()->getTCosts();
 
-        if(verbose) { std::cout << "Initial "; energy->evaluateTotalCostSum(); }
+        if(verbose) { std::cout << "Initial "; energy->evaluateTotalCostSum(); std::cout << "Running Monte Carlo simulation..." << std::endl; }
 
         std::random_device rd;
         std::mt19937 gen(rd());
@@ -55,38 +55,38 @@ public:
                 const int nodeB = triplets[triplet*3+1];
                 const int nodeC = triplets[triplet*3+2];
 
-                costs[0] = triplet_costs[labeling[nodeC] + num_labels * (labeling[nodeB] + num_labels * (labeling[nodeA] + num_labels * triplet))]
-                           + unary_costs[labeling[nodeA] * num_nodes + nodeA]
+                costs[0] = tcosts[triplet][labeling[nodeA]][labeling[nodeB]][labeling[nodeC]]
+                           + (unary_costs[labeling[nodeA] * num_nodes + nodeA]
                            + unary_costs[labeling[nodeB] * num_nodes + nodeB]
-                           + unary_costs[labeling[nodeC] * num_nodes + nodeC];
-                costs[1] = triplet_costs[label + num_labels * (labeling[nodeB] + num_labels * (labeling[nodeA] + num_labels * triplet))]
-                           + unary_costs[labeling[nodeA] * num_nodes + nodeA]
+                           + unary_costs[labeling[nodeC] * num_nodes + nodeC])/3.0;
+                costs[1] = tcosts[triplet][labeling[nodeA]][labeling[nodeB]][label]
+                           + (unary_costs[labeling[nodeA] * num_nodes + nodeA]
                            + unary_costs[labeling[nodeB] * num_nodes + nodeB]
-                           + unary_costs[label * num_nodes + nodeC];
-                costs[2] = triplet_costs[labeling[nodeC] + num_labels * (label + num_labels * (labeling[nodeA] + num_labels * triplet))]
-                           + unary_costs[labeling[nodeA] * num_nodes + nodeA]
+                           + unary_costs[label * num_nodes + nodeC])/3.0;
+                costs[2] = tcosts[triplet][labeling[nodeA]][label][labeling[nodeC]]
+                           + (unary_costs[labeling[nodeA] * num_nodes + nodeA]
                            + unary_costs[label * num_nodes + nodeB]
-                           + unary_costs[labeling[nodeC] * num_nodes + nodeC];
-                costs[3] = triplet_costs[label + num_labels * (label + num_labels * (labeling[nodeA] + num_labels * triplet))]
-                           + unary_costs[labeling[nodeA] * num_nodes + nodeA]
+                           + unary_costs[labeling[nodeC] * num_nodes + nodeC])/3.0;
+                costs[3] = tcosts[triplet][labeling[nodeA]][label][label]
+                           + (unary_costs[labeling[nodeA] * num_nodes + nodeA]
                            + unary_costs[label * num_nodes + nodeB]
-                           + unary_costs[label * num_nodes + nodeC];
-                costs[4] = triplet_costs[labeling[nodeC] + num_labels * (labeling[nodeB] + num_labels * (label + num_labels * triplet))]
-                           + unary_costs[label * num_nodes + nodeA]
+                           + unary_costs[label * num_nodes + nodeC])/3.0;
+                costs[4] = tcosts[triplet][label][labeling[nodeB]][labeling[nodeC]]
+                           + (unary_costs[label * num_nodes + nodeA]
                            + unary_costs[labeling[nodeB] * num_nodes + nodeB]
-                           + unary_costs[labeling[nodeC] * num_nodes + nodeC];
-                costs[5] = triplet_costs[label + num_labels * (labeling[nodeB] + num_labels * (label + num_labels * triplet))]
-                           + unary_costs[label * num_nodes + nodeA]
+                           + unary_costs[labeling[nodeC] * num_nodes + nodeC])/3.0;
+                costs[5] = tcosts[triplet][label][labeling[nodeB]][label]
+                           + (unary_costs[label * num_nodes + nodeA]
                            + unary_costs[labeling[nodeB] * num_nodes + nodeB]
-                           + unary_costs[label * num_nodes + nodeC];
-                costs[6] = triplet_costs[labeling[nodeC] + num_labels * (label + num_labels * (label + num_labels * triplet))]
-                           + unary_costs[label * num_nodes + nodeA]
+                           + unary_costs[label * num_nodes + nodeC])/3.0;
+                costs[6] = tcosts[triplet][label][label][labeling[nodeC]]
+                           + (unary_costs[label * num_nodes + nodeA]
                            + unary_costs[label * num_nodes + nodeB]
-                           + unary_costs[labeling[nodeC] * num_nodes + nodeC];
-                costs[7] = triplet_costs[label + num_labels * (label + num_labels * (label + num_labels * triplet))]
-                           + unary_costs[label * num_nodes + nodeA]
+                           + unary_costs[labeling[nodeC] * num_nodes + nodeC])/3.0;
+                costs[7] = tcosts[triplet][label][label][label]
+                           + (unary_costs[label * num_nodes + nodeA]
                            + unary_costs[label * num_nodes + nodeB]
-                           + unary_costs[label * num_nodes + nodeC];
+                           + unary_costs[label * num_nodes + nodeC])/3.0;
 
                 auto index = std::distance(costs.begin(), std::min_element(costs.begin(), costs.end()));
 
@@ -121,12 +121,6 @@ public:
                         default:
                             throw MeshregException("Unknown error");
                     }
-            }
-
-            if (verbose && i % 10000 == 0 && i > 0)
-            {
-                std::cout << "MC iter " << i << '/' << mciters << '\t';
-                energy->evaluateTotalCostSum();
             }
         }
 

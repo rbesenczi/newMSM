@@ -40,7 +40,8 @@ void DiscreteCostFunction::initialize(int numNodes, int numLabels, int numPairs,
     if (m_num_triplets != numTriplets || m_num_labels != numLabels)
     {
         delete[] tripletcosts;
-        tripletcosts = new double[numTriplets * numLabels * numLabels * numLabels];
+        //tripletcosts = new double[numTriplets * numLabels * numLabels * numLabels];
+        tcosts.resize(numTriplets, std::vector<std::vector<std::vector<double>>>(numLabels, std::vector<std::vector<double>>(numLabels, std::vector<double>(numLabels, 0.0))));
     }
 
     m_num_nodes = numNodes;
@@ -50,7 +51,7 @@ void DiscreteCostFunction::initialize(int numNodes, int numLabels, int numPairs,
 
     std::fill(unarycosts,unarycosts+m_num_labels*m_num_nodes,0.0f);
     std::fill(paircosts,paircosts+m_num_labels*m_num_labels*m_num_pairs,0.0f);
-    std::fill(tripletcosts,tripletcosts+m_num_triplets*m_num_labels*m_num_labels*m_num_labels,0.0f);
+    //std::fill(tripletcosts,tripletcosts+m_num_triplets*m_num_labels*m_num_labels*m_num_labels,0.0f);
 }
 
 double DiscreteCostFunction::evaluateTotalCostSum(const int *labeling, const int *pairs, const int *triplets) {
@@ -248,7 +249,8 @@ void NonLinearSRegDiscreteCostFunction::computeTripletCosts() {
         for(int label_a = 0; label_a < m_num_labels; label_a++)
             for(int label_b = 0; label_b < m_num_labels; label_b++)
                 for (int label_c = 0; label_c < m_num_labels; label_c++)
-                    tripletcosts[label_c + m_num_labels * (label_b + m_num_labels * (label_a + m_num_labels * triplet))] =
+                    tcosts[triplet][label_a][label_b][label_c] =
+                    //tripletcosts[label_c + m_num_labels * (label_b + m_num_labels * (label_a + m_num_labels * triplet))] =
                             computeTripletCost(triplet, label_a, label_b, label_c);
 
 }

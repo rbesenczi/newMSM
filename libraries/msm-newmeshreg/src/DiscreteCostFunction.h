@@ -46,6 +46,8 @@ public:
     double* getUnaryCosts() { return unarycosts; } //Returns the unary costs look-up table.
     double* getPairwiseCosts() { return paircosts; } //Returns the pairwise costs look-up table.
     double* getTripletCosts() { return tripletcosts; }
+    const auto& getTCosts() { return tcosts; }
+
     //---COMPUTE--//
     virtual void computeUnaryCosts() {}; //Computes the unary costs look-up table.
     virtual double computeUnaryCost(int node, int label) { return 0; } //Computes the unary potential for the given node
@@ -69,6 +71,7 @@ protected:
     double* unarycosts = nullptr; // Unary potentials look-up table.
     double* paircosts = nullptr; // Pairwise potentials look-up table.
     double* tripletcosts = nullptr;
+    std::vector<std::vector<std::vector<std::vector<double>>>> tcosts;
 
     int* _pairs = nullptr;
     int* _triplets = nullptr;
