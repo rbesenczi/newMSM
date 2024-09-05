@@ -33,6 +33,7 @@ public:
         int* labeling = energy->getLabeling();
         const int num_nodes = energy->getNumNodes();
         const int num_labels = energy->getNumLabels();
+        const double dist_param = .4;
         const int* triplets = energy->getTriplets();
         const double* unary_costs = energy->getCostFunction()->getUnaryCosts();
         const auto& tcosts = energy->getCostFunction()->getTCosts();
@@ -41,11 +42,13 @@ public:
 
         std::random_device rd;
         std::mt19937 gen(rd());
-        std::uniform_int_distribution<> distribution(0, num_labels-1);
+        //std::uniform_int_distribution<> distribution(0, num_labels-1);
+        std::geometric_distribution<> distribution(dist_param);
 
         for(int i = 0; i < mciters; ++i)
         {
-            int label = distribution(gen);
+            int label = 0;
+            while((label = distribution(gen)) > (num_labels-1));
 
             for(int triplet = 0; triplet < energy->getNumTriplets(); ++triplet)
             {

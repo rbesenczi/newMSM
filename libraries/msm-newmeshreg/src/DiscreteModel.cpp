@@ -117,6 +117,7 @@ void NonLinearSRegDiscreteModel::Initialize_sampling_grid() {
 
 void NonLinearSRegDiscreteModel::label_sampling_grid(int centroid, double dist, newresampler::Mesh& Grid) {
 
+    std::map<double,newresampler::Point> samples, barycentres;
     m_samples.clear();
     m_barycentres.clear();
     std::vector<int> getneighbours, newneighbours;
@@ -136,9 +137,10 @@ void NonLinearSRegDiscreteModel::label_sampling_grid(int centroid, double dist, 
             for(auto j = Grid.nbegin(getneighbour); j != Grid.nend(getneighbour); j++)
             {
                 newresampler::Point sample = Grid.get_coord(*j);
-                if((sample-centre).norm() <= dist && (found(*j+1)==0) && *j != centroid)
+                double distance = (sample-centre).norm(); // pt-centroid equals deformation vector
+                if(distance <= dist && (found(*j+1)==0) && *j != centroid)
                 {
-                    m_samples.push_back(Grid.get_coord(*j));  // pt-centroid equals deformation vector
+                    samples[distance] = sample;
                     newneighbours.push_back(*j);
                     found(*j+1) = 1;
                 }
@@ -155,15 +157,16 @@ void NonLinearSRegDiscreteModel::label_sampling_grid(int centroid, double dist, 
                 bary.normalize();
                 bary = bary * RAD;
 
-                if((bary - centre).norm() <= dist && (bary - centre).norm() > 0 && found_tr(*j+1) == 0)
+                double distance = (bary - centre).norm();
+                if(distance <= dist && (bary - centre).norm() > 0 && found_tr(*j+1) == 0)
                 {
-                    for (auto& m_barycentre: m_barycentres)
-                        if (abs(1 - (((bary - centre) | (m_barycentre - centre)) /
-                                     ((bary - centre).norm() * (m_barycentre - centre).norm()))) < 1e-2)
+                    for (auto& m_barycentre: barycentres)
+                        if (abs(1 - (((bary - centre) | (m_barycentre.second - centre)) /
+                                     ((bary - centre).norm() * (m_barycentre.second - centre).norm()))) < 1e-2)
                             found_tr(*j + 1) = 1;
 
                     if (found_tr(*j + 1) == 0)
-                        m_barycentres.push_back(bary);
+                        barycentres[distance] = bary;
 
                     found_tr(*j+1) = 1;
                 }
@@ -172,6 +175,12 @@ void NonLinearSRegDiscreteModel::label_sampling_grid(int centroid, double dist, 
         getneighbours = newneighbours;
         newneighbours.clear();
     }
+
+    for (const auto &e: samples)
+        m_samples.push_back(e.second);
+
+    for (const auto &e: barycentres)
+        m_barycentres.push_back(e.second);
 }
 
 std::vector<newresampler::Point> NonLinearSRegDiscreteModel::rescale_sampling_grid() {
