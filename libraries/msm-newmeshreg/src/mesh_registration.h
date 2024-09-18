@@ -134,6 +134,7 @@ protected:
     double _bulkmod = 1.6;    // for strain regulariser
     double _cprange = 1.0;
     std::vector<int> _mciters;
+    double _mcparameter = 0.8;
 
     //---AFFINE PARAMETERS---//
     double _affinestepsize = 0.0;

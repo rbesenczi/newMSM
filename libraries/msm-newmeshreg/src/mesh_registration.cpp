@@ -547,8 +547,11 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
                                std::string("Determines the finite distance spacing for the affine gradient calculation (default 0.5)"),
                                false,Utilities::requires_argument);
     Utilities::Option<std::vector<int>> mciters(std::string("--mciters"), intdefault,
-                                   std::string("number of iterations for Monte Carlo optimisation (default == 1000)"),
+                                   std::string("number of iterations for Monte Carlo optimisation (default == 100000)"),
                                    false,Utilities::requires_argument);
+    Utilities::Option<float> mcparam(std::string("--mcparam"), 0.8,
+                               std::string("Parameter for geometric distribution random number generation for MC method (default == 0.8)"),
+                               false,Utilities::requires_argument);
     Utilities::Option<int> threads(std::string("--numthreads"), 1,
                         std::string("number of threads for OpenMP (default is single thread)"),
                         false,Utilities::requires_argument);
@@ -584,6 +587,7 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
         options.add(affinestepsize);
         options.add(gradsampling);
         options.add(mciters);
+        options.add(mcparam);
         options.add(threads);
 
         if(parameters=="usage")
@@ -702,7 +706,9 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
     _affinegradsampling=gradsampling.value();
     _numthreads=threads.value();
     if(mciters.set()) _mciters=mciters.value();
-    else _mciters.resize(cost.size(), 50000);
+    else _mciters.resize(cost.size(), 100000);
+    _mcparameter = mcparam.value();
+
     _rescale_labels=rescale_labels.value();
 
     if(_verbose)
@@ -729,7 +735,10 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
         if(intensitynormalizewcut.set()) std::cout << "\nIntensity normalise with cut set.";
         if(rescale_labels.set()) std::cout << "\nRescale labels set.";
         std::cout << "\nDiscrete implementation: " << _discreteOPT;
-        if(_discreteOPT == "MCMC") { std::cout << "\nMonte Carlo iterations: "; for(const auto& e : _mciters) std::cout << e << ' '; }
+        if(_discreteOPT == "MCMC") {
+            std::cout << "\nMonte Carlo iterations: "; for(const auto& e : _mciters) std::cout << e << ' ';
+            std::cout << "\nMonte Carlo geometric distribution parameter: " << _mcparameter;
+        }
         std::cout << "\nRegulariser: " <<  _regmode;
         if(_regmode == 3 || _regmode == 5) std::cout << "\nShearmod: " << _shearmod << "; Bulkmod: " << _bulkmod << "; k_exponent: " << _k_exp;
         std::cout << "\nRegulariser exponent: " <<  _regexp;
@@ -789,6 +798,7 @@ void Mesh_registration::fix_parameters_for_level(int i) {
     PARAMETERS.insert(parameterPair("gradsampling", _affinegradsampling));
     PARAMETERS.insert(parameterPair("numthreads", _numthreads));
     PARAMETERS.insert(parameterPair("kexponent", _k_exp));
+    PARAMETERS.insert(parameterPair("mcparam", _mcparameter));
 }
 
 void Mesh_registration::check() {

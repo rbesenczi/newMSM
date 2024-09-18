@@ -148,6 +148,8 @@ public:
     inline std::shared_ptr<DiscreteCostFunction> getCostFunction() override { return costfct; }
     virtual void applyLabeling();
 
+    double getMCParam() const { return MCparam; }
+
 protected:
     newresampler::Mesh m_TARGET; // TARGET MESH
     newresampler::Mesh m_SOURCE; // SOURCE MESH
@@ -165,6 +167,7 @@ protected:
     double _labeldist = 0.5;
     double range = 1;
     double m_scale = 0.0;
+    double MCparam = 0.8;
     bool m_multivariate = false;
     bool m_debug = false;
     bool m_triclique = false;

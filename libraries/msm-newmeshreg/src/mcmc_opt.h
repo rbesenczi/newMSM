@@ -33,26 +33,23 @@ public:
         int* labeling = energy->getLabeling();
         const int num_nodes = energy->getNumNodes();
         const int num_labels = energy->getNumLabels();
-        const double dist_param = .4;
+        const int num_triplets = energy->getNumTriplets();
+        const double dist_param = energy->getMCParam();
         const int* triplets = energy->getTriplets();
         const double* unary_costs = energy->getCostFunction()->getUnaryCosts();
         const auto& tcosts = energy->getCostFunction()->getTCosts();
+        int label = 0;
+        std::vector<double> costs(8,0.0);
 
         if(verbose) { std::cout << "Initial "; energy->evaluateTotalCostSum(); std::cout << "Running Monte Carlo simulation..." << std::endl; }
 
         std::random_device rd;
         std::mt19937 gen(rd());
-        //std::uniform_int_distribution<> distribution(0, num_labels-1);
         std::geometric_distribution<> distribution(dist_param);
 
-        for(int i = 0; i < mciters; ++i)
-        {
-            int label = 0;
-            while((label = distribution(gen)) > (num_labels-1));
-
-            for(int triplet = 0; triplet < energy->getNumTriplets(); ++triplet)
-            {
-                std::vector<double> costs(8,0.0);
+        for(int i = 0; i < mciters; ++i) {
+            for(int triplet = 0; triplet < num_triplets; ++triplet) {
+                do { label = distribution(gen); } while(label >= num_labels);
 
                 const int nodeA = triplets[triplet*3];
                 const int nodeB = triplets[triplet*3+1];
@@ -91,39 +88,42 @@ public:
                            + unary_costs[label * num_nodes + nodeB]
                            + unary_costs[label * num_nodes + nodeC])/3.0;
 
-                auto index = std::distance(costs.begin(), std::min_element(costs.begin(), costs.end()));
-
-                if(index > 0)
-                    switch(index) {
-                        case 1:
-                            labeling[nodeC] = label;
-                            break;
-                        case 2:
-                            labeling[nodeB] = label;
-                            break;
-                        case 3:
-                            labeling[nodeB] = label;
-                            labeling[nodeC] = label;
-                            break;
-                        case 4:
-                            labeling[nodeA] = label;
-                            break;
-                        case 5:
-                            labeling[nodeA] = label;
-                            labeling[nodeC] = label;
-                            break;
-                        case 6:
-                            labeling[nodeA] = label;
-                            labeling[nodeB] = label;
-                            break;
-                        case 7:
-                            labeling[nodeA] = label;
-                            labeling[nodeB] = label;
-                            labeling[nodeC] = label;
-                            break;
-                        default:
-                            throw MeshregException("Unknown error");
-                    }
+                switch(std::distance(costs.begin(), std::min_element(costs.begin(), costs.end()))) {
+                    case 0:
+                        break;
+                    case 1:
+                        labeling[nodeC] = label;
+                        break;
+                    case 2:
+                        labeling[nodeB] = label;
+                        break;
+                    case 3:
+                        labeling[nodeB] = label;
+                        labeling[nodeC] = label;
+                        break;
+                    case 4:
+                        labeling[nodeA] = label;
+                        break;
+                    case 5:
+                        labeling[nodeA] = label;
+                        labeling[nodeC] = label;
+                        break;
+                    case 6:
+                        labeling[nodeA] = label;
+                        labeling[nodeB] = label;
+                        break;
+                    case 7:
+                        labeling[nodeA] = label;
+                        labeling[nodeB] = label;
+                        labeling[nodeC] = label;
+                        break;
+                    default:
+                        throw MeshregException("Unknown error");
+                }
+            }
+            if (verbose && i % 10000 == 0) {
+                std::cout << "MC iter " << i << '/' << mciters << '\t';
+                energy->evaluateTotalCostSum();
             }
         }
 
