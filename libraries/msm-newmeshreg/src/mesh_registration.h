@@ -48,11 +48,11 @@ public:
 
     //---SET FUNCTIONS---//
     void set_input(const newresampler::Mesh& M);
-    void set_input(const std::string &M);
-    void set_reference(const newresampler::Mesh &M);
+    void set_input(const std::string& M);
+    void set_reference(const newresampler::Mesh& M);
     void set_reference(const std::string& M);
-    void set_anatomical(const std::string &M1, const std::string &M2);
-    void set_transformed(const std::string &M);
+    void set_anatomical(const std::string& M1, const std::string& M2);
+    void set_transformed(const std::string& M);
     void set_input_cfweighting(const std::string& E);
     void set_reference_cfweighting(const std::string& E);
     void set_output_format(const std::string& type);
@@ -74,8 +74,8 @@ protected:
     std::vector<newresampler::Mesh> MESHES;  // original input (moving) mesh
 
     newresampler::Mesh transformed_mesh;  // original input (moving) mesh in transformed position (i.e. from previous alignment step)
-    newresampler::Mesh in_anat;
-    newresampler::Mesh ref_anat;
+    newresampler::Mesh in_anat; // input anatomical mesh
+    newresampler::Mesh ref_anat; // reference anatomical mesh
     newresampler::Mesh SPH_orig; // original low res icosphere mesh
     newresampler::Mesh SPH_reg;  // transformed low res icosphere mesh
     newresampler::Mesh ANAT_orig; // original low res icosphere mesh
@@ -118,9 +118,9 @@ protected:
     bool _cut = false;  // exclusion zone
     bool _varnorm = false; // variance normalise
     bool _tricliquelikeihood = false;
-    bool _anat = false;
+    bool _anat = false; // if anatomical meshes provided
     bool _rescale_labels = false;
-    bool _incfw = false;
+    bool _incfw = false;    //if cost function weightings provided
     bool _refcfw = false;
     bool fixnan = false;
     double _k_exp = 2.0;
@@ -133,8 +133,8 @@ protected:
     double _shearmod = 0.4; // for strain regulariser
     double _bulkmod = 1.6;    // for strain regulariser
     double _cprange = 1.0;
-    std::vector<int> _mciters;
-    double _mcparameter = 0.8;
+    std::vector<int> _mciters;  // Monte Carlo iterations
+    double _mcparameter = 0.8;  // param for Monte Carlo random distribution
 
     //---AFFINE PARAMETERS---//
     double _affinestepsize = 0.0;

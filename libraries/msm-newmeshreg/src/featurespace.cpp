@@ -42,8 +42,8 @@ newresampler::Mesh featurespace::initialise(int ico, std::vector<newresampler::M
 
     if (IN.size() != CMfile_in.size())
         throw MeshregException("featurespace::Initialize do not have the same number of datasets and surface meshes");
-    else
-        DATA.resize(CMfile_in.size(), std::shared_ptr<MISCMATHS::BFMatrix>());
+
+    DATA.resize(CMfile_in.size(), std::shared_ptr<MISCMATHS::BFMatrix>());
 
     if(ico > 0)
     {

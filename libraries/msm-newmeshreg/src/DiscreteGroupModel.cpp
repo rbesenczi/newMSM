@@ -180,8 +180,6 @@ void DiscreteGroupModel::setupCostFunction() {
 
     m_labels = m_samples;
 
-    //if (m_iter % 2 == 0) m_labels = m_samples;
-    //else m_labels = m_barycentres;
     m_num_labels = (int)m_labels.size();
 
     costfct->set_labels(m_labels,m_ROT);

@@ -149,8 +149,8 @@ void unfold(newresampler::Mesh& SOURCE, bool verbosity) {
         else if (it % 100 == 0 && verbosity)
             std::cout << "Mesh is folded, total folded vertices: " << foldedvertices.size() << " iter: " << it << std::endl;
 
-        for (int foldedvertice: foldedvertices)
-            foldinggradients.emplace_back(spatialgradient(foldedvertice, SOURCE));
+        for (int foldedvertex: foldedvertices)
+            foldinggradients.emplace_back(spatialgradient(foldedvertex, SOURCE));
             // estimates gradient of triangle area for all vertices that are detected as folded
 
         for (unsigned int i = 0; i < foldedvertices.size(); i++)
@@ -176,7 +176,7 @@ void unfold(newresampler::Mesh& SOURCE, bool verbosity) {
     }
 }
 
-NEWMAT::Matrix get_coordinate_transformation(double dNdT1,double dNdT2, NEWMAT::ColumnVector& Norm) {
+NEWMAT::Matrix get_coordinate_transformation(double dNdT1, double dNdT2, NEWMAT::ColumnVector& Norm) {
 
     newresampler::Point G1(1, 0, dNdT1);
     newresampler::Point G2(0, 1, dNdT2);

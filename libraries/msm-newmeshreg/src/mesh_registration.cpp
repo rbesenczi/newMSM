@@ -65,7 +65,7 @@ void Mesh_registration::initialize_level(int current_lvl) {
     SPHin_CFWEIGHTING = downsample_cfweighting(SPH_orig, IN_CFWEIGHTING, FEAT->get_input_excl());
     SPHref_CFWEIGHTING = downsample_cfweighting(SPH_orig, REF_CFWEIGHTING, FEAT->get_reference_excl());
 
-    if(cost[current_lvl] == "RIGID" || cost[current_lvl] == "AFFINE")
+    if(cost[current_lvl] == "RIGID" || cost[current_lvl] == "AFFINE") // "AFFINE" is for backward compatibility
     {
         rigidcf = std::make_shared<Rigid_cost_function>(SPH_orig, SPH_orig, FEAT);
         rigidcf->set_parameters(PARAMETERS);
@@ -194,17 +194,17 @@ void Mesh_registration::run_discrete_opt() {
 #ifdef HAS_HOCR
             newenergy = Fusion::optimize(model, _verbose, _numthreads);
 #else
-            #ifdef HAS_FPD
-        throw MeshregException("HOCR is not supported in this version of newMSM. Please use MCMC or FastPD.");
-#else
-        throw MeshregException("HOCR and FastPD are not supported in this version of newMSM. Please use MCMC.");
-#endif
+        #ifdef HAS_FPD
+            throw MeshregException("HOCR is not supported in this version of newMSM. Please use MCMC or FastPD.");
+        #else
+            throw MeshregException("HOCR and FastPD are not supported in this version of newMSM. Please use MCMC.");
+        #endif
 #endif
         }
-        else
-            throw MeshregException("Unrecognized optimiser");
+        else throw MeshregException("Unrecognized optimiser");
 
-        if(iter > 2 && ((iter - 1) % 2 == 0) && (energy - newenergy < 0.001) && _discreteOPT != "MCMC") {
+        if(iter > 2 && ((iter - 1) % 2 == 0) && (energy - newenergy < 0.001) && _discreteOPT != "MCMC")
+        {
             if(_verbose) {
                 std::cout << iter+1 << " level has converged." << std::endl;
                 std::cout <<  "newenergy " << newenergy <<  "\tenergy " << energy
@@ -219,7 +219,7 @@ void Mesh_registration::run_discrete_opt() {
         newresampler::Mesh previous_controlgrid = model->get_CPgrid(0);
 
         model->applyLabeling();
-        // apply these choices in order to deform the CP grid
+        // apply these choices to deform the CP grid
         newresampler::Mesh transformed_controlgrid = model->get_CPgrid(0);
         // use the control point updates to warp the source mesh
         newresampler::sphere_project_warp(SPH_reg, previous_controlgrid, transformed_controlgrid, _numthreads);
@@ -236,7 +236,8 @@ NEWMAT::Matrix Mesh_registration::combine_weighting() {
     CombinedWeight.resize(1, SPH_reg.nvertices());
     CombinedWeight = 1;
 
-    if(_incfw && _refcfw) {
+    if(_incfw && _refcfw)
+    {
         NEWMAT::Matrix ResampledRefWeight = SPHref_CFWEIGHTING;
         newresampler::Mesh targetmesh = model->get_TARGET();
         targetmesh.set_pvalues(ResampledRefWeight);
@@ -467,45 +468,45 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
                                      false,Utilities::requires_argument);
     std::vector<int> intdefault;
     Utilities::Option<std::vector<int>> simval(std::string("--simval"), intdefault,
-                                    std::string("code for determining which similarty measure is used to assess cost during registration. Warning! Changes in newMSM: rigid method uses SSD or Pearson's correlation, Discrete uses Pearson's correlation only. NMI has been removed from newMSM."),
+                                    std::string("similarty measure used to assess cost during registration. Warning! Changes in newMSM: rigid method uses SSD or Pearson's correlation, Discrete uses Pearson's correlation only. NMI has been removed from newMSM."),
                                false, Utilities::requires_argument);
     Utilities::Option<std::vector<int>> iterations(std::string("--it"), intdefault,
-                                        std::string("number of iterations at each resolution (default -–it=3,3,3)"),
+                                        std::string("number of iterations at each resolution level (default -–it=3,3,3)"),
                                     false, Utilities::requires_argument);
     std::vector<float> floatdefault;
     Utilities::Option<std::vector<float>> sigma_in(std::string("--sigma_in"),floatdefault,
                                         std::string("smoothing parameter for input image (default --sigma_in=2,2,2)"),
                                     false, Utilities::requires_argument);
     Utilities::Option<std::vector<float>> sigma_ref(std::string("--sigma_ref"),  floatdefault,
-                                         std::string("Sigma parameter - smoothing parameter for reference image (set equal to sigma_in by default)"),
+                                         std::string("smoothing parameter for reference image (set equal to sigma_in by default)"),
                                      false, Utilities::requires_argument);
     Utilities::Option<std::vector<float>> lambda(std::string("--lambda"),  floatdefault,
-                                      std::string("Lambda parameter - controls contribution of regulariser "),
+                                      std::string("controls contribution of regulariser"),
                                  false, Utilities::requires_argument);
     Utilities::Option<std::vector<int>> datagrid(std::string("--datagrid"),intdefault,
-                                      std::string("DATA grid resolution (default --datagrid=5,5,5). If parameter = 0 then the native mesh is used."),
+                                      std::string("data grid resolution (default --datagrid=5,5,5). If parameter = 0 then the native mesh is used."),
                                  false, Utilities::requires_argument);
     Utilities::Option<std::vector<int>> cpgrid(std::string("--CPgrid"),intdefault,
-                                    std::string("Control point grid resolution (default --CPgrid=2,3,4)"),
+                                    std::string("control point grid resolution (default --CPgrid=2,3,4)"),
                                false, Utilities::requires_argument);
     Utilities::Option< std::vector<int>> sampgrid(std::string("--SGgrid"),intdefault,
-                                  std::string("Sampling grid resolution (default = 2 levels higher than the control point grid)"),
+                                  std::string("sampling grid resolution (default = 2 levels higher than the control point grid)"),
                                   false, Utilities::requires_argument);
     Utilities::Option<std::vector<int>> anatgrid(std::string("--anatgrid"),intdefault,
-                                  std::string("Anatomical grid resolution (default = 2 levels higher than the control point grid)"),
+                                  std::string("anatomical grid resolution (default = 2 levels higher than the control point grid)"),
                                   false, Utilities::requires_argument);
     std::vector<float> cutthresholddefault(2,0.0); cutthresholddefault[1] = 0.0001;
     Utilities::Option< std::vector<float>> cutthreshold(std::string("--cutthr"),cutthresholddefault,
-                                             std::string("Upper and lower thresholds for defining cut vertices (default --cutthr=0,0)"),
+                                             std::string("upper and lower thresholds for defining cut vertices (default --cutthr=0,0)"),
                                         false, Utilities::requires_argument);
     Utilities::Option<int> regulariseroption(std::string("--regoption"), 1,
-                                  std::string("Choose option for regulariser form lambda*weight*pow(cost,rexp). Where cost can be PAIRWISE or TRI-CLIQUE based. Options are: 1) PAIRWISE - penalising diffences in rotations of neighbouring points (FastPD only); 2) Removed from newMSM; 3) TRI_CLIQUE: Strain-based (for spheres);  4) Removed from newMSM; 5) TRI_CLIQUE: Strain-based (for anatomical mesh)"),
+                                  std::string("Choose option for regulariser form lambda*weight*pow(cost,rexp). Where cost can be PAIRWISE or TRI-CLIQUE based. Options are: 1) PAIRWISE - penalising differences in rotations of neighbouring points (FastPD only); 2) Removed from newMSM, will use opt 3; 3) TRI_CLIQUE: Strain-based (for spheres);  4) Removed from newMSM, will use opt 5; 5) TRI_CLIQUE: Strain-based (for anatomical mesh)"),
                                   false, Utilities::requires_argument);
     Utilities::Option<std::string> doptimizer(std::string("--dopt"),"FastPD",
                                    std::string("discrete optimisation implementation. Choice of: FastPD (default), HOCR (will reduce to QBPO for pairwise) or MCMC. Warning! ELC and ELC_approx removed from newMSM."),
                               false,Utilities::requires_argument,false);
     Utilities::Option<bool> tricliquelikeihood(std::string("--triclique"), false,
-                                    std::string("estimate similarity for triangular patches (rather than circular)"),
+                                    std::string("estimate similarity for triangular patches (instead of circular)"),
                                     false, Utilities::no_argument);
     Utilities::Option<float> shear(std::string("--shearmod"), 0.4,
                         std::string("shear modulus (default 0.4); for use with --regoption 3 or 5"),
@@ -517,25 +518,25 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
                             std::string("exponent inside strain equation (default 2)"),
                             false, Utilities::requires_argument);
     Utilities::Option<float> regulariserexp(std::string("--regexp"), 2.0,
-                                 std::string("Regulariser exponent 'rexp' (default 2.0)"),
+                                 std::string("regulariser exponent 'rexp' (default 2.0)"),
                                  false,Utilities::requires_argument);
     Utilities::Option<bool> fix_nan(std::string("--fixnan"), false,
-                                  std::string("Fixes possible NaN values in cost function calculation"),
+                                  std::string("fixes possible NaN values in cost function calculation (groupwise mode only)"),
                             false, Utilities::no_argument);
     Utilities::Option<bool> rescale_labels(std::string("--rescaleL"), false,
                                 std::string("rescale label grid rather than using barycentres"),
                                 false, Utilities::no_argument);
     Utilities::Option<float> controlptrange(std::string("--cprange"), 1.0,
-                                 std::string("Range (as % control point spacing) of data samples (default 1) "),
+                                 std::string("range (as % control point spacing) of data samples (default 1)"),
                                  false,Utilities::requires_argument,false);
     Utilities::Option<bool> intensitynormalize(std::string("--IN"), false,
-                                    std::string("Normalize intensity ranges using histogram matching "),
+                                    std::string("normalize intensity ranges using histogram matching"),
                                     false, Utilities::no_argument);
     Utilities::Option<bool> intensitynormalizewcut(std::string("--INc"), false,
-                                        std::string("Normalize intensity ranges using histogram matching excluding cut"),
+                                        std::string("normalize intensity ranges using histogram matching excluding cut"),
                                         false, Utilities::no_argument);
     Utilities::Option<bool> variancenormalize(std::string("--VN"), false,
-                                   std::string("Variance normalize data "),
+                                   std::string("variance normalize data"),
                                    false, Utilities::no_argument);
     Utilities::Option<bool> exclude(std::string("--excl"), false,
                          std::string("Ignore the cut when resampling the data"),
@@ -557,8 +558,6 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
                         false,Utilities::requires_argument);
 
     try {
-        // must include all wanted options here (the order determines how
-        // the help message is printed)
         options.add(optimizer);
         options.add(simval);
         options.add(iterations);
@@ -733,6 +732,7 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
         if(variancenormalize.set()) std::cout << "\nVariance normalise set.";
         if(intensitynormalize.set()) std::cout << "\nIntensity normalise set.";
         if(intensitynormalizewcut.set()) std::cout << "\nIntensity normalise with cut set.";
+        if(tricliquelikeihood.set()) std::cout << "\nTriclique likelihood.";
         if(rescale_labels.set()) std::cout << "\nRescale labels set.";
         std::cout << "\nDiscrete implementation: " << _discreteOPT;
         if(_discreteOPT == "MCMC") {
