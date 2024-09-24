@@ -115,7 +115,6 @@ public:
 
     std::vector<std::vector<double>> get_face_angles() const {
     //TODO needs testing!
-        //std::vector<std::vector<double>> all_angles(triangles.size());
         std::vector<std::vector<double>> all_angles;
         all_angles.reserve(triangles.size());
         for (const auto& triangle : triangles)
@@ -166,7 +165,6 @@ public:
     void load_ascii(const std::string &filename, bool loadSurfaceData = true, bool appendFieldData = false);
     void load_vtk(const std::string &filename);
     void load_matrix(const std::string &filename, const Mesh::FileType &type);
-    //void load_ascii_file(const std::string &filename);
 
     void save(const std::string &filename) const;
     void save_ascii(const std::string &s) const;

@@ -38,23 +38,7 @@ Triangle::Triangle(const std::shared_ptr<Mpoint> &p1, const std::shared_ptr<Mpoi
     vertices.push_back(p3);
     area = calc_area();
 }
-/*
-Triangle Triangle::copy() const {
-    Triangle t;
-    for (const auto& i: vertices)
-        t.vertices.emplace_back(std::make_shared<Mpoint>(*i));
-    t.no = no;
-    t.area = area;
-    return t;
-}
-*/
-/*
-Point Triangle::centroid() const {
-    return {(vertices[0]->get_coord().X + vertices[1]->get_coord().X + vertices[2]->get_coord().X) / 3,
-            (vertices[0]->get_coord().Y + vertices[1]->get_coord().Y + vertices[2]->get_coord().Y) / 3,
-            (vertices[0]->get_coord().Z + vertices[1]->get_coord().Z + vertices[2]->get_coord().Z) / 3 };
-}
-*/
+
 Point Triangle::normal() const {
     Point result = (vertices[2]->get_coord() - vertices[0]->get_coord()) *
                    (vertices[1]->get_coord() - vertices[0]->get_coord());
@@ -63,11 +47,6 @@ Point Triangle::normal() const {
 }
 
 double Triangle::calc_area() const {
-    /*
-    Point result = (vertices[2]->get_coord() - vertices[0]->get_coord()) *
-                   (vertices[1]->get_coord() - vertices[0]->get_coord());
-    return 0.5 * result.norm();
-    */
     return 0.5 * ((vertices[2]->get_coord() - vertices[0]->get_coord()) *
                  (vertices[1]->get_coord() - vertices[0]->get_coord())).norm();
 }
@@ -75,12 +54,6 @@ double Triangle::calc_area() const {
 void Triangle::set(Point p1, Point p2, Point p3, int number)
 {
     vertices.clear();
-    /*
-    std::shared_ptr<Mpoint> m1 = std::make_shared<Mpoint>(p1,0);
-    std::shared_ptr<Mpoint> m2 = std::make_shared<Mpoint>(p2,1);
-    std::shared_ptr<Mpoint> m3 = std::make_shared<Mpoint>(p3,2);
-    vertices.push_back(m1); vertices.push_back(m2); vertices.push_back(m3);
-    */
     vertices.emplace_back(std::make_shared<Mpoint>(p1,0));
     vertices.emplace_back(std::make_shared<Mpoint>(p2,1));
     vertices.emplace_back(std::make_shared<Mpoint>(p3,2));
@@ -91,7 +64,6 @@ void Triangle::set(Point p1, Point p2, Point p3, int number)
 void Triangle::set_vertex(int i, const Point& p) {
     //TODO why 0?
     if(vertices.empty()) vertices.resize(3);
-    //std::shared_ptr<Mpoint> m = std::make_shared<Mpoint>(p,0);
     vertices[i] = std::make_shared<Mpoint>(p,0);
 }
 
@@ -102,38 +74,14 @@ std::vector<double> Triangle::get_angles() const { // get angles in order of ver
     Point v0 = vertices[2]->get_coord() - vertices[0]->get_coord();  // edge from vertex 0 to 2
     Point v1 = vertices[1]->get_coord() - vertices[0]->get_coord();  // edge from vertex 0 to 1
     Point v2 = vertices[2]->get_coord() - vertices[1]->get_coord();  // edge from vertex 1 to 2
-/*
-    double dot01 = v0 | v1;
-    double dot02 = v0 | v2;
-    double dot12 = v1 | v2;
-*/
+
     face_angles.emplace_back(acos((v0 | v1) / (v0.norm() * v1.norm())));
     face_angles.emplace_back(acos((v0 | v2) / (v0.norm() * v2.norm())));
     face_angles.emplace_back(acos((v1 | v2) / (v2.norm() * v1.norm())));
 
     return face_angles;
 }
-/*
-bool Triangle::is_inside(const Point& x) const {
 
-    Point v0 = vertices[2]->get_coord() - vertices[0]->get_coord();
-    Point v1 = vertices[1]->get_coord() - vertices[0]->get_coord();
-    Point v2 = x - vertices[0]->get_coord();
-
-    double dot00 = v0 | v0;
-    double dot01 = v0 | v1;
-    double dot02 = v0 | v2;
-    double dot11 = v1 | v1;
-    double dot12 = v1 | v2;
-
-    double invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
-
-    double u = (dot11 * dot02 - dot01 * dot12) * invDenom;
-    double v = (dot00 * dot12 - dot01 * dot02) * invDenom;
-
-    return (u > 0.0) && (v > 0.0) && (u + v < 1.0);
-}
-*/
 double Triangle::dist_to_point(const Point& x0) const {
 
     const Point x1(vertices[0]->get_coord());
@@ -174,8 +122,8 @@ double Triangle::dist_to_point(const Point& x0) const {
 }
 
 std::map<int,double> calc_barycentric_weights(const Point& v1, const Point& v2,
-                                             const Point& v3, const Point& vref,
-                                             int n1, int n2, int n3){
+                                              const Point& v3, const Point& vref,
+                                              int n1, int n2, int n3){
 
     std::map<int,double> weights;
 

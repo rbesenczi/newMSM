@@ -190,11 +190,9 @@ Point operator-(const Point &v1, const Point &v2) {
 }
 
 Point operator/(const Point &v, const double &d) {
-    //if (d != 0)
     if (d > EPSILON)
         return {v.X / d, v.Y / d, v.Z / d};
-    else
-        throw MeshException{"newresampler::Point operator/ division by zero"};
+    throw MeshException{"newresampler::Point operator/ division by zero"};
 }
 
 Point operator*(const Point &v, const double &d) {
@@ -232,7 +230,6 @@ Point operator*=(Point &p, const double &d) {
 }
 
 Point operator/=(Point &p, const double &d) {
-    //if (d != 0) {
     if (d > EPSILON) {
         p.X /= d;
         p.Y /= d;

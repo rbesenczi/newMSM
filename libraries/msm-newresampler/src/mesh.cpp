@@ -513,53 +513,7 @@ void Mesh::load_ascii(const std::string &filename, const bool loadSurfaceData,
         exit(EXIT_FAILURE);
     }
 }
-/*
-void Mesh::load_ascii_file(const std::string &filename) { //load a freesurfer ascii mesh for pvalues only
-    // loads surface & data
-    clear();
 
-    std::ifstream f(filename.c_str());
-    if (f.is_open()) {
-        //reading the header
-        std::string header;
-        getline(f, header);
-        std::string::size_type pos = header.find("#!ascii");
-        if (pos == std::string::npos) {
-            std::cerr << "Mesh::load_ascii:error in the header" << std::endl;
-            exit(1);
-        }
-
-        //reading the size of the mesh
-        int NVertices, NFaces;
-        f >> NVertices >> NFaces;
-
-        std::vector<double> tmp_pvalues;
-
-        for (int i = 0; i < NVertices; i++) {
-            double x, y, z;
-            float val;
-            f >> x >> y >> z >> val;
-            std::shared_ptr<Mpoint> m = std::make_shared<Mpoint>(x, y, z, i);
-            points.push_back(m);
-            tmp_pvalues.push_back(val);
-        }
-        pvalues.push_back(tmp_pvalues);
-
-        for (int i = 0; i < NFaces; i++) {
-            int p0, p1, p2;
-            float val;
-            f >> p0 >> p1 >> p2 >> val;
-            Triangle t(points[p0], points[p1], points[p2], i);
-            push_triangle(t);
-        }
-        f.close();
-
-    } else {
-        std::cout << "Mesh::load_ascii:error opening file: " << filename << std::endl;
-        exit(1);
-    }
-}
-*/
 void Mesh::load_matrix(const std::string &filename,
                        const Mesh::FileType &type) {  // for pvalues only - when data is held in a textfile
     // cannot provide field data - surface only (also reads .dpv files)

@@ -57,12 +57,9 @@ public:
     void set_vertex(int i, const Point& p);
 
     //---UTILITY---//
-    //Triangle copy() const;
-    //Point centroid() const;
     Point normal() const;
     double calc_area() const;
     std::vector<double> get_angles() const;
-    //bool is_inside(const Point &x) const;
     double dist_to_point(const Point &x0) const;
 };
 

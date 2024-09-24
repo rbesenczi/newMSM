@@ -35,7 +35,6 @@ public:
     virtual ~DiscreteCostFunction(){
         delete[] unarycosts;
         delete[] paircosts;
-        //delete[] tripletcosts;
     }
 
     //---SET--//
@@ -45,7 +44,6 @@ public:
     //---GET--//
     double* getUnaryCosts() { return unarycosts; } //Returns the unary costs look-up table.
     double* getPairwiseCosts() { return paircosts; } //Returns the pairwise costs look-up table.
-    //double* getTripletCosts() { return tripletcosts; }
     const auto& getTCosts() { return tcosts; }
 
     //---COMPUTE--//
@@ -70,7 +68,6 @@ protected:
 
     double* unarycosts = nullptr; // Unary potentials look-up table.
     double* paircosts = nullptr; // Pairwise potentials look-up table.
-    //double* tripletcosts = nullptr;
     std::vector<std::vector<std::vector<std::vector<double>>>> tcosts;
 
     int* _pairs = nullptr;
