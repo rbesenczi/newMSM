@@ -48,7 +48,7 @@ public:
         costfct->set_parameters(p);
     }
 
-    void set_masks(const newresampler::Mesh& m) { mask = m; is_masked = true; }
+    void set_masks(const newresampler::Mesh& m) override { mask = m; is_masked = true; }
 
     void set_meshspace(const newresampler::Mesh& target, const newresampler::Mesh& source, int num) override {
         target_space = target;

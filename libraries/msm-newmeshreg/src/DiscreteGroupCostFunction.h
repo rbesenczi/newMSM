@@ -47,7 +47,7 @@ public:
 
     void reset_CPgrid(const newresampler::Mesh& grid, int num) override { _CONTROLMESHES[num] = grid; }
     void set_patch_data(const std::vector<std::map<int,std::vector<double>>>& patches) override { patch_data = patches; }
-    void set_masks(const newresampler::Mesh& m) { _MASK = m; is_masked = true; }
+    void set_masks(const newresampler::Mesh& m) override { _MASK = m; is_masked = true; }
 
     //---Compute costs---//
     double computeTripletCost(int triplet, int labelA, int labelB, int labelC) override;
