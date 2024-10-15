@@ -176,4 +176,26 @@ double sparsesimkernel::corr(const std::vector<double>& A, const std::vector<dou
     return prod / (sqrt(varA) * sqrt(varB));
 }
 
+double sparsesimkernel::SSD(const std::vector<double>& A, const std::vector<double>& B, const std::vector<double>& weights) {
+
+    double prod = 0.0;
+
+    for (unsigned int i = 0; i < A.size(); i++) {
+        prod += weights[i] * (A[i] - B[i]) * (A[i] - B[i]);
+    }
+
+    return sqrt(prod)/A.size();
+}
+
+double sparsesimkernel::SSD(const std::vector<double>& A, const std::vector<double>& B) {
+
+    double prod = 0.0;
+
+    for (unsigned int i = 0; i < A.size(); i++) {
+        prod += (A[i] - B[i]) * (A[i] - B[i]);
+    }
+
+    return sqrt(prod)/A.size();
+}
+
 } //namespace newmeshreg

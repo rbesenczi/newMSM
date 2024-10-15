@@ -644,10 +644,6 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
                 std::cout << "Warning! NMI similarity metric has been removed from newMSM. Using Pearson's correlation instead." << std::endl;
                 _simval[i] = 2;
             }
-            if (_simval[i] == 1 && cost[i] == "DISCRETE") {
-                std::cout << "Warning! SSD similarity metric is not supported for discrete method in newMSM (Pearson's correlation only)." << std::endl;
-                _simval[i] = 2;
-            }
         }
         if (iterations.set()) _iters = iterations.value();
         else _iters.resize(cost.size(), 3);

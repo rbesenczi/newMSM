@@ -45,7 +45,11 @@ public:
 
     //---FOR DISCRETE---//
     inline double get_sim_for_min(const std::vector<double>& input, const std::vector<double>& reference, const std::vector<double>& weights = std::vector<double>()) {
-        return 1 - ( 1 + corr(input,reference,weights)) * 0.5;
+        if(_sim == 1)
+            return SSD(input,reference,weights);
+        else if(_sim == 2)
+            return 1 - ( 1 + corr(input,reference,weights)) * 0.5;
+        else throw MeshregException("Unknown similarity metric");
     }
 
 private:
@@ -65,6 +69,8 @@ private:
     //---FOR DISCRETE---//
     double corr(const std::vector<double>& A, const std::vector<double>& B, const std::vector<double>& weights);
     double corr(const std::vector<double>& A, const std::vector<double>& B);
+    double SSD(const std::vector<double>& A, const std::vector<double>& B, const std::vector<double>& weights);
+    double SSD(const std::vector<double>& A, const std::vector<double>& B);
 };
 
 } //namespace newmeshreg
