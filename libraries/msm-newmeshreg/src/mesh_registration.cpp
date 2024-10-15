@@ -468,7 +468,7 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
                                      false,Utilities::requires_argument);
     std::vector<int> intdefault;
     Utilities::Option<std::vector<int>> simval(std::string("--simval"), intdefault,
-                                    std::string("similarty measure used to assess cost during registration. Warning! Changes in newMSM: rigid method uses SSD or Pearson's correlation, Discrete uses Pearson's correlation only. NMI has been removed from newMSM."),
+                                    std::string("similarty measure used to assess cost during registration. 1) SSD, 2) Pearson's Correlation, 4) DICE (experimental). With DICE use --percentile. Warning! Changes in newMSM: NMI has been removed from newMSM."),
                                false, Utilities::requires_argument);
     Utilities::Option<std::vector<int>> iterations(std::string("--it"), intdefault,
                                         std::string("number of iterations at each resolution level (default -–it=3,3,3)"),
@@ -553,6 +553,9 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
     Utilities::Option<float> mcparam(std::string("--mcparam"), 0.8,
                                std::string("Parameter for geometric distribution random number generation for MC method (default == 0.8)"),
                                false,Utilities::requires_argument);
+    Utilities::Option<float> perc(std::string("--percentile"), 1.0,
+                               std::string("Percentile for DICE overlap thresholding."),
+                               false,Utilities::requires_argument);
     Utilities::Option<int> threads(std::string("--numthreads"), 1,
                         std::string("number of threads for OpenMP (default is single thread)"),
                         false,Utilities::requires_argument);
@@ -587,6 +590,7 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
         options.add(gradsampling);
         options.add(mciters);
         options.add(mcparam);
+        options.add(perc);
         options.add(threads);
 
         if(parameters=="usage")
@@ -703,6 +707,7 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
     if(mciters.set()) _mciters=mciters.value();
     else _mciters.resize(cost.size(), 100000);
     _mcparameter = mcparam.value();
+    if(perc.set()) percentile = perc.value();
 
     _rescale_labels=rescale_labels.value();
 
@@ -795,6 +800,7 @@ void Mesh_registration::fix_parameters_for_level(int i) {
     PARAMETERS.insert(parameterPair("numthreads", _numthreads));
     PARAMETERS.insert(parameterPair("kexponent", _k_exp));
     PARAMETERS.insert(parameterPair("mcparam", _mcparameter));
+    PARAMETERS.insert(parameterPair("percentile", percentile));
 }
 
 void Mesh_registration::check() {

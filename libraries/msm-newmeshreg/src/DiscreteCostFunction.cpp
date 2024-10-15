@@ -126,6 +126,7 @@ void NonLinearSRegDiscreteCostFunction::set_parameters(myparam& ALLPARAMS) {
     it=ALLPARAMS.find("lambda"); _reglambda=std::get<double>(it->second);
     it=ALLPARAMS.find("range"); _controlptrange=std::get<double>(it->second);
     it=ALLPARAMS.find("simmeasure"); _simmeasure=std::get<int>(it->second); sim.set_simval(_simmeasure);
+    it=ALLPARAMS.find("percentile"); sim.set_percentile(std::get<double>(it->second));
     it=ALLPARAMS.find("verbosity"); _verbosity=std::get<bool>(it->second);
     it=ALLPARAMS.find("regularisermode"); _rmode=std::get<int>(it->second);
     it=ALLPARAMS.find("numthreads"); _threads=std::get<int>(it->second);

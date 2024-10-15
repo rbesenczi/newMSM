@@ -198,4 +198,31 @@ double sparsesimkernel::SSD(const std::vector<double>& A, const std::vector<doub
     return sqrt(prod)/A.size();
 }
 
+double sparsesimkernel::DICE(const std::vector<double>& A, const std::vector<double>& B) {
+
+    int num_elements = A.size();
+    int idx = std::floor(percentile * num_elements);
+    int size_A = num_elements, size_B = num_elements;
+    std::vector<double> A_sorted(A), B_sorted(B);
+    std::vector<int> overlapping(num_elements,1);
+
+    std::sort(A_sorted.begin(), A_sorted.end());
+    std::sort(B_sorted.begin(), B_sorted.end());
+
+    for(int i = 0; i < num_elements; i++) {
+        if(A[i] < A_sorted[idx]) {
+            size_A--;
+            overlapping[i] = 0;
+        }
+        if(B[i] < B_sorted[idx]) {
+            size_B--;
+            overlapping[i] = 0;
+        }
+    }
+
+    int size_common = std::accumulate(overlapping.begin(), overlapping.end(), 0);
+
+    return -((2.0 * size_common) / (size_A + size_B));
+}
+
 } //namespace newmeshreg

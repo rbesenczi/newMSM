@@ -37,6 +37,7 @@ public:
     void initialise(int simval);
     inline double peek(unsigned int r, unsigned int c) const { return(mp->Peek(r,c)); }
     void set_simval(int val) { _sim = val; }
+    void set_percentile(double val) { percentile = val; }
     void set_input(std::shared_ptr<MISCMATHS::BFMatrix> in ){ m_A = in; }
     void set_reference(std::shared_ptr<MISCMATHS::BFMatrix> ref){ m_B = ref; }
     void set_neighbourhood(std::shared_ptr<Neighbourhood>& n) { nbh = n; }
@@ -44,12 +45,14 @@ public:
     void calculate_sim_column_nbh(int);
 
     //---FOR DISCRETE---//
-    inline double get_sim_for_min(const std::vector<double>& input, const std::vector<double>& reference, const std::vector<double>& weights = std::vector<double>()) {
+    double get_sim_for_min(const std::vector<double>& input, const std::vector<double>& reference, const std::vector<double>& weights = std::vector<double>()) {
         if(_sim == 1)
             return SSD(input,reference,weights);
-        else if(_sim == 2)
+        if(_sim == 2)
             return 1 - ( 1 + corr(input,reference,weights)) * 0.5;
-        else throw MeshregException("Unknown similarity metric");
+        if(_sim == 4)
+            return DICE(input,reference);
+        throw MeshregException("Unknown similarity metric");
     }
 
 private:
@@ -60,6 +63,7 @@ private:
     NEWMAT::RowVector _rmeanA, _rmeanB;
 
     int _sim = 1;
+    double percentile = 1.0;
 
     //---FOR RIGID---//
     double corr(int, int);
@@ -71,6 +75,7 @@ private:
     double corr(const std::vector<double>& A, const std::vector<double>& B);
     double SSD(const std::vector<double>& A, const std::vector<double>& B, const std::vector<double>& weights);
     double SSD(const std::vector<double>& A, const std::vector<double>& B);
+    double DICE(const std::vector<double>& A, const std::vector<double>& B);
 };
 
 } //namespace newmeshreg
