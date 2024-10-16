@@ -171,6 +171,7 @@ protected:
     bool m_multivariate = false;
     bool m_debug = false;
     bool m_triclique = false;
+    bool m_patchwise = false;
     std::string optimiser;
     bool _pairwise = false;
     bool m_rescalelabels = false;

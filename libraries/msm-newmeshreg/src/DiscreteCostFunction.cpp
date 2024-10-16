@@ -617,4 +617,78 @@ double HOMultivariateNonLinearSRegDiscreteCostFunction::triplet_likelihood(int t
     return (AbsoluteWeights(CP_id0+1)+AbsoluteWeights(CP_id1+1)+AbsoluteWeights(CP_id2+1)) / 3.0 * cost;
 }
 
+void PatchwiseMultivariateNonLinearSRegDiscreteCostFunction::initialize(int numNodes, int numLabels, int numPairs, int numTriplets) {
+    NonLinearSRegDiscreteCostFunction::initialize(numNodes, numLabels, numPairs, numTriplets);
+    _sourceinrange.clear(); _sourceinrange.resize(_CPgrid.nvertices());
+    _weights.clear(); _weights.resize(_CPgrid.nvertices());
+    patchwise_sourcedata.clear(); patchwise_sourcedata.resize(_CPgrid.nvertices());
+    patchwise_targetdata.clear(); patchwise_targetdata.resize(_CPgrid.nvertices());
+    for(auto& vertex : patchwise_targetdata) vertex.resize(FEAT->get_dim());
+}
+
+void PatchwiseMultivariateNonLinearSRegDiscreteCostFunction::get_source_data() {
+
+    for(auto& vertex : patchwise_sourcedata) {
+        vertex.clear();
+        vertex.resize(FEAT->get_dim());
+    }
+
+    #pragma omp parallel for num_threads(_threads)
+    for (int cp_vertex = 0; cp_vertex < _CPgrid.nvertices(); ++cp_vertex)
+        for (int src_vertex = 0; src_vertex < _SOURCE.nvertices(); ++src_vertex)
+            if (within_controlpt_range(cp_vertex, src_vertex)) {
+                _sourceinrange[cp_vertex].push_back(src_vertex);
+                for(int dimensions = 0; dimensions < FEAT->get_dim(); ++dimensions)
+                    patchwise_sourcedata.at(cp_vertex).at(dimensions).push_back(FEAT->get_input_val(dimensions+1, src_vertex+1));
+
+                if (_HIGHREScfweight.Nrows() >= 1)
+                    _weights[cp_vertex].emplace_back(_HIGHREScfweight(1, src_vertex + 1));
+                else
+                    _weights[cp_vertex].emplace_back(1.0);
+            }
+    resample_weights();
+}
+
+void PatchwiseMultivariateNonLinearSRegDiscreteCostFunction::get_target_data(int node, const NEWMAT::Matrix& PtROTATOR) {
+
+    for(auto& channel : patchwise_targetdata[node]) {
+        channel.clear();
+        channel.resize(_sourceinrange[node].size());
+    }
+
+    for(unsigned int i = 0; i < _sourceinrange[node].size(); i++)
+    {
+        newresampler::Point tmp = PtROTATOR * _SOURCE.get_coord(_sourceinrange[node][i]);
+
+        newresampler::Triangle closest_triangle = targettree->get_closest_triangle(tmp);
+
+        newresampler::Point v0 = closest_triangle.get_vertex_coord(0),
+                            v1 = closest_triangle.get_vertex_coord(1),
+                            v2 = closest_triangle.get_vertex_coord(2);
+        int n0 = closest_triangle.get_vertex_no(0),
+            n1 = closest_triangle.get_vertex_no(1),
+            n2 = closest_triangle.get_vertex_no(2);
+
+        for(int channel = 0; channel < FEAT->get_dim(); ++channel)
+            patchwise_targetdata[node][channel][i] = newresampler::barycentric_interpolation(v0, v1, v2, tmp,
+                                                                FEAT->get_ref_val(channel+1, n0+1),
+                                                                FEAT->get_ref_val(channel+1, n1+1),
+                                                                FEAT->get_ref_val(channel+1, n2+1));
+    }
+
+}
+
+double PatchwiseMultivariateNonLinearSRegDiscreteCostFunction::computeUnaryCost(int node, int label) {
+    double cost = 0.0;
+
+    get_target_data(node,estimate_rotation_matrix(_CPgrid.get_coord(node),(*ROTATIONS)[node] * _labels[label]));
+
+    for(int channel = 0; channel < FEAT->get_dim(); ++channel)
+        cost += sim.get_sim_for_min(patchwise_sourcedata[node][channel], patchwise_targetdata[node][channel], _weights[node]);
+
+    cost /= FEAT->get_dim();
+
+    return AbsoluteWeights(node + 1) * cost;
+}
+
 } //namespace newmeshreg

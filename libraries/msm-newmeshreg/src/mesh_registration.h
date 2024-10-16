@@ -118,6 +118,7 @@ protected:
     bool _cut = false;  // exclusion zone
     bool _varnorm = false; // variance normalise
     bool _tricliquelikeihood = false;
+    bool _patchwise = false;
     bool _anat = false; // if anatomical meshes provided
     bool _rescale_labels = false;
     bool _incfw = false;    //if cost function weightings provided

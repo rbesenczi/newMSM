@@ -32,6 +32,7 @@ void NonLinearSRegDiscreteModel::set_parameters(myparam& PAR) {
     it=PAR.find("verbosity"); m_verbosity = std::get<bool>(it->second);
     it=PAR.find("outdir"); m_outdir = std::get<std::string>(it->second);
     it=PAR.find("TriLikelihood"); m_triclique = std::get<bool>(it->second);
+    it=PAR.find("patchwise"); m_patchwise = std::get<bool>(it->second);
     it=PAR.find("rescalelabels"); m_rescalelabels = std::get<bool>(it->second);
     it=PAR.find("numthreads"); _nthreads = std::get<int>(it->second);
     it=PAR.find("range"); range = std::get<double>(it->second);
@@ -41,16 +42,20 @@ void NonLinearSRegDiscreteModel::set_parameters(myparam& PAR) {
 
 void NonLinearSRegDiscreteModel::initialize_cost_function(bool MV, myparam& P) {
 
-    if (MV)
-        if(m_triclique)
-            costfct = std::shared_ptr<NonLinearSRegDiscreteCostFunction>(new HOMultivariateNonLinearSRegDiscreteCostFunction());
+    if (MV) {
+        if(m_patchwise)
+            costfct = std::make_shared<PatchwiseMultivariateNonLinearSRegDiscreteCostFunction>();
+        else if(m_triclique)
+            costfct = std::make_shared<HOMultivariateNonLinearSRegDiscreteCostFunction>();
         else
-            costfct = std::shared_ptr<NonLinearSRegDiscreteCostFunction>(new MultivariateNonLinearSRegDiscreteCostFunction());
-    else
+            costfct = std::make_shared<MultivariateNonLinearSRegDiscreteCostFunction>();
+    }
+    else {
         if (m_triclique)
-            costfct = std::shared_ptr<NonLinearSRegDiscreteCostFunction>(new HOUnivariateNonLinearSRegDiscreteCostFunction());
+            costfct = std::make_shared<HOUnivariateNonLinearSRegDiscreteCostFunction>();
         else
-            costfct = std::shared_ptr<NonLinearSRegDiscreteCostFunction>(new UnivariateNonLinearSRegDiscreteCostFunction());
+            costfct = std::make_shared<UnivariateNonLinearSRegDiscreteCostFunction>();
+    }
 
     costfct->set_parameters(P);
 }

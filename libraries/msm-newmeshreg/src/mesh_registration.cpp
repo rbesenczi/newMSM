@@ -508,6 +508,9 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
     Utilities::Option<bool> tricliquelikeihood(std::string("--triclique"), false,
                                     std::string("estimate similarity for triangular patches (instead of circular)"),
                                     false, Utilities::no_argument);
+    Utilities::Option<bool> patchwise_multivariate(std::string("--patchwise"), false,
+                                    std::string("estimate similarity for patches in multivariate instead of feature vectors"),
+                                    false, Utilities::no_argument);
     Utilities::Option<float> shear(std::string("--shearmod"), 0.4,
                         std::string("shear modulus (default 0.4); for use with --regoption 3 or 5"),
                         false,Utilities::requires_argument);
@@ -575,6 +578,7 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
         options.add(regulariseroption);
         options.add(doptimizer);
         options.add(tricliquelikeihood);
+        options.add(patchwise_multivariate);
         options.add(shear);
         options.add(bulk);
         options.add(fix_nan);
@@ -681,6 +685,7 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
     _regmode=regulariseroption.value();
     _discreteOPT=doptimizer.value();
     _tricliquelikeihood=tricliquelikeihood.value();
+    _patchwise=patchwise_multivariate.value();
     fixnan=fix_nan.value();
     _shearmod=shear.value();
     _bulkmod=bulk.value();
@@ -734,6 +739,7 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
         if(intensitynormalize.set()) std::cout << "\nIntensity normalise set.";
         if(intensitynormalizewcut.set()) std::cout << "\nIntensity normalise with cut set.";
         if(tricliquelikeihood.set()) std::cout << "\nTriclique likelihood.";
+        if(_patchwise) std::cout << "\nPatchwise mode for multivariate on.";
         if(rescale_labels.set()) std::cout << "\nRescale labels set.";
         std::cout << "\nDiscrete implementation: " << _discreteOPT;
         if(_discreteOPT == "MCMC") {
@@ -770,6 +776,8 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
         throw MeshregException("MeshREG ERROR:: config file parameter list lengths are inconsistent:--CPgrid");
     if ((int) _sampres.size() != _resolutionlevels)
         throw MeshregException("MeshREG ERROR:: config file parameter list lengths are inconsistent:--SGres");
+    if (_patchwise && _tricliquelikeihood)
+        throw MeshregException("Cannot use patchwise and triclique options together. Choose one.");
 }
 
 void Mesh_registration::fix_parameters_for_level(int i) {
@@ -786,6 +794,7 @@ void Mesh_registration::fix_parameters_for_level(int i) {
     PARAMETERS.insert(parameterPair("anatres", _anatres[i]));
     PARAMETERS.insert(parameterPair("regularisermode", _regmode));
     PARAMETERS.insert(parameterPair("TriLikelihood", _tricliquelikeihood));
+    PARAMETERS.insert(parameterPair("patchwise", _patchwise));
     PARAMETERS.insert(parameterPair("fixnan", fixnan));
     PARAMETERS.insert(parameterPair("rescalelabels", _rescale_labels));
     PARAMETERS.insert(parameterPair("shearmodulus", _shearmod));

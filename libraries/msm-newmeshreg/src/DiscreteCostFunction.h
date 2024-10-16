@@ -230,6 +230,19 @@ public:
     double triplet_likelihood(int, int, int, int, const newresampler::Point&, const newresampler::Point&, const newresampler::Point&) override;
 };
 
+class PatchwiseMultivariateNonLinearSRegDiscreteCostFunction: public MultivariateNonLinearSRegDiscreteCostFunction {
+
+    std::vector<std::vector<std::vector<double>>> patchwise_sourcedata;
+    std::vector<std::vector<std::vector<double>>> patchwise_targetdata;
+
+    public:
+        void initialize(int numNodes, int numLabels, int numPairs, int numTriplets) override;
+        void get_source_data() override;
+        void get_target_data(int node, const NEWMAT::Matrix& PtROTATOR) override;
+        double computeUnaryCost(int node, int label) override;
+        double triplet_likelihood(int, int, int, int, const newresampler::Point&, const newresampler::Point&, const newresampler::Point&) override { return 0; }
+    };
+
 } //namespace newmeshreg
 
 #endif //NEWMESHREG_DISCRETECOSTFUNCTION_H
