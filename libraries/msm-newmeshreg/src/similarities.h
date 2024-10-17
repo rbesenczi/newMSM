@@ -63,7 +63,7 @@ private:
     NEWMAT::RowVector _rmeanA, _rmeanB;
 
     int _sim = 1;
-    double percentile = 1.0;
+    double percentile = 0.75;
 
     //---FOR RIGID---//
     double corr(int, int);

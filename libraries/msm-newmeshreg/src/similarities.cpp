@@ -222,7 +222,7 @@ double sparsesimkernel::DICE(const std::vector<double>& A, const std::vector<dou
 
     int size_common = std::accumulate(overlapping.begin(), overlapping.end(), 0);
 
-    return -((2.0 * size_common) / (size_A + size_B));
+    return 1.0-((2.0 * size_common) / (size_A + size_B));
 }
 
 } //namespace newmeshreg

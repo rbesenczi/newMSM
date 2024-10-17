@@ -125,7 +125,7 @@ protected:
     bool _refcfw = false;
     bool fixnan = false;
     double _k_exp = 2.0;
-    double percentile = 1.0;
+    double percentile = 0.75;
     int _resolutionlevels = 1;  // default 1
     int _regmode = 0; //regulariser option
 

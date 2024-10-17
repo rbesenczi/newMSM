@@ -556,7 +556,7 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
     Utilities::Option<float> mcparam(std::string("--mcparam"), 0.8,
                                std::string("Parameter for geometric distribution random number generation for MC method (default == 0.8)"),
                                false,Utilities::requires_argument);
-    Utilities::Option<float> perc(std::string("--percentile"), 1.0,
+    Utilities::Option<float> perc(std::string("--percentile"), 0.75,
                                std::string("Percentile for DICE overlap thresholding."),
                                false,Utilities::requires_argument);
     Utilities::Option<int> threads(std::string("--numthreads"), 1,
@@ -721,6 +721,7 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
         std::cout << "\nParameters:\nOptimiser per level: ";
         for(const auto& e : cost) std::cout << e << ' ';
         std::cout << "\nSimilarity measure per level: "; for(const auto& e : _simval) std::cout << e << ' ';
+        if (_simval[0] == 4) std::cout << "Percentile: " << percentile;
         std::cout << "\nMax iterations per level: "; for(const auto& e : _iters) std::cout << e << ' ';
         std::cout << "\nLambda regulariser: "; for(const auto& e : _lambda) std::cout << e << ' ';
         std::cout << "\nSigma for in data per level: "; for(const auto& e : _sigma_in) std::cout << e << ' ';
@@ -778,6 +779,8 @@ void Mesh_registration::parse_reg_options(const std::string &parameters)
         throw MeshregException("MeshREG ERROR:: config file parameter list lengths are inconsistent:--SGres");
     if (_patchwise && _tricliquelikeihood)
         throw MeshregException("Cannot use patchwise and triclique options together. Choose one.");
+    if (percentile < 0.0+EPSILON || percentile > 1.0-EPSILON)
+        throw MeshregException("Percentile must be between 0 and 1.");
 }
 
 void Mesh_registration::fix_parameters_for_level(int i) {
