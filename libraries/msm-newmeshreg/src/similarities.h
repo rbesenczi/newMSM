@@ -52,6 +52,8 @@ public:
             return 1 - ( 1 + corr(input,reference,weights)) * 0.5;
         if(_sim == 4)
             return DICE(input,reference);
+        if(_sim == 5)
+            return genDICE(input,reference);
         throw MeshregException("Unknown similarity metric");
     }
 
@@ -76,6 +78,7 @@ private:
     double SSD(const std::vector<double>& A, const std::vector<double>& B, const std::vector<double>& weights);
     double SSD(const std::vector<double>& A, const std::vector<double>& B);
     double DICE(const std::vector<double>& A, const std::vector<double>& B);
+    double genDICE(const std::vector<double>& A, const std::vector<double>& B);
 };
 
 } //namespace newmeshreg
