@@ -78,6 +78,19 @@ newresampler::Mesh featurespace::initialise(int ico, std::vector<newresampler::M
             multivariate_histogram_normalization(*DATA[i], *DATA[0], EXCL[i], EXCL[0], _nthreads);
             // match input data feature distributions to equivalent in ref, rescale all to first feature in reference if _scale is
 
+/*  For debugging intensity normalisation.
+    if(_intensitynorm)
+    {
+        for(unsigned int i = 0; i < IN.size(); i++)
+        {
+            std::string path = "/home/renato/temp/test_" + std::to_string(i) + ".func.gii";
+            newresampler::Mesh in = icotmp;
+            in.set_pvalues(DATA[i]->AsMatrix());
+            in.save(path);
+        }
+    }
+*/
+
     if (_varnorm)
         for (unsigned int i = 0; i < IN.size(); i++)
             variance_normalise(DATA[i], EXCL[i], _nthreads);
