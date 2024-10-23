@@ -249,7 +249,7 @@ double sparsesimkernel::genDICE(const std::vector<double>& A, const std::vector<
 
     int size_common = std::accumulate(overlapping.begin(), overlapping.end(), 0);
 
-    return 1.0 - (2.0 * (((1.0/sqrt(size_B))*size_common) / ((1.0/sqrt(size_B))*(size_A + size_B))));
+    return 1.0 - (2.0 * (((size_common/pow(size_B,2))) / ((size_A + size_B)/pow(size_B,2))));
 }
 
 } //namespace newmeshreg
