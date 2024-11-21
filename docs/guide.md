@@ -6,9 +6,9 @@ The main MSM tool is currently run from the command line using the program `newm
 
 NewMSM is a new implementation with several improvements that made the MSM method computationally more efficient. Improvements include a completely re-implemented mesh resampling library with a new nearest neighbour search algorithm (octree search), an option for multicore CPU utilisation and several others. In general, the average runtime of a registration process is now 25% of that of the original MSM implementation (and 5% using multicore CPU utilisation). The operation of newMSM is supposed to be the same as the previous MSM implementation. We notify the user about any changes that have been made in adequate command line messages. NewMSM now contains an implementation of a groupwise surface registration method that is described later in this guide. 
 
-Before use, read our [user's guide](https://github.com/rbesenczi/newMSM/docs/guide.md).
+Before use, read our [user's guide](docs/guide.md).
 
-Installation instruction can be found [here](https://github.com/rbesenczi/newMSM/docs/install.md).
+Installation instruction can be found [here](docs/install.md).
 
 The original MSM implementation can be found [here](https://github.com/ecr05/MSM_HOCR/). 
 
@@ -37,12 +37,12 @@ If you use the groupwise method, please also reference:
 
 MSM matches two spherical surfaces known as the input and reference (groupwise MSM works in a different way, see Groupwise MSM section). Registration is performed by warping a low resolution regular Control Point (CP) Grid. At each iteration of the registration, every control point is deformed independently according to one of a small set of local rotations. The endpoints of these rotations are defined by a set of evenly spaced points (labels) that surround the control point, which are determined by placing a higher resolution Sampling Grid over each CP. MSM mappings are learnt though discrete optimisation. This means, rather than allowing a control-point grid vertex to displace continuously to any new location (at each iteration) it is instead constrained to displace to one of a finite set of end points, as shown in the diagram below. This warp is then propagated to the (higher resolution) input mesh using mesh interpolation.
 
-![MSM Spherical framework](/assets/images/msm_sphericalframework.jpg)
+![MSM Spherical framework](assets/images/msm_sphericalframework.jpg)
 
 
 The number of faces in an icosahedron is 20 and subsampling this gives rise to high resolution representations of a sphere that are used for controlling the grid spacing. Serial subsampling leads to polyhedra with the following number of faces: 42, 162, 642, 2562, 10242, 40962. These correspond to the codes: 1, 2, 3, 4, 5, 6. Below are examples of codes 0 (icosahedron), 1 and 2 in the first row and 4 and 5 in the second row.
 
-![Regular grids in MSM](/assets/images/msm_grids.jpg)
+![Regular grids in MSM](assets/images/msm_grids.jpg)
 
 Choice of label (and therefore local deformation) is dependent on the similarity of the input and reference mesh features following the proposed warp. Therefore, for each control point, an overlapping patch from the input mesh is transformed according to each local rotation, and its similarity with the reference features at that position is assessed. The optimal label choice balances the desire for optimal image matching with a requirement that the deformation should be as smooth as possible. Note, rather than using the full feature sets, data is typically downsampled and smoothed onto regular template surfaces known as the datagrid as we find this speeds computation without appreciably downgrading the quality of the alignment.
 
@@ -223,7 +223,7 @@ Strain based regularisation has proved extremely vital for improving quality of 
 
 Here, warps continue to be inferred between source and targets spheres (SSS and TSS) via displacements of points to discrete locations defined on the sphere. However, due to one-to-one correspondence between vertices for each subject's sphere and (white/pial/midthickness) surface, it means it is possible to infer an anatomical warp (SAS, DAS) by projecting the moving surface mesh topology (SAS) onto the target anatomical surface (TAS) shape, using the location of source vertices (shown in yellow) relative to target vertices (shown in pink: TSS) to perform the weighted (barycentric) resampling. This leads to a deformed configuration of the source anatomy (DAS) where the 2D transformations ($`\mathbf{F_{pqr}}`$) of mesh faces (from SAS-DAS) can then be regularised using biomechanical strain ($`\mathbf{W_{pqr}}`$).
 
-![Projecting anatomical landmarks on to a sphere](/assets/images/amsm.jpg)
+![Projecting anatomical landmarks on to a sphere](assets/images/amsm.jpg)
 
 If you seek to run aMSM and penalise anatomical deformations you might consider the following options:
 
@@ -258,7 +258,7 @@ $$
     \lambda W_{\mathbf{pqr}} (l_{\mathbf{p}},l_{\mathbf{r}},l_{\mathbf{s}})
 $$
 
-![Groupwise registration method](/assets/images/gw_method_flow.png)
+![Groupwise registration method](assets/images/gw_method_flow.png)
 
 The figure above shows the overview of the groupwise registration process. The input of the method is pairs of overlapping patches on all meshes across the group (step 1). These patches are moved around the labels (2), then the calculated costs of all displacements (3) are minimised by the optimisation method (4). Then all CP grids are updated. This iteration runs until convergence (5), then all meshes are deformed (6) according to the results of the optimisation. The aligned meshes (7) then resampled to the output space and saved. As an example, yellow circles highlight patches that are aligned during the process from step 1 to 7. Blue and red circles denote patches on different subjects, similarity costs are calculated on the overlapping area of patches.
 
@@ -422,9 +422,9 @@ The most important outputs of the pipeline consists of the following files:
 
 The figures below illustrate the output of the pipeline. First figure (from top left to bottom right): sulcal depth mean, sulcal depth standard deviation, curvature mean and curvature standard deviation maps. Second figure (from left to right): areal distortion and shape distortion charts.
 
-![Mean and standard deviation maps](/assets/images/gw_example_maps.png)
+![Mean and standard deviation maps](assets/images/gw_example_maps.png)
 
-![Distortion distribution](/assets/images/gw_example_charts.png)
+![Distortion distribution](assets/images/gw_example_charts.png)
 
 As an optional step, we show how we compared gMSM results with typical registration. For this we provide the `typical_MSM.sh` and `compare_stats.py` scripts. The typical_MSM script performs "typical" registration (i.e. individual subject to template), so you will need to choose a template. In the script provided, this template is `MSMStrain.L.sulc.curv.ico6.shape.gii`. After registering all the subjects in the specified group to the same template, we generate the mean, standard deviation and areal and shape distortion maps, just as we did with the groupwise results. After this, the `compare_stats.py` script calculates cross-correlation similarity (pairwise average), DICE overlap ratio (percentile can be changed, .75 is the default) and different areal and shape distortion statistics, as shown below for `NODE2078`:
 
