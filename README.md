@@ -20,7 +20,7 @@ Most of the code from the original version has been replaced, but some were reus
  - application of octree search during registration
  - parallelisation of cost calculation during registration
 
-As a new feature, groupwise cortical surface registration is now available. Please see our [user's guide](https://github.com/rbesenczi/newMSM/docs/guide.md) for more information.
+As a new feature, groupwise cortical surface registration is now available. Please see our [user's guide](docs/guide.md) for more information.
 
 Please note, the current version is 0.8.0-BETA. All feedbacks are much appreciated.
 
