@@ -8,7 +8,7 @@ NewMSM is a new implementation with several improvements that made the MSM metho
 
 Before use, read our [user's guide](docs/guide.md).
 
-Installation instruction can be found [here](docs/install.md).
+Installation instructions can be found [here](docs/install.md).
 
 The original MSM implementation can be found [here](https://github.com/ecr05/MSM_HOCR/).
 
