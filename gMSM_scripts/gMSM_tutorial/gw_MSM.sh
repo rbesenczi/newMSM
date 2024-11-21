@@ -9,17 +9,25 @@ clustering=$workdir/frontal_subject_clusters_HCP.csv
 template=$workdir/templates/sunet.ico-6.template.surf.gii
 
 config_file=$workdir/configs/gMSM_config.txt
-outdir=$workdir/output
-resultdir=$workdir/results
 
 group_id=NODE2078
 ###########################################################
 
+outdir=$workdir/output
+resultdir=$workdir/results
+
+# Making directories and cleaning up files
+mkdir $outdir
+mkdir $outdir/$group_id
+mkdir $resultdir
+mkdir $resultdir/$group_id
 mkdir $workdir/file_lists
 rm $workdir/file_lists/input_data_$group_id.txt && touch $workdir/file_lists/input_data_$group_id.txt
 rm $workdir/file_lists/input_meshes_$group_id.txt && touch $workdir/file_lists/input_meshes_$group_id.txt
+
 subjects=()
 
+# Generating file lists to MSM
 while IFS="," read -r linenum subject group
 do
   if [ $group_id = $group ]; then
@@ -28,11 +36,6 @@ do
     subjects+=($subject)
   fi
 done < $clustering
-
-mkdir $outdir
-mkdir $outdir/$group_id
-mkdir $resultdir
-mkdir $resultdir/$group_id
 
 ## gMSM registration phase ##
 echo "Running gMSM for group $group_id"
@@ -51,18 +54,16 @@ if [ $retval -ne 0 ]; then
 fi
 
 index=0
-## some renaming and setting structures ##
+## Renaming output files ##
 for subject in "${subjects[@]}"
 do
-  wb_command -set-structure $outdir/$group_id/groupwise.$group_id.sphere-$index.reg.surf.gii CORTEX_LEFT
   mv $outdir/$group_id/groupwise.$group_id.sphere-$index.reg.surf.gii $outdir/$group_id/groupwise.$group_id.sphere-$subject.reg.surf.gii
-  wb_command -set-structure $outdir/$group_id/groupwise.$group_id.transformed_and_reprojected-$index.func.gii CORTEX_LEFT
   mv $outdir/$group_id/groupwise.$group_id.transformed_and_reprojected-$index.func.gii $outdir/$group_id/groupwise.$group_id.transformed_and_reprojected-$subject.func.gii
   ((index++))
 done
 
-## dedrifting phase ##
-## calculating surface average of inverse of registration ##
+## Dedrifting phase ##
+## Calculating surface average of inverse of registration ##
 surf_avg="wb_command -surface-average $outdir/$group_id/groupwise.$group_id.dedriftwarp.ico-6.sphere.surf.gii "
 
 for subject in "${subjects[@]}"
@@ -89,7 +90,7 @@ do
   $outdir/$group_id/groupwise.$group_id.dedriftwarp.ico-6.sphere.surf.gii \
   $outdir/$group_id/groupwise.$group_id.sphere-$subject.reg.corrected.surf.gii
 
-  ## resampling data for the new dedrifted mesh ##
+  ## resampling data to the new dedrifted mesh ##
   wb_command -metric-resample \
   $input_folder/$subject.sulc.curv.affine.ico6.shape.gii \
   $outdir/$group_id/groupwise.$group_id.sphere-$subject.reg.corrected.surf.gii \
