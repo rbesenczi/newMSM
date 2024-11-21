@@ -6,7 +6,7 @@ The main MSM tool is currently run from the command line using the program `newm
 
 NewMSM is a new implementation with several improvements that made the MSM method computationally more efficient. Improvements include a completely re-implemented mesh resampling library with a new nearest neighbour search algorithm (octree search), an option for multicore CPU utilisation and several others. In general, the average runtime of a registration process is now 25% of that of the original MSM implementation (and 5% using multicore CPU utilisation). The operation of newMSM is supposed to be the same as the previous MSM implementation. We notify the user about any changes that have been made in adequate command line messages. NewMSM now contains an implementation of a groupwise surface registration method that is described later in this guide. 
 
-Installation instructions can be found [here](docs/install.md).
+Installation instructions can be found [here](install.md).
 
 The original MSM implementation can be found [here](https://github.com/ecr05/MSM_HOCR/). 
 
