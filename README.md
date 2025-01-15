@@ -22,7 +22,7 @@ Most of the code from the original version has been replaced, but some were reus
 
 As a new feature, groupwise cortical surface registration is now available. Please see our [user's guide](docs/guide.md) for more information.
 
-Please note, the current version is 0.8.0-BETA. All feedbacks are much appreciated.
+Please note, the current version is 1.0. All feedbacks are much appreciated.
 
 ## Referencing
 
