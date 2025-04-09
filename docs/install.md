@@ -8,13 +8,15 @@ NewMSM is available to download from FSL or Github. Please follow the steps desc
 1. Download and install FSL. For more information, please visit the FSL [webpage](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/).
 2. Download and install newMSM from the FSL developer branch by executing the following command on Terminal:
 ```console
-fsl/bin/conda create --override-channels -c https://fsl.fmrib.ox.ac.uk/fsldownloads/fslconda/development/ -c https://fsl.fmrib.ox.ac.uk/fsldownloads/fslconda/public/ -c conda-forge -p ./msm-env fsl-newmsm
+fsl/bin/conda create -c https://fsl.fmrib.ox.ac.uk/fsldownloads/fslconda/public/ -c conda-forge -p ./msm-env fsl-newmsm
 ```
 3. Activate this environment:
 ```console
 conda activate ./msm-env/
 ```
 4. You can test with the `newmsm -p` command.
+
+Note: if you use the recent version on FSL, you might need to use `micromamba` instead of `conda` for installing newMSM. Please refer to FSL documentation.
 
 ### Install from source
 
