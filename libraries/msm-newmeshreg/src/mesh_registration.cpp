@@ -139,7 +139,7 @@ newresampler::Mesh Mesh_registration::project_CPgrid(newresampler::Mesh SPH_in, 
             else
             {
                 newresampler::sphere_project_warp(SPH_in, MESHES[num], transformed_mesh, _numthreads);
-                model->warp_CPgrid(MESHES[num],transformed_mesh, num);
+                if (model) model->warp_CPgrid(MESHES[num],transformed_mesh, num);
             }
         }
     }
